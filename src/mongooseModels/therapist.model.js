@@ -1,0 +1,38 @@
+const mongoose = require("mongoose");
+
+const therapistSchema = new mongoose.Schema(
+  {
+    name: { type: String, default: null },
+    image: { type: String, default: null },
+    age: { type: Number, default: 0 },
+    mobileNumber: { type: String, default: null },
+    email: { type: String, default: null },
+    specialization: [{ type: String }],
+    charges: { type: Number, default: 0 },
+    qualification: { type: String, default: null },
+    discountedCharges: { type: Number, default: 0 },
+    location: { type: String, default: null },
+    language: { type: String, default: null },
+    summary: { type: String, default: null },
+    isOnline: { type: Boolean, default: false },
+    onCall: { type: Boolean, default: false },
+    isProfileVerified: { type: Boolean, default: false },
+    documents: [{ name: { type: String },image: { type: String } }],
+    isAdmin:{ type: Boolean, default: false },
+    notification: {
+      type: mongoose.Types.ObjectId,
+      ref: "notification",
+      default: null,
+    },
+    userExtraDetails: {
+      type: mongoose.Types.ObjectId,
+      ref: "userExtraDetails",
+      default: null,
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
+
+module.exports = mongoose.model("therapist", therapistSchema);
