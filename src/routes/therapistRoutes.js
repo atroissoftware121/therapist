@@ -12,17 +12,23 @@ const {
   TherapistList,
   TherapistTopList,
   TherapistDetailGet,
-  TherapistListForApproval
+  TherapistListForApproval,
+  ApproveTherapist,
 } = require("../controllers/therapistController");
 const { upload } = require("../helpers/s3Helper");
 
 module.exports = (app) => {
   const route = Router();
   app.use("/therapist", route);
-  
+
   route.get("/get-top-list", isAuthorized, TherapistTopList);
   route.get("/get-list", isAuthorized, TherapistList);
-  route.get("/get-list-for-approval", isAuthorized,injectTherapistDetails, TherapistListForApproval);
+  route.get(
+    "/get-list-for-approval",
+    isAuthorized,
+    injectTherapistDetails,
+    TherapistListForApproval
+  );
   route.put(
     "/updateProfile",
     isAuthorized,
@@ -86,5 +92,17 @@ module.exports = (app) => {
     }),
     TherapistAddOffer
   );
-  route.get("/:_id", isAuthorized,injectTherapistDetails, TherapistDetailGet);
+  route.get("/:_id", isAuthorized, injectTherapistDetails, TherapistDetailGet);
+
+  route.patch(
+    "/approve-therapist",
+    isAuthorized,
+    injectTherapistDetails,
+    celebrate({
+      [Segments.BODY]: Joi.object().keys({
+        _id: Joi.string().required(),
+      }),
+    }),
+    ApproveTherapist
+  );
 };

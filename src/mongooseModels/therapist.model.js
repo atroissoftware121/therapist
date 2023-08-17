@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-
+const mongoosePaginate = require("mongoose-paginate-v2");
 const therapistSchema = new mongoose.Schema(
   {
     name: { type: String, default: null },
@@ -17,8 +17,8 @@ const therapistSchema = new mongoose.Schema(
     isOnline: { type: Boolean, default: false },
     onCall: { type: Boolean, default: false },
     isProfileVerified: { type: Boolean, default: false },
-    documents: [{ name: { type: String },image: { type: String } }],
-    isAdmin:{ type: Boolean, default: false },
+    documents: [{ name: { type: String }, image: { type: String } }],
+    isAdmin: { type: Boolean, default: false },
     notification: {
       type: mongoose.Types.ObjectId,
       ref: "notification",
@@ -34,5 +34,6 @@ const therapistSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
-
+// add plugin that converts mongoose to json
+therapistSchema.plugin(mongoosePaginate);
 module.exports = mongoose.model("therapist", therapistSchema);

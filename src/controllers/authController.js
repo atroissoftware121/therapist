@@ -3,7 +3,7 @@ const {
   updateQuery,
   createQuery,
   deleteQuery,
-  findOneQuery
+  findOneQuery,
 } = require("../helpers/mongooseHelpers");
 const {
   SendBadResponse,
@@ -50,7 +50,7 @@ const GetOtp = async (req, res) => {
   let [isNumberExistWithUsertype] = await findQuery(authCredtionalsModel, {
     $and: [{ mobileNumber }, { userType }],
   });
-  
+
   if (
     (method === "login" || method === "forgetPassword") &&
     !isNumberExistWithUsertype
@@ -132,13 +132,13 @@ const VerifyOtp = async (req, res) => {
       data: { error: "Please send correct usertype!" },
     });
   mobileNumber = "+" + mobileNumber.trim();
-  console.log(mobileNumber)
-  console.log(method)
-  console.log(otp)
+  console.log(mobileNumber);
+  console.log(method);
+  console.log(otp);
   let isOtpValid = await findQuery(otpSentModel, {
     $and: [{ mobileNumber }, { otp }, { method }],
   });
-  console.log(isOtpValid)
+  console.log(isOtpValid);
   if (!isOtpValid)
     return SendBadResponse({
       res,

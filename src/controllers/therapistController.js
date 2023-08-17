@@ -1,8 +1,13 @@
 const { genratePasswordHash } = require("../helpers/bcryptHelper");
-const { findQuery, updateQuery } = require("../helpers/mongooseHelpers");
-const catchAsync = require('../utils/catchAsync');
-const ApiError = require('../utils/ApiError');
-const httpStatus = require('http-status');
+const {
+  findQuery,
+  updateQuery,
+  findQueryWithPagining,
+} = require("../helpers/mongooseHelpers");
+const catchAsync = require("../utils/catchAsync");
+const sendEmail = require("../utils/emailer");
+const ApiError = require("../utils/ApiError");
+const httpStatus = require("http-status");
 
 const {
   SendSuccessResponse,
@@ -10,8 +15,9 @@ const {
 } = require("../helpers/responseHelpers");
 const authCredtionalsModel = require("../mongooseModels/authCredtionals.model");
 const therapistModel = require("../mongooseModels/therapist.model");
+const pick = require("../utils/pick");
 
-const TherapistRegisterStepFirst =catchAsync( async (req, res) => {
+const TherapistRegisterStepFirst = catchAsync(async (req, res) => {
   const { name, email, password, image } = req.body;
   const { _id, mobileNumber, ...user } = req.user;
   let [isEmailExist] = await findQuery(authCredtionalsModel, { email });
@@ -151,7 +157,7 @@ const TherapistAddOffer = catchAsync(async (req, res) => {
   });
 });
 
-const TherapistTopList =catchAsync( async (req, res) => {
+const TherapistTopList = catchAsync(async (req, res) => {
   const list = await findQuery(
     therapistModel,
     { isProfileVerified: true },
@@ -166,7 +172,7 @@ const TherapistTopList =catchAsync( async (req, res) => {
 
 const TherapistList = catchAsync(async (req, res) => {
   let { page, priceS, priceE, ageS, ageE, lang, specialization } = req.query;
-  let findQueryArr=findQueryArr.push({ isProfileVerified: true });
+  let findQueryArr = findQueryArr.push({ isProfileVerified: true });
   let skip = 0;
   let limit = 20;
   let languageArr = lang?.split(",") || [];
@@ -200,32 +206,67 @@ const TherapistList = catchAsync(async (req, res) => {
 
 const TherapistListForApproval = catchAsync(async (req, res) => {
   const { isAdmin } = req.user;
-  if(!isAdmin){
+  if (!isAdmin) {
     throw new ApiError(httpStatus.UNAUTHORIZED, "Permission Denied");
   }
-  const list = await findQuery(
+  const options = pick(req.query, ["limit", "page"]);
+  const list = await findQueryWithPagining(
     therapistModel,
-    { isAdmin: false }
+    { isAdmin: false },
+    options
   );
   return SendSuccessResponse({
     res,
     data: { message: "Therapist list get successfully!", data: list },
   });
 });
+const ApproveTherapist = catchAsync(async (req, res) => {
+  let { _id } = req.body;
+  const { isAdmin } = req.user;
+  if (!isAdmin) {
+    throw new ApiError(httpStatus.UNAUTHORIZED, "Permission Denied");
+  }
+  let therapist = await findQuery(therapistModel, { _id });
+  if (!therapist) {
+    return SendBadResponse({
+      res,
+      status: 404,
+      data: { error: "Therapist Not Found!" },
+    });
+  }
+
+  if (!therapist.email || !therapist.documents.length) {
+    return SendBadResponse({
+      res,
+      status: 400,
+      data: { error: "Therapist registration not complete!" },
+    });
+  }
+  const response = await updateQuery(
+    therapistModel,
+    { _id },
+    { isProfileVerified: true }
+  );
+  sendEmail(
+    therapist.email,
+    "Account Approval Confirmation",
+    "Congratulations! Your Account as Therapist is Now Active"
+  );
+  return SendSuccessResponse({
+    res,
+    data: { message: "Therapist sucessfully approved!", data: response },
+  });
+});
 
 const TherapistDetailGet = catchAsync(async (req, res) => {
   let { _id } = req.params;
   const { isAdmin } = req.user;
-  let selection
-  if(!isAdmin){
-    selection= "name image specialization qualification charges discountedCharges location language summary isOnline onCall"
-
+  let selection;
+  if (!isAdmin) {
+    selection =
+      "name image specialization qualification charges discountedCharges location language summary isOnline onCall";
   }
-  let therapist = await findQuery(
-    therapistModel,
-    { _id },
-    selection
-  );
+  let therapist = await findQuery(therapistModel, { _id }, selection);
   return SendSuccessResponse({
     res,
     data: { message: "Therapist detail get successfully!", data: therapist },
@@ -240,5 +281,6 @@ module.exports = {
   TherapistList,
   TherapistTopList,
   TherapistDetailGet,
-  TherapistListForApproval
+  TherapistListForApproval,
+  ApproveTherapist,
 };

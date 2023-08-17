@@ -2,9 +2,22 @@ const findQuery = (collection, query, select) => {
   let findMethod = query?._id ? "findById" : "find";
   query = query?._id || query;
   return new Promise(async (resolve, _reject) => {
-    let queryOutput = await collection[findMethod](query, select)
+    let queryOutput = await collection[findMethod](query, select);
     resolve(queryOutput);
   });
+};
+
+/**
+ * findQueryWithPagining
+ * @param {Object} filter - Mongo filter
+ * @param {Object} options - Query options
+ * @param {number} [options.limit] - Maximum number of results per page (default = 10)
+ * @param {number} [options.page] - Current page (default = 1)
+ * @returns {Promise<QueryResult>}
+ */
+const findQueryWithPagining = async (collection, filter, options) => {
+  options.sort = { updatedAt: -1 };
+  return collection["paginate"](filter, options);
 };
 
 const updateQuery = (collection, query, updatedValue) => {
@@ -31,12 +44,12 @@ const createQuery = (collection, saveObj) => {
 };
 
 const deleteQuery = (collection, query) => {
-  console.log(query)
-  console.log(collection)
+  console.log(query);
+  console.log(collection);
   return new Promise(async (resolve, reject) => {
     try {
-      const result=await collection.deleteMany(query);
-      console.log(result)
+      const result = await collection.deleteMany(query);
+      console.log(result);
       resolve(true);
     } catch (error) {
       resolve(false);
@@ -45,4 +58,10 @@ const deleteQuery = (collection, query) => {
   });
 };
 
-module.exports = { findQuery, updateQuery, createQuery, deleteQuery };
+module.exports = {
+  findQuery,
+  updateQuery,
+  createQuery,
+  deleteQuery,
+  findQueryWithPagining,
+};

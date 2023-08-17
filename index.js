@@ -13,7 +13,8 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 mongodb();
-
+// Allow all incoming traffic (not recommended for production)
+app.use(cors());
 app.get("/status", (req, res) => {
   res.status(200).end();
 });
