@@ -6,6 +6,7 @@ const {
 } = require("../helpers/mongooseHelpers");
 const catchAsync = require("../utils/catchAsync");
 const sendEmail = require("../utils/emailer");
+const { sendSMS } = require("../helpers/twilloHelpers");
 const ApiError = require("../utils/ApiError");
 const httpStatus = require("http-status");
 
@@ -247,11 +248,13 @@ const ApproveTherapist = catchAsync(async (req, res) => {
     { _id },
     { isProfileVerified: true }
   );
-  sendEmail(
-    therapist.email,
-    "Account Approval Confirmation",
-    "Congratulations! Your Account as Therapist is Now Active"
-  );
+  const message =
+    "Congratulations! Your Therapist account on Sahhaya is active and ready to use.  Please login on ….. app link……\nTeam Sahhaya";
+  sendEmail(therapist.email, message);
+  sendSMS({
+    to: therapist.mobileNumber,
+    body: message,
+  });
   return SendSuccessResponse({
     res,
     data: { message: "Therapist sucessfully approved!", data: response },
