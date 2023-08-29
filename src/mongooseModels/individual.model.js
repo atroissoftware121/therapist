@@ -7,7 +7,7 @@ const individualSchema = new mongoose.Schema(
     image: { type: String, default: null },
     email: { type: String, default: null },
     mobileNumber: { type: String, default: null },
-    isMale: { type: Boolean, default: true },
+    gender: { type: String, default: null },
     notification: { type: mongoose.Types.ObjectId, ref: "notification" },
     userExtraDetails: {
       type: mongoose.Types.ObjectId,

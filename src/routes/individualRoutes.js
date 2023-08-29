@@ -22,7 +22,8 @@ module.exports = (app) => {
         fname: Joi.string().required(),
         lname: Joi.string().required(),
         email: Joi.string().required(),
-        isMale: Joi.boolean().required(),
+        gender: Joi.string().required(),
+        image: Joi.string().optional(),
       }),
     }),
     IndividualProfileUpdate
@@ -37,7 +38,8 @@ module.exports = (app) => {
         lname: Joi.string().required(),
         email: Joi.string().required(),
         password: Joi.string().required(),
-        isMale: Joi.boolean().required(),
+        gender: Joi.string().required(),
+        image: Joi.string().optional(),
       }),
     }),
     IndividualRegister

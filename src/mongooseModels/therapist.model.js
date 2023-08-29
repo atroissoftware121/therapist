@@ -7,6 +7,7 @@ const therapistSchema = new mongoose.Schema(
     age: { type: Number, default: 0 },
     mobileNumber: { type: String, default: null },
     email: { type: String, default: null },
+    gender: { type: String, default: null },
     specialization: [{ type: String }],
     charges: { type: Number, default: 0 },
     qualification: { type: String, default: null },

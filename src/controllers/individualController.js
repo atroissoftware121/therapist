@@ -8,7 +8,7 @@ const authCredtionalsModel = require("../mongooseModels/authCredtionals.model");
 const individualModel = require("../mongooseModels/individual.model");
 
 const IndividualProfileUpdate = async (req, res) => {
-  const { fname, lname, email, isMale } = req.body;
+  const { fname, lname, email, gender, image } = req.body;
   const { _id, mobileNumber, ...user } = req.user;
   let [isEmailExist] = await findQuery(authCredtionalsModel, {
     $and: [{ email }, { userId: { $nin: [_id] } }],
@@ -28,7 +28,8 @@ const IndividualProfileUpdate = async (req, res) => {
       fname,
       lname,
       email,
-      isMale,
+      gender,
+      image,
     }
   );
   await updateQuery(
@@ -45,7 +46,7 @@ const IndividualProfileUpdate = async (req, res) => {
 };
 
 const IndividualRegister = async (req, res) => {
-  const { fname, lname, email, isMale, password } = req.body;
+  const { fname, lname, email, gender, password, image } = req.body;
   const { _id, mobileNumber, ...user } = req.user;
   let [isEmailExist] = await findQuery(authCredtionalsModel, {
     email,
@@ -65,7 +66,8 @@ const IndividualRegister = async (req, res) => {
       fname,
       lname,
       email,
-      isMale,
+      gender,
+      image,
     }
   );
   let hashedPassword = await genratePasswordHash(password);
