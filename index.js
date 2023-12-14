@@ -14,7 +14,7 @@ const server = http.createServer(app);
 const io = new Server(server);
 mongodb();
 // Allow all incoming traffic (not recommended for production)
-app.use(cors());
+app.use(cors({ credentials: true, origin: true, methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE'] }));
 app.get("/status", (req, res) => {
   res.status(200).end();
 });
