@@ -177,7 +177,8 @@ const TherapistTopList = catchAsync(async (req, res) => {
 
 const TherapistList = catchAsync(async (req, res) => {
   let { page, priceS, priceE, ageS, ageE, lang, specialization } = req.query;
-  let findQueryArr = findQueryArr.push({ isProfileVerified: true });
+  let findQueryArr=[]
+  findQueryArr.push({ isProfileVerified: true });
   let skip = 0;
   let limit = 20;
   let languageArr = lang?.split(",") || [];
@@ -267,12 +268,8 @@ const ApproveTherapist = catchAsync(async (req, res) => {
 
 const TherapistDetailGet = catchAsync(async (req, res) => {
   let { _id } = req.params;
-  const { isAdmin } = req.user;
-  let selection;
-  if (!isAdmin) {
-    selection =
+  let  selection =
       "name image specialization qualification charges discountedCharges location language summary isOnline onCall";
-  }
   let therapist = await findQuery(therapistModel, { _id }, selection);
   return SendSuccessResponse({
     res,

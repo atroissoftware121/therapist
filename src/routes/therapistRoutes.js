@@ -3,6 +3,7 @@ const { celebrate, Joi, Segments } = require("celebrate");
 const {
   isAuthorized,
   injectTherapistDetails,
+  injectIndividualDetails,
 } = require("../middlewares/authMiddlewares");
 const {
   TherapistRegisterStepFirst,
@@ -95,6 +96,7 @@ module.exports = (app) => {
     TherapistAddOffer
   );
   route.get("/:_id", isAuthorized, injectTherapistDetails, TherapistDetailGet);
+  route.get("/get-detail/:_id", isAuthorized, injectIndividualDetails, TherapistDetailGet);
 
   route.patch(
     "/approve-therapist",
