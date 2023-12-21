@@ -3,6 +3,7 @@ const {
   findQuery,
   updateQuery,
   findQueryWithPagining,
+  findQueryWithLimit
 } = require("../helpers/mongooseHelpers");
 const catchAsync = require("../utils/catchAsync");
 const sendEmail = require("../utils/emailer");
@@ -197,7 +198,7 @@ const TherapistList = catchAsync(async (req, res) => {
 
   let findQueryObj = {};
   if (findQueryArr.length > 0) findQueryObj = { $and: findQueryArr };
-  const list = await findQuery(
+  const list = await findQueryWithLimit(
     therapistModel,
     findQueryObj,
     "name image specialization qualification charges discountedCharges location language summary isOnline onCall",

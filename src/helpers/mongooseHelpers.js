@@ -7,6 +7,14 @@ const findQuery = (collection, query, select) => {
   });
 };
 
+const findQueryWithLimit = (collection, query, select,limit,skip) => {
+  let findMethod = query?._id ? "findById" : "find";
+  query = query?._id || query;
+  return new Promise(async (resolve, _reject) => {
+    let queryOutput = await collection[findMethod](query, select).limit(limit).skip(skip);
+    resolve(queryOutput);
+  });
+};
 /**
  * findQueryWithPagining
  * @param {Object} filter - Mongo filter
@@ -64,4 +72,5 @@ module.exports = {
   createQuery,
   deleteQuery,
   findQueryWithPagining,
+  findQueryWithLimit
 };
