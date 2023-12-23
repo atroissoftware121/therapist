@@ -39,7 +39,6 @@ module.exports = (app) => {
         name: Joi.string().required(),
         email: Joi.string().required(),
         age: Joi.number().required(),
-        gender: Joi.string().required(),
         specialization: Joi.array().required(),
         qualification: Joi.string().required(),
         charges: Joi.number().required(),
