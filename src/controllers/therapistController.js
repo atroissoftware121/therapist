@@ -1,4 +1,5 @@
 const { genratePasswordHash } = require("../helpers/bcryptHelper");
+
 const {
   findQuery,
   updateQuery,
@@ -175,7 +176,7 @@ const TherapistTopList = catchAsync(async (req, res) => {
 });
 
 const TherapistList = catchAsync(async (req, res) => {
-  let { page, priceS, priceE, ageS, ageE, lang, specialization } = req.query;
+  let { page, priceS, priceE, ageS, ageE, lang, specialization,sKeyword } = req.query;
   let findQueryArr=[]
   findQueryArr.push({ isProfileVerified: true });
   let skip = 0;
@@ -193,13 +194,20 @@ const TherapistList = catchAsync(async (req, res) => {
   if (ageS) findQueryArr.push({ age: { $gte: parseInt(ageS) } });
   if (ageE) findQueryArr.push({ age: { $lte: parseInt(ageE) } });
   if (specialization) findQueryArr.push({ specialization });
+  if (sKeyword) {
+    findQueryArr.push(
+      {$or: [
+      { name: { $regex: sKeyword, $options: 'i' } }, // 'i' makes the search case-insensitive
+      { specialization: { $in: [new RegExp(sKeyword, 'i')] } } // 'i' for case-insensitive
+    ],});
+  }
 
   let findQueryObj = {};
   if (findQueryArr.length > 0) findQueryObj = { $and: findQueryArr };
   const list = await findQueryWithLimit(
     therapistModel,
     findQueryObj,
-    "name image specialization qualification charges discountedCharges location language summary isOnline onCall",
+    "name email mobileNumber gender image specialization qualification charges discountedCharges location language summary isOnline onCall",
     limit,
     skip
   );
@@ -225,6 +233,8 @@ const TherapistListForApproval = catchAsync(async (req, res) => {
     data: { message: "Therapist list get successfully!", data: list },
   });
 });
+
+
 const ApproveTherapist = catchAsync(async (req, res) => {
   let { _id } = req.body;
   const { isAdmin } = req.user;
