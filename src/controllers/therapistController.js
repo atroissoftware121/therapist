@@ -166,7 +166,7 @@ const TherapistTopList = catchAsync(async (req, res) => {
   const list = await findQuery(
     therapistModel,
     { isProfileVerified: true },
-    "name image specialization qualification charges discountedCharges location language summary isOnline onCall",
+    "name email mobileNumber gender image specialization qualification charges discountedCharges location language summary isOnline onCall",
     5
   );
   return SendSuccessResponse({
