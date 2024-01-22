@@ -13,7 +13,7 @@ const AWS_ACCESS_KEY = process.env.AWS_ACCESS_KEY;
 const AWS_SECRET_KEY = process.env.AWS_SECRET_KEY;
 const SMTP_EMAIL = process.env.SMTP_EMAIL;
 const SMTP_PASSWORD = process.env.SMTP_PASSWORD;
-
+const FIREBASE_API_KEY = process.env.FIREBASE_API_KEY;
 module.exports = {
   PORT,
   TWILIO_ACCOUNT_SID,
@@ -28,4 +28,5 @@ module.exports = {
   AWS_SECRET_KEY,
   SMTP_EMAIL,
   SMTP_PASSWORD,
+  FIREBASE_API_KEY
 };

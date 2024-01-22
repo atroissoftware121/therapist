@@ -1,6 +1,8 @@
 const { Router } = require("express");
-const { GetImage, UploadImages } = require("../controllers/commonController");
+const { GetImage, UploadImages, sentPushNotifications } = require("../controllers/commonController");
 const { upload } = require("../helpers/s3Helper");
+const { celebrate, Joi, Segments } = require("celebrate");
+
 const {
   injectUserDetails,
   isAuthorized,
@@ -17,6 +19,22 @@ module.exports = (app) => {
     isAuthorized,
     injectUserDetails,
     Logout
+  );
+  route.post(
+    "/pushNotification",
+    celebrate({
+      [Segments.BODY]: Joi.object().keys({
+        senderId: Joi.string().required(),
+        senderName: Joi.string().required(),
+        receiverId: Joi.string().required(),
+        receiverName: Joi.string().required(),
+        title: Joi.string().required(),
+        image: Joi.string().optional(),
+        message: Joi.string().optional(),
+      }),
+    }),
+    isAuthorized,
+    sentPushNotifications
   );
   route.get("/image/:key", GetImage);
   route.post("/image", upload.single("image"), UploadImages);

@@ -37,6 +37,7 @@ const updateQuery = (collection, query, updatedValue) => {
   return new Promise(async (resolve, reject) => {
     let queryOutput = await collection[updateMethod](query, updatedValue, {
       new: true,
+      upsert: true
     });
     resolve(queryOutput);
   });
