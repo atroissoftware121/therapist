@@ -108,4 +108,5 @@ module.exports = (app) => {
     }),
     ApproveTherapist
   );
+
 };

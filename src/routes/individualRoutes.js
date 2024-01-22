@@ -28,6 +28,7 @@ module.exports = (app) => {
     }),
     IndividualProfileUpdate
   );
+  
   route.put(
     "/register",
     isAuthorized,

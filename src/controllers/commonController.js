@@ -2,7 +2,10 @@ const {
   SendBadResponse,
   SendSuccessResponse,
 } = require("../helpers/responseHelpers");
+const { updateQuery } = require("../helpers/mongooseHelpers");
 const { getFileStream, uploadFileS3 } = require("../helpers/s3Helper");
+const userExtraDetailsModel = require("../mongooseModels/userExtraDetails.model");
+
 
 const GetImage = async (req, res) => {
   const key = req.params.key;
@@ -29,5 +32,26 @@ const UploadImages = async (req, res) => {
     },
   });
 };
+const Logout = async (req, res) => {
+  try{
+    let { userId } = req.user;
+    await updateQuery(
+      userExtraDetailsModel,
+      { userId },
+      {
+        fcmToken: null,
+        deviceInfo: null,
+        isUserLogout: true,
+      }
+    );
+    return SendSuccessResponse({ res, data: { userId } });
+  }catch(error){
+    return SendBadResponse({
+      res,
+      status: 403,
+      data: { message: error.message },
+    });
+  }
+};
 
-module.exports = { GetImage, UploadImages };
+module.exports = { GetImage, UploadImages, Logout };

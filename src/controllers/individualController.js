@@ -84,5 +84,4 @@ const IndividualRegister = async (req, res) => {
     data: { message: "Register successfully!", data: isUserUpdated },
   });
 };
-
 module.exports = { IndividualProfileUpdate, IndividualRegister };

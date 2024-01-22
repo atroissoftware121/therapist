@@ -112,7 +112,7 @@ const GetOtp = async (req, res) => {
 };
 
 const VerifyOtp = async (req, res) => {
-  let { n: mobileNumber, t: userType, m: method, o: otp } = req.query;
+  let { n: mobileNumber, t: userType, m: method, o: otp,fcmToken,deviceInfo } = req.query;
   if (!mobileNumber || !userType || !method || !otp)
     return SendBadResponse({
       res,
@@ -176,6 +176,8 @@ const VerifyOtp = async (req, res) => {
         lastLogin: Date.now(),
         lastJWTToken: token,
         isUserLogout: false,
+        deviceInfo,
+        fcmToken
       }
     );
     return SendSuccessResponse({
@@ -217,7 +219,7 @@ const VerifyOtp = async (req, res) => {
 };
 
 const Login = async (req, res) => {
-  let { email, password, userType } = req.body;
+  let { email, password, userType, fcmToken, deviceInfo } = req.body;
 
   let [isEmailExist] = await findQuery(authCredtionalsModel, {
     $and: [{ email }, { userType }],
@@ -259,11 +261,15 @@ const Login = async (req, res) => {
     {
       lastLogin: Date.now(),
       lastJWTToken: token,
+      fcmToken:fcmToken,
+      deviceInfo: deviceInfo,
       isUserLogout: false,
     }
   );
   return SendSuccessResponse({ res, data: { userData, token } });
 };
+
+
 
 const ForgetPassword = async (req, res) => {
   const { otp, password, mobileNumber } = req.body;

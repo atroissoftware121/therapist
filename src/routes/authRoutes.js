@@ -1,10 +1,12 @@
 const { Segments, Joi, celebrate } = require("celebrate");
 const { Router } = require("express");
+
 const {
   GetOtp,
   VerifyOtp,
   ForgetPassword,
   Login,
+  Logout
 } = require("../controllers/authController");
 
 module.exports = (app) => {
@@ -22,11 +24,12 @@ module.exports = (app) => {
         email: Joi.string().required(),
         password: Joi.string().required(),
         userType: Joi.string().required(),
+        fcmToken: Joi.string().required(),
+        deviceInfo: Joi.string().required(),
       }),
     }),
     Login
   );
-
   route.post(
     "/forgetPassword",
     celebrate({

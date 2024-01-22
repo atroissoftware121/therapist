@@ -1,11 +1,14 @@
-const findQuery = (collection, query, select) => {
-  let findMethod = query?._id ? "findById" : "find";
-  query = query?._id || query;
-  return new Promise(async (resolve, _reject) => {
-    let queryOutput = await collection[findMethod](query, select);
-    resolve(queryOutput);
-  });
+const findQuery = async (collection, query, select) => {
+  try {
+    const findMethod = query?._id ? "findById" : "find";
+    const resolvedQuery = query?._id || query;
+    const queryOutput = await collection[findMethod](resolvedQuery, select);
+    return queryOutput;
+  } catch (error) {
+    throw new Error(error.message);
+  }
 };
+
 
 const findQueryWithLimit = (collection, query, select,limit,skip) => {
   let findMethod = query?._id ? "findById" : "find";

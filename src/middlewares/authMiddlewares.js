@@ -5,6 +5,8 @@ const { findQuery } = require("../helpers/mongooseHelpers");
 const { SendBadResponse } = require("../helpers/responseHelpers");
 const therapistModel = require("../mongooseModels/therapist.model");
 const individualModel = require("../mongooseModels/individual.model");
+const userExtraDetailsModel = require("../mongooseModels/userExtraDetails.model");
+
 
 const getTokenFromHeader = (req) => {
   if (
@@ -67,8 +69,31 @@ const injectIndividualDetails = async (req, res, next) => {
   next();
 };
 
+const injectUserDetails = async (req, res, next) => {
+  let token = getTokenFromHeader(req);
+  let decodedValue = await getTokenData(token);
+  if (!decodedValue)
+    return SendBadResponse({
+      res,
+      status: 401,
+      data: { error: "Token invaild!" },
+    });
+  let userExtraDetail = await findQuery(userExtraDetailsModel, {
+    userId: decodedValue._id,
+  });
+  if (!userExtraDetail.length)
+    return SendBadResponse({
+      res,
+      status: 404,
+      data: { error: "User not found!" },
+    });
+  req.user = userExtraDetail[0];
+  next();
+};
+
 module.exports = {
   isAuthorized,
   injectTherapistDetails,
   injectIndividualDetails,
+  injectUserDetails
 };
