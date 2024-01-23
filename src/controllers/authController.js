@@ -4,24 +4,24 @@ const {
   createQuery,
   deleteQuery,
   findOneQuery,
-} = require("../helpers/mongooseHelpers");
+} = require('../helpers/mongooseHelpers');
 const {
   SendBadResponse,
   SendSuccessResponse,
-} = require("../helpers/responseHelpers");
-const { sendSMS, genrateOtp } = require("../helpers/twilloHelpers");
-const authCredtionalsModel = require("../mongooseModels/authCredtionals.model");
-const otpSentModel = require("../mongooseModels/otpSent.model");
-const therapistModel = require("../mongooseModels/therapist.model");
-const individualModel = require("../mongooseModels/individual.model");
-const notificationsModel = require("../mongooseModels/notifications.model");
-const { getSignupOtpString } = require("../stringTemplates");
-const { genrateToken } = require("../helpers/jwtHelpers");
+} = require('../helpers/responseHelpers');
+const { sendSMS, genrateOtp } = require('../helpers/twilloHelpers');
+const authCredtionalsModel = require('../mongooseModels/authCredtionals.model');
+const otpSentModel = require('../mongooseModels/otpSent.model');
+const therapistModel = require('../mongooseModels/therapist.model');
+const individualModel = require('../mongooseModels/individual.model');
+const notificationsModel = require('../mongooseModels/notifications.model');
+const { getSignupOtpString } = require('../stringTemplates');
+const { genrateToken } = require('../helpers/jwtHelpers');
 const {
   genratePasswordHash,
   comparePassword,
-} = require("../helpers/bcryptHelper");
-const userExtraDetailsModel = require("../mongooseModels/userExtraDetails.model");
+} = require('../helpers/bcryptHelper');
+const userExtraDetailsModel = require('../mongooseModels/userExtraDetails.model');
 
 const GetOtp = async (req, res) => {
   let { n: mobileNumber, t: userType, m: method } = req.query;
@@ -29,21 +29,21 @@ const GetOtp = async (req, res) => {
     return SendBadResponse({
       res,
       status: 400,
-      data: { error: "Please send all required fields!" },
+      data: { error: 'Please send all required fields!' },
     });
-  if (method !== "login" && method !== "signup" && method !== "forgetPassword")
+  if (method !== 'login' && method !== 'signup' && method !== 'forgetPassword')
     return SendBadResponse({
       res,
       status: 400,
-      data: { error: "Please send correct method!" },
+      data: { error: 'Please send correct method!' },
     });
-  if (userType !== "therapist" && userType !== "individual")
+  if (userType !== 'therapist' && userType !== 'individual')
     return SendBadResponse({
       res,
       status: 400,
-      data: { error: "Please send correct usertype!" },
+      data: { error: 'Please send correct usertype!' },
     });
-  mobileNumber = "+" + mobileNumber.trim();
+  mobileNumber = '+' + mobileNumber.trim();
   let [isMobileNumberExist] = await findQuery(authCredtionalsModel, {
     mobileNumber,
   });
@@ -52,20 +52,20 @@ const GetOtp = async (req, res) => {
   });
 
   if (
-    (method === "login" || method === "forgetPassword") &&
+    (method === 'login' || method === 'forgetPassword') &&
     !isNumberExistWithUsertype
   )
     return SendBadResponse({
       res,
       status: 404,
-      data: { error: "User not found!" },
+      data: { error: 'User not found!' },
     });
 
-  if (method === "signup" && isMobileNumberExist)
+  if (method === 'signup' && isMobileNumberExist)
     return SendBadResponse({
       res,
       status: 404,
-      data: { error: "User already exist! Please try to login." },
+      data: { error: 'User already exist! Please try to login.' },
     });
 
   const [isOtpDataExist] = await findQuery(otpSentModel, {
@@ -80,7 +80,7 @@ const GetOtp = async (req, res) => {
     return SendBadResponse({
       res,
       status: 502,
-      data: { error: "limit exceeded! Please try after one day." },
+      data: { error: 'limit exceeded! Please try after one day.' },
     });
 
   let otp = genrateOtp();
@@ -92,7 +92,7 @@ const GetOtp = async (req, res) => {
     return SendBadResponse({
       res,
       status: 503,
-      data: { error: "somethings went wrong!" },
+      data: { error: 'somethings went wrong!' },
     });
 
   const otpModelObj = {
@@ -107,31 +107,38 @@ const GetOtp = async (req, res) => {
   else await createQuery(otpSentModel, otpModelObj);
   return SendSuccessResponse({
     res,
-    data: { message: "Otp sent successfully!" },
+    data: { message: 'Otp sent successfully!' },
   });
 };
 
 const VerifyOtp = async (req, res) => {
-  let { n: mobileNumber, t: userType, m: method, o: otp,fcmToken,deviceInfo } = req.query;
-  if (!mobileNumber || !userType || !method || !otp)
+  let {
+    n: mobileNumber,
+    t: userType,
+    m: method,
+    o: otp,
+    fcmToken,
+    deviceInfo,
+  } = req.query;
+  if (!mobileNumber || !userType || !method || !otp || !fcmToken || !deviceInfo)
     return SendBadResponse({
       res,
       status: 400,
-      data: { error: "Please send all required fields!" },
+      data: { error: 'Please send all required fields!' },
     });
-  if (method !== "login" && method !== "signup")
+  if (method !== 'login' && method !== 'signup')
     return SendBadResponse({
       res,
       status: 400,
-      data: { error: "Please send correct method!" },
+      data: { error: 'Please send correct method!' },
     });
-  if (userType !== "therapist" && userType !== "individual")
+  if (userType !== 'therapist' && userType !== 'individual')
     return SendBadResponse({
       res,
       status: 400,
-      data: { error: "Please send correct usertype!" },
+      data: { error: 'Please send correct usertype!' },
     });
-  mobileNumber = "+" + mobileNumber.trim();
+  mobileNumber = '+' + mobileNumber.trim();
   console.log(mobileNumber);
   console.log(method);
   console.log(otp);
@@ -143,7 +150,7 @@ const VerifyOtp = async (req, res) => {
     return SendBadResponse({
       res,
       status: 400,
-      data: { error: "Invaild Otp!" },
+      data: { error: 'Invaild Otp!' },
     });
   if (
     new Date().getTime() >
@@ -152,19 +159,19 @@ const VerifyOtp = async (req, res) => {
     return SendBadResponse({
       res,
       status: 400,
-      data: { error: "Otp Expired!" },
+      data: { error: 'Otp Expired!' },
     });
   deleteQuery(otpSentModel, { mobileNumber });
-  if (method === "login") {
+  if (method === 'login') {
     let [isUserExist] = await findQuery(
-      userType === "therapist" ? therapistModel : individualModel,
+      userType === 'therapist' ? therapistModel : individualModel,
       { mobileNumber }
     );
     if (!isUserExist)
       return SendBadResponse({
         res,
         status: 404,
-        data: { error: "No user data found!" },
+        data: { error: 'No user data found!' },
       });
     let { notification, userExtraDetails, ...userData } =
       isUserExist?._doc || {};
@@ -177,7 +184,7 @@ const VerifyOtp = async (req, res) => {
         lastJWTToken: token,
         isUserLogout: false,
         deviceInfo,
-        fcmToken
+        fcmToken,
       }
     );
     return SendSuccessResponse({
@@ -186,7 +193,7 @@ const VerifyOtp = async (req, res) => {
     });
   }
   let { notification, userExtraDetails, ...isUserCreated } = await createQuery(
-    userType === "therapist" ? therapistModel : individualModel,
+    userType === 'therapist' ? therapistModel : individualModel,
     {
       mobileNumber,
     }
@@ -202,13 +209,15 @@ const VerifyOtp = async (req, res) => {
     lastJWTToken: token,
     isUserLogout: false,
     userId: isUserCreated._id,
+    deviceInfo,
+    fcmToken,
   });
   let isUserNotificationDataCreated = await createQuery(notificationsModel, {
     userId: isUserCreated._id,
     notifications: [],
   });
   updateQuery(
-    userType === "therapist" ? therapistModel : individualModel,
+    userType === 'therapist' ? therapistModel : individualModel,
     { _id: isUserCreated._id },
     {
       userExtraDetails: isUserExtraDataCreated._id,
@@ -228,7 +237,7 @@ const Login = async (req, res) => {
     return SendBadResponse({
       res,
       status: 403,
-      data: { error: "Invaild email/password!" },
+      data: { error: 'Invaild email/password!' },
     });
 
   const isPasswordCorrect = await comparePassword(
@@ -239,18 +248,18 @@ const Login = async (req, res) => {
     return SendBadResponse({
       res,
       status: 403,
-      data: { error: "Invaild email/password!" },
+      data: { error: 'Invaild email/password!' },
     });
 
   let isUserExist = await findQuery(
-    userType === "therapist" ? therapistModel : individualModel,
+    userType === 'therapist' ? therapistModel : individualModel,
     { _id: isEmailExist.userId }
   );
   if (!isUserExist)
     return SendBadResponse({
       res,
       status: 403,
-      data: { error: "Invaild email/password!" },
+      data: { error: 'Invaild email/password!' },
     });
 
   let { notification, userExtraDetails, ...userData } = isUserExist?._doc || {};
@@ -261,7 +270,7 @@ const Login = async (req, res) => {
     {
       lastLogin: Date.now(),
       lastJWTToken: token,
-      fcmToken:fcmToken,
+      fcmToken: fcmToken,
       deviceInfo: deviceInfo,
       isUserLogout: false,
     }
@@ -269,18 +278,16 @@ const Login = async (req, res) => {
   return SendSuccessResponse({ res, data: { userData, token } });
 };
 
-
-
 const ForgetPassword = async (req, res) => {
   const { otp, password, mobileNumber } = req.body;
   let [isOtpValid] = await findQuery(otpSentModel, {
-    $and: [{ mobileNumber }, { otp }, { method: "forgetPassword" }],
+    $and: [{ mobileNumber }, { otp }, { method: 'forgetPassword' }],
   });
   if (!isOtpValid)
     return SendBadResponse({
       res,
       status: 400,
-      data: { error: "Invaild Otp!" },
+      data: { error: 'Invaild Otp!' },
     });
   if (
     new Date().getTime() >
@@ -289,7 +296,7 @@ const ForgetPassword = async (req, res) => {
     return SendBadResponse({
       res,
       status: 400,
-      data: { error: "Otp Expired!" },
+      data: { error: 'Otp Expired!' },
     });
   deleteQuery(otpSentModel, { mobileNumber });
   let hashedPassword = await genratePasswordHash(password);
@@ -302,7 +309,7 @@ const ForgetPassword = async (req, res) => {
   );
   return SendSuccessResponse({
     res,
-    data: { message: "Password reset successfully!" },
+    data: { message: 'Password reset successfully!' },
   });
 };
 

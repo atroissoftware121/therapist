@@ -67,7 +67,7 @@ const sentPushNotifications = catchAsync(async (req, res) => {
   let [receiverDetail] = await findQuery(userExtraDetailsModel, {
     userId: data.receiverId,
   });
-  if (receiverDetail) {
+  if (receiverDetail && receiverDetail.fcmToken) {
     const message = {
       notification: {
         title: data.title,
