@@ -2,7 +2,11 @@ const {
   SendBadResponse,
   SendSuccessResponse,
 } = require('../helpers/responseHelpers');
-const { findQuery, updateQuery } = require('../helpers/mongooseHelpers');
+const {
+  findQuery,
+  updateQuery,
+  findQueryWithPagining,
+} = require('../helpers/mongooseHelpers');
 
 const admin = require('firebase-admin');
 const { firebaseConfig } = require('../config/firebase-admin');
@@ -10,7 +14,7 @@ const catchAsync = require('../utils/catchAsync');
 admin.initializeApp({
   credential: admin.credential.cert(firebaseConfig),
 });
-
+const pick = require('../utils/pick');
 const { getFileStream, uploadFileS3 } = require('../helpers/s3Helper');
 const userExtraDetailsModel = require('../mongooseModels/userExtraDetails.model');
 const chatNotificationsModel = require('../mongooseModels/chatNotifications.model');
@@ -92,6 +96,7 @@ const sentPushNotifications = catchAsync(async (req, res) => {
         receiverId: data.receiverId,
         receiverName: data.receiverName,
         title: data.title,
+        body: data.body,
       },
     };
     await updateQuery(
@@ -124,4 +129,38 @@ const sentPushNotifications = catchAsync(async (req, res) => {
   });
 });
 
-module.exports = { GetImage, UploadImages, Logout, sentPushNotifications };
+const chatHistory = async (req, res) => {
+  try {
+    let { userId } = req.user;
+    const options = pick(req.query, ['limit', 'page']);
+    const chats = await findQueryWithPagining(
+      chatNotificationsModel,
+      {
+        $or: [
+          {
+            senderId: userId,
+          },
+          {
+            receiverId: userId,
+          },
+        ],
+      },
+      options
+    );
+    return SendSuccessResponse({ res, data: chats });
+  } catch (error) {
+    return SendBadResponse({
+      res,
+      status: 403,
+      data: { message: error.message },
+    });
+  }
+};
+
+module.exports = {
+  GetImage,
+  UploadImages,
+  Logout,
+  sentPushNotifications,
+  chatHistory,
+};
