@@ -83,17 +83,18 @@ const GetOtp = async (req, res) => {
       data: { error: 'limit exceeded! Please try after one day.' },
     });
 
-  let otp = genrateOtp();
-  let messageResponse = await sendSMS({
-    to: mobileNumber,
-    body: getSignupOtpString(otp),
-  });
-  if (!messageResponse)
-    return SendBadResponse({
-      res,
-      status: 503,
-      data: { error: 'somethings went wrong!' },
-    });
+  //let otp = genrateOtp();
+  let otp = '121';
+  // let messageResponse = await sendSMS({
+  //   to: mobileNumber,
+  //   body: getSignupOtpString(otp),
+  // });
+  // if (!messageResponse)
+  //   return SendBadResponse({
+  //     res,
+  //     status: 503,
+  //     data: { error: 'somethings went wrong!' },
+  //   });
 
   const otpModelObj = {
     otp,
