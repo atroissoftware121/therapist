@@ -18,6 +18,9 @@ const pick = require('../utils/pick');
 const { getFileStream, uploadFileS3 } = require('../helpers/s3Helper');
 const userExtraDetailsModel = require('../mongooseModels/userExtraDetails.model');
 const chatNotificationsModel = require('../mongooseModels/chatNotifications.model');
+const authCredtionalsModel = require('../mongooseModels/authCredtionals.model');
+const therapistModel = require('../mongooseModels/therapist.model');
+const individualModel = require('../mongooseModels/individual.model');
 
 const GetImage = async (req, res) => {
   const key = req.params.key;
@@ -157,10 +160,45 @@ const chatHistory = async (req, res) => {
   }
 };
 
+const getProfile = async (req, res) => {
+  try {
+    const { userId } = req.user;
+    const [isUserExists] = await findQuery(authCredtionalsModel, { userId });
+    if (!isUserExists) {
+      return SendBadResponse({
+        res,
+        status: 404,
+        data: { error: 'User not found!' },
+      });
+    }
+
+    const getProfileData = await findQuery(
+      isUserExists.userType === 'therapist' ? therapistModel : individualModel,
+      { _id: userId }
+    );
+    if (!getProfileData) {
+      return SendBadResponse({
+        res,
+        status: 404,
+        data: { error: 'User not found!' },
+      });
+    }
+
+    return SendSuccessResponse({ res, data: { getProfileData } });
+  } catch (err) {
+    return SendBadResponse({
+      res,
+      status: 403,
+      data: { message: err.message },
+    });
+  }
+}
+
 module.exports = {
   GetImage,
   UploadImages,
   Logout,
   sentPushNotifications,
   chatHistory,
+  getProfile,
 };
