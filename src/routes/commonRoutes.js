@@ -5,6 +5,7 @@ const {
   UploadImages,
   sentPushNotifications,
   chatHistory,
+  getProfile,
 } = require('../controllers/commonController');
 const { upload } = require('../helpers/s3Helper');
 
@@ -37,4 +38,5 @@ module.exports = (app) => {
   route.get('/chatHistory', isAuthorized, injectUserDetails, chatHistory);
   route.get('/image/:key', GetImage);
   route.post('/image', upload.single('image'), UploadImages);
+  route.get('/getProfile', isAuthorized, injectUserDetails, getProfile);
 };
