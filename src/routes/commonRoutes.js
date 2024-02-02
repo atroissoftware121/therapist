@@ -6,7 +6,7 @@ const {
   sentPushNotifications,
   chatHistory,
   getProfile,
-  sendMessage,
+  listOfMessages,
   startSession,
   endSession,
 } = require('../controllers/commonController');
@@ -42,7 +42,7 @@ module.exports = (app) => {
   route.get('/image/:key', GetImage);
   route.post('/image', upload.single('image'), UploadImages);
   route.get('/getProfile', isAuthorized, injectUserDetails, getProfile);
-  route.get('/sendMessage', sendMessage);
+  route.get('/listOfMessages', isAuthorized, injectUserDetails, listOfMessages);
   route.get('/session-start', startSession);
   route.get('/end-session', endSession);
 };
