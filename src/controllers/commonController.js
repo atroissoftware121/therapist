@@ -6,6 +6,7 @@ const {
   findQuery,
   updateQuery,
   findQueryWithPagining,
+  createQuery,
 } = require('../helpers/mongooseHelpers');
 
 const admin = require('firebase-admin');
@@ -21,6 +22,9 @@ const chatNotificationsModel = require('../mongooseModels/chatNotifications.mode
 const authCredtionalsModel = require('../mongooseModels/authCredtionals.model');
 const therapistModel = require('../mongooseModels/therapist.model');
 const individualModel = require('../mongooseModels/individual.model');
+const chatDetailsModel = require('../mongooseModels/chat-details.model');
+const sessionModel = require('../mongooseModels/session.model');
+const individualTransactionModel = require('../mongooseModels/individual-transaction.model');
 
 const GetImage = async (req, res) => {
   const key = req.params.key;
@@ -194,6 +198,156 @@ const getProfile = async (req, res) => {
   }
 }
 
+const sendMessage = async (req, res) => {
+  try {
+    const { individualId, therapistsId } = req.query;
+    const individualData = await findQuery(individualModel, { _id: individualId });
+    const therapistsData = await findQuery(therapistModel, { _id: therapistsId });
+
+    if (!individualData || !therapistsData) {
+      return SendBadResponse({
+        res,
+        status: 404,
+        data: { error: 'User not found!' },
+      });
+    }
+
+    const individualObj = {
+      senderId: individualId,
+      senderName: `${individualData.fname} ${individualData.lname}`,
+      email: individualData.email,
+      mobileNumber: individualData.mobileNumber,
+      gender: individualData.gender,
+    }
+    const [isChatExisted] = await findQuery(chatDetailsModel, { receiverId: therapistsId });
+    let messageData;
+    if (isChatExisted) {
+      const isSenderPresent = isChatExisted.individualDetails.some(detail => detail.senderId === individualId);
+
+      if (!isSenderPresent) {
+        messageData = await updateQuery( chatDetailsModel,
+          {
+            receiverId: therapistsId,
+            'individualDetails.senderId': { $ne: individualId }
+          },
+          {
+            $set: {
+              receiverName: therapistsData.name
+            },
+            $addToSet: {
+              individualDetails: individualObj,
+            },
+          },
+        )
+      }else {
+        return SendBadResponse({
+          res,
+          status: 404,
+          data: { error: 'individual chat already existed' },
+        })};
+    } else {
+      messageData = await createQuery(chatDetailsModel, {
+        receiverId: therapistsId,
+        receiverName: therapistsData.name,
+        individualDetails: [individualObj],
+      });
+    }
+
+    return SendSuccessResponse({ res, data: { messageData } });
+  } catch (err) {
+    return SendBadResponse({
+      res,
+      status: 403,
+      data: { message: err.message },
+    });
+  }
+}
+
+const startSession = async (req, res) => {
+  const { individualId, therapistsId } = req.query;
+
+  const [userChatDetails] = await findQuery(chatDetailsModel,
+    {
+      receiverId: therapistsId,
+      'individualDetails.senderId': { $eq: individualId }
+    });
+
+  if (!userChatDetails) {
+    return SendBadResponse({
+      res,
+      status: 404,
+      data: { error: 'User details not found!' },
+    });
+  }
+
+  const sessionStartTime = new Date();
+
+  const createSession = await createQuery(sessionModel, { sessionStartTime });
+
+  await updateQuery(chatDetailsModel,
+    {
+      receiverId: therapistsId,
+      'individualDetails.senderId': { $eq: individualId }
+    },
+    {
+      $set: {
+        'individualDetails.$.sessionId': createSession._id,
+      },
+    },
+  )
+
+  return SendSuccessResponse({ res, data: { createSession } });
+};
+
+const endSession = async (req, res) => {
+  try {
+    const { individualId, therapistsId, sessionId } = req.query;
+    const sessionData = await findQuery(sessionModel, { _id: sessionId });
+
+    if (!sessionData) {
+      return SendBadResponse({
+        res,
+        status: 404,
+        data: { error: 'session not found!' },
+      });
+    }
+
+    const sessionTime = new Date();
+
+    const updatedSession = await updateQuery(sessionModel, { _id: sessionId }, { sessionEndTime: sessionTime });
+    const startTime = new Date(updatedSession.sessionStartTime);
+    const endTime = new Date(updatedSession.sessionEndTime);
+
+    // Calculate the duration in minutes
+    const duration = (endTime - startTime) / (1000 * 60);
+
+    // Assume session cost per minute
+    const costPerminute = 100; // used manually just for test
+
+    const saveObj = {
+      sessionId: sessionId,
+      userId: individualId,
+      sessionDuration: duration,
+      cost: duration * costPerminute,
+    }
+    await createQuery(individualTransactionModel, saveObj);
+
+    const updateChatDetails = await updateQuery(
+      chatDetailsModel,
+      { receiverId: therapistsId },
+      { $pull: { "individualDetails": { senderId: individualId, sessionId: sessionId } } },
+    )
+
+    return SendSuccessResponse({ res, data: { updateChatDetails } });
+  } catch (err) {
+    return SendBadResponse({
+      res,
+      status: 403,
+      data: { message: err.message },
+    });
+  }
+};
+
 module.exports = {
   GetImage,
   UploadImages,
@@ -201,4 +355,7 @@ module.exports = {
   sentPushNotifications,
   chatHistory,
   getProfile,
+  sendMessage,
+  startSession,
+  endSession,
 };

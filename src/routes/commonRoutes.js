@@ -6,6 +6,9 @@ const {
   sentPushNotifications,
   chatHistory,
   getProfile,
+  sendMessage,
+  startSession,
+  endSession,
 } = require('../controllers/commonController');
 const { upload } = require('../helpers/s3Helper');
 
@@ -39,4 +42,8 @@ module.exports = (app) => {
   route.get('/image/:key', GetImage);
   route.post('/image', upload.single('image'), UploadImages);
   route.get('/getProfile', isAuthorized, injectUserDetails, getProfile);
+  route.get('/sendMessage', sendMessage);
+  route.get('/session-start', startSession);
+  route.get('/end-session', endSession);
 };
+   
