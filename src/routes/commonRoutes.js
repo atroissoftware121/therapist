@@ -27,9 +27,7 @@ module.exports = (app) => {
     celebrate({
       [Segments.BODY]: Joi.object().keys({
         senderId: Joi.string().required(),
-        senderName: Joi.string().required(),
         receiverId: Joi.string().required(),
-        receiverName: Joi.string().required(),
         title: Joi.string().required(),
         image: Joi.string().optional(),
         message: Joi.string().optional(),
