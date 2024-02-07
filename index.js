@@ -8,10 +8,16 @@ const { PORT } = require("./src/config");
 const bodyParser = require("body-parser");
 const mongodb = require("./src/loaders/mongodb");
 const socket = require("./src/loaders/socket");
+const socketIo = require('socket.io');
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server);
+const io = socketIo(server, {
+  cors: {
+      origin: '*',
+      methods: ['GET', 'POST']
+  }
+});
 mongodb();
 // Allow all incoming traffic (not recommended for production)
 app.use(cors({

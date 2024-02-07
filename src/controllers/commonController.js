@@ -224,21 +224,6 @@ const getProfile = async (req, res) => {
   }
 }
 
-const listOfMessages = async (req, res) => {
-   console.log('req', req.user);
-    let { userId } = req.user;
-    const [isChatExisted] = await findQuery(chatDetailsModel, { receiverId: userId });
-    if(!isChatExisted) {
-      return SendBadResponse({
-        res,
-        status: 403,
-        data: { message: 'chat does not exists with this userId' },
-      })
-    }
-     console.log('isChat', isChatExisted.individualDetails);
-    return SendSuccessResponse({ res, data: [isChatExisted.individualDetails] });
-}
-
 const startSession = async (req, res) => {
   const { individualId, therapistsId } = req.query;
 
@@ -321,6 +306,19 @@ const endSession = async (req, res) => {
       status: 403,
       data: { message: err.message },
     });
+  }
+};
+
+const listOfMessages = async (userId, socket) => {
+  console.log('userI1d', userId);
+  const [isChatExisted] = await findQuery(chatDetailsModel, { receiverId: userId });
+ 
+  console.log('isChatExitsed', isChatExisted);
+  if (!isChatExisted) {
+      socket.emit('chat-not-found', { message: 'Chat does not exist with this userId' });
+  } else {
+      console.log('isChat', isChatExisted.individualDetails);
+      socket.emit('chat-details', { data: [isChatExisted.individualDetails] });
   }
 };
 
