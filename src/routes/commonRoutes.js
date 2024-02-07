@@ -6,7 +6,6 @@ const {
   sentPushNotifications,
   chatHistory,
   getProfile,
-  listOfMessages,
   startSession,
   endSession,
 } = require('../controllers/commonController');
@@ -18,7 +17,7 @@ const {
 } = require('../middlewares/authMiddlewares');
 const { Logout } = require('../controllers/commonController');
 
-module.exports = (app) => {
+module.exports = (app, io) => {
   const route = Router();
   app.use('/', route);
   route.patch('/logout', isAuthorized, injectUserDetails, Logout);
@@ -34,13 +33,12 @@ module.exports = (app) => {
       }),
     }),
     isAuthorized,
-    sentPushNotifications
+    sentPushNotifications(io),
   );
   route.get('/chatHistory', isAuthorized, injectUserDetails, chatHistory);
   route.get('/image/:key', GetImage);
   route.post('/image', upload.single('image'), UploadImages);
   route.get('/getProfile', isAuthorized, injectUserDetails, getProfile);
-  route.get('/listOfMessages', isAuthorized, injectUserDetails, listOfMessages);
   route.get('/session-start', startSession);
   route.get('/end-session', endSession);
 };
