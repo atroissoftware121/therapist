@@ -45,6 +45,7 @@ module.exports = (app) => {
         language: Joi.string().required(),
         summary: Joi.string().required(),
         location: Joi.string().required(),
+        gender: Joi.string().required(),
         image: Joi.string().optional(),
       }),
     }),

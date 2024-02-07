@@ -104,8 +104,10 @@ const TherapistUpdateProfile = catchAsync(async (req, res) => {
     location,
     qualification,
     image,
+    gender,
   } = req.body;
   const { _id, mobileNumber, ...user } = req.user;
+  
   let [isEmailExist] = await findQuery(authCredtionalsModel, {
     $and: [{ email }, { userId: { $nin: [_id] } }],
   });
@@ -131,6 +133,7 @@ const TherapistUpdateProfile = catchAsync(async (req, res) => {
       location,
       qualification,
       image,
+      gender,
     }
   );
   await updateQuery(
