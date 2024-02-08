@@ -146,8 +146,8 @@ const sentPushNotifications = (io) => catchAsync(async (req, res) => {
       }
       console.log('emit', [messageData?.individualDetails]);
 
-      io.emit('chat-details', { data: [messageData?.individualDetails] });
-
+      io.to(data.receiverId).emit('chat-details', { data: [messageData?.individualDetails] });
+      
       return SendSuccessResponse({ res, data: response });
 
     }
@@ -312,10 +312,9 @@ const endSession = async (req, res) => {
   }
 };
 
-const listOfMessages = async (userId, socket) => {
+const listOfMessages = async (userId, socket, io) => {
   console.log('userI1d', userId);
   const [isChatExisted] = await findQuery(chatDetailsModel, { receiverId: userId });
- 
   console.log('isChatExitsed', isChatExisted);
   if (!isChatExisted) {
       socket.emit('chat-not-found', { message: 'Chat does not exist with this userId' });
