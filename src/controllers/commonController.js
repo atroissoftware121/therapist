@@ -324,6 +324,13 @@ const listOfMessages = async (userId, socket) => {
   }
 };
 
+const messageAccepted = (io) => async(req, res) => {
+  const { individualId, therapistId } = req.query;
+  io.emit('startTimer', { individualId, therapistId });
+
+  return SendSuccessResponse({ res, data: [true]  });
+}
+
 module.exports = {
   GetImage,
   UploadImages,
@@ -334,4 +341,5 @@ module.exports = {
   startSession,
   endSession,
   listOfMessages,
+  messageAccepted,
 };

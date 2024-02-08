@@ -8,6 +8,7 @@ const {
   getProfile,
   startSession,
   endSession,
+  messageAccepted
 } = require('../controllers/commonController');
 const { upload } = require('../helpers/s3Helper');
 
@@ -41,5 +42,6 @@ module.exports = (app, io) => {
   route.get('/getProfile', isAuthorized, injectUserDetails, getProfile);
   route.get('/session-start', startSession);
   route.get('/end-session', endSession);
+  route.get('/message-accepted', messageAccepted(io));
 };
    
