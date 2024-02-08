@@ -312,7 +312,7 @@ const endSession = async (req, res) => {
   }
 };
 
-const listOfMessages = async (userId, socket, io) => {
+const listOfMessages = async (userId, socket) => {
   console.log('userI1d', userId);
   const [isChatExisted] = await findQuery(chatDetailsModel, { receiverId: userId });
   console.log('isChatExitsed', isChatExisted);
