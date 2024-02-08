@@ -227,8 +227,10 @@ const getProfile = async (req, res) => {
   }
 }
 
-const startSession = async (req, res) => {
+const startSession = (io) => async (req, res) => {
   const { individualId, therapistsId } = req.query;
+  
+  io.emit('startTimer', { individualId, therapistId });
 
   const [userChatDetails] = await findQuery(chatDetailsModel,
     {
@@ -246,7 +248,7 @@ const startSession = async (req, res) => {
 
   const sessionStartTime = new Date();
 
-  const createSession = await createQuery(sessionModel, { sessionStartTime });
+  const createSession = await createQuery(sessionModel, { sessionStartTime, isSessionStart: true });
 
   await updateQuery(chatDetailsModel,
     {
@@ -278,7 +280,7 @@ const endSession = async (req, res) => {
 
     const sessionTime = new Date();
 
-    const updatedSession = await updateQuery(sessionModel, { _id: sessionId }, { sessionEndTime: sessionTime });
+    const updatedSession = await updateQuery(sessionModel, { _id: sessionId }, { sessionEndTime: sessionTime, isSessionStart: false });
     const startTime = new Date(updatedSession.sessionStartTime);
     const endTime = new Date(updatedSession.sessionEndTime);
 
@@ -324,13 +326,6 @@ const listOfMessages = async (userId, socket) => {
   }
 };
 
-const messageAccepted = (io) => async(req, res) => {
-  const { individualId, therapistId } = req.query;
-  io.emit('startTimer', { individualId, therapistId });
-
-  return SendSuccessResponse({ res, data: [true]  });
-}
-
 module.exports = {
   GetImage,
   UploadImages,
@@ -341,5 +336,4 @@ module.exports = {
   startSession,
   endSession,
   listOfMessages,
-  messageAccepted,
 };
