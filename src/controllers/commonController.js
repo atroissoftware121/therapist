@@ -253,7 +253,7 @@ const startSession = (io) => async (req, res) => {
     isSessionStart: createSession.isSessionStart,
     sessionId: createSession._id,
   };
-  
+
   io.emit('startTimer', data);
 
   await updateQuery(chatDetailsModel,
@@ -328,18 +328,6 @@ const endSession = (io) => async (req, res) => {
   }
 };
 
-const listOfMessages = async (userId, socket) => {
-  console.log('userI1d', userId);
-  const [isChatExisted] = await findQuery(chatDetailsModel, { receiverId: userId });
-  console.log('isChatExitsed', isChatExisted);
-  if (!isChatExisted) {
-      socket.emit('chat-not-found', { message: 'Chat does not exist with this userId' });
-  } else {
-      console.log('isChat', isChatExisted.individualDetails);
-      socket.emit('chat-data', { data: [isChatExisted.individualDetails] });
-  }
-};
-
 module.exports = {
   GetImage,
   UploadImages,
@@ -349,5 +337,4 @@ module.exports = {
   getProfile,
   startSession,
   endSession,
-  listOfMessages,
 };
