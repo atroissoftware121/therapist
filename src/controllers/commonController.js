@@ -229,13 +229,6 @@ const getProfile = async (req, res) => {
 
 const startSession = (io) => async (req, res) => {
   const { individualId, therapistsId } = req.query;
-  const data = {
-    individualId,
-    therapistsId,
-    isSessionStart: true
-  };
-
-  io.emit('startTimer', data);
 
   const [userChatDetails] = await findQuery(chatDetailsModel,
     {
@@ -254,6 +247,14 @@ const startSession = (io) => async (req, res) => {
   const sessionStartTime = new Date();
 
   const createSession = await createQuery(sessionModel, { sessionStartTime, isSessionStart: true });
+  const data = {
+    individualId,
+    therapistsId,
+    isSessionStart: createSession.isSessionStart,
+    sessionId: createSession._id,
+  };
+  
+  io.emit('startTimer', data);
 
   await updateQuery(chatDetailsModel,
     {
