@@ -234,7 +234,7 @@ const startSession = (io) => async (req, res) => {
     therapistsId,
     isSessionStart: true
   };
-  
+
   io.emit('startTimer', data);
 
   const [userChatDetails] = await findQuery(chatDetailsModel,
@@ -273,6 +273,13 @@ const startSession = (io) => async (req, res) => {
 const endSession = async (req, res) => {
   try {
     const { individualId, therapistsId, sessionId } = req.query;
+    const data = {
+      individualId,
+      therapistsId,
+      isSessionStart: false,
+    };
+
+    io.emit('endTimer', data);
     const sessionData = await findQuery(sessionModel, { _id: sessionId });
 
     if (!sessionData) {
@@ -299,7 +306,7 @@ const endSession = async (req, res) => {
       sessionId: sessionId,
       userId: individualId,
       sessionDuration: duration,
-      cost: duration * costPerminute,
+      cost: duration * costPerminute, 
     }
     await createQuery(individualTransactionModel, saveObj);
 
