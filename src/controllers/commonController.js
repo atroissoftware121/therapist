@@ -270,7 +270,7 @@ const startSession = (io) => async (req, res) => {
   return SendSuccessResponse({ res, data: { createSession } });
 };
 
-const endSession = async (req, res) => {
+const endSession = (io) => async (req, res) => {
   try {
     const { individualId, therapistsId, sessionId } = req.query;
     const data = {
@@ -314,7 +314,7 @@ const endSession = async (req, res) => {
       chatDetailsModel,
       { receiverId: therapistsId },
       { $pull: { "individualDetails": { senderId: individualId, sessionId: sessionId } } },
-    )
+    );
 
     return SendSuccessResponse({ res, data: { updateChatDetails } });
   } catch (err) {
