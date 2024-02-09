@@ -276,6 +276,7 @@ const endSession = (io) => async (req, res) => {
     const data = {
       individualId,
       therapistsId,
+      sessionId,
       isSessionStart: false,
     };
 
