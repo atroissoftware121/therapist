@@ -1,10 +1,14 @@
-const { listOfMessages } = require('../controllers/commonController');
+const { findQuery, updateQuery} = require('../helpers/mongooseHelpers');
+const chatDetailsModel = require('../mongooseModels/chat-details.model');
 
 module.exports = (io) => {
   io.on('connection', (socket) => {
     console.log('A user connected');
     socket.on('list-of-messages', async (userId) => {
       await listOfMessages(userId, socket);
+    });
+    socket.on('individual-end-chat', async (data) => {
+      await updatedList(data, io);
     });
     socket.on('join-therapist-room', (therapistId) => {
       const roomName = therapistId;
@@ -15,4 +19,28 @@ module.exports = (io) => {
       console.log('User disconnected');
     });
   });
+
+  const listOfMessages = async (userId, socket) => {
+    console.log('userI1d', userId);
+    const [isChatExisted] = await findQuery(chatDetailsModel, { receiverId: userId });
+    console.log('isChatExitsed', isChatExisted);
+    if (!isChatExisted) {
+        socket.emit('chat-not-found', { message: 'Chat does not exist with this userId' });
+    } else {
+        console.log('isChat', isChatExisted.individualDetails);
+        socket.emit('chat-data', { data: [isChatExisted.individualDetails] });
+    }
+  };
+  
+  const updatedList = async(data, io) => {
+    const { individualId, therapistsId } = data;
+    console.log('data', data);
+    const updateChatDetails = await updateQuery(
+      chatDetailsModel,
+      { receiverId: therapistsId },
+      { $pull: { "individualDetails": { senderId: individualId } } },
+    );
+  
+    io.to(therapistsId).emit('refresh-chat-data', { data: [updateChatDetails.individualDetails] });
+  }
 };
