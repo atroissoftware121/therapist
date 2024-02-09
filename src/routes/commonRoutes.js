@@ -40,6 +40,6 @@ module.exports = (app, io) => {
   route.post('/image', upload.single('image'), UploadImages);
   route.get('/getProfile', isAuthorized, injectUserDetails, getProfile);
   route.get('/session-start', startSession(io));
-  route.get('/end-session', endSession);
+  route.get('/end-session', endSession(io));
 };
    
