@@ -1,6 +1,5 @@
 const { findQuery, updateQuery} = require('../helpers/mongooseHelpers');
 const chatDetailsModel = require('../mongooseModels/chat-details.model');
-let countdownTimer = 300; 
 
 module.exports = (io) => {
   io.on('connection', (socket) => {
@@ -16,11 +15,6 @@ module.exports = (io) => {
       socket.join(roomName);
       console.log(`Socket ${socket.id} joined room: ${roomName}`);
     });
-
-    const intervalId = setInterval(() => {
-      countdownTimer -= 1
-      io.emit('updateTimer', countdownTimer);
-    }, 1000);
     socket.on('disconnect', () => {
       console.log('User disconnected');
     });
