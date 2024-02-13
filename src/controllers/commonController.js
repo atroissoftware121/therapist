@@ -25,6 +25,7 @@ const individualModel = require('../mongooseModels/individual.model');
 const chatDetailsModel = require('../mongooseModels/chat-details.model');
 const sessionModel = require('../mongooseModels/session.model');
 const individualTransactionModel = require('../mongooseModels/individual-transaction.model');
+let countdownTimer = 300; 
 
 const GetImage = async (req, res) => {
   const key = req.params.key;
@@ -81,7 +82,7 @@ const sentPushNotifications = (io) => catchAsync(async (req, res) => {
     });
     const individualData = await findQuery(individualModel, { _id: data.senderId });
     const therapistsData = await findQuery(therapistModel, { _id: data.receiverId });
-
+    console.log('data', individualData, therapistsData);
     if (!individualData || !therapistsData) {
       return SendBadResponse({
         res,
@@ -255,6 +256,7 @@ const startSession = (io) => async (req, res) => {
   };
 
   io.emit('startTimer', data);
+  io.emit("updateTimer", countdownTimer);
 
   await updateQuery(chatDetailsModel,
     {
