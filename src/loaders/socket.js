@@ -1,5 +1,6 @@
 const { findQuery, updateQuery} = require('../helpers/mongooseHelpers');
 const chatDetailsModel = require('../mongooseModels/chat-details.model');
+let countdownTimer = 300; 
 
 module.exports = (io) => {
   io.on('connection', (socket) => {
@@ -15,16 +16,21 @@ module.exports = (io) => {
       socket.join(roomName);
       console.log(`Socket ${socket.id} joined room: ${roomName}`);
     });
+
+    const intervalId = setInterval(() => {
+      countdownTimer -= 1
+      io.emit('updateTimer', countdownTimer);
+    }, 1000);
     socket.on('disconnect', () => {
       console.log('User disconnected');
     });
-  });
+  });      
 
-  const listOfMessages = async (userId, socket) => {
+  const listOfMessages = async (userId, socket) => { 
     console.log('userI1d', userId);
     const [isChatExisted] = await findQuery(chatDetailsModel, { receiverId: userId });
     console.log('isChatExitsed', isChatExisted);
-    if (!isChatExisted) {
+    if (!isChatExisted) { 
         socket.emit('chat-not-found', { message: 'Chat does not exist with this userId' });
     } else {
         console.log('isChat', isChatExisted.individualDetails);
@@ -44,3 +50,4 @@ module.exports = (io) => {
     io.to(therapistsId).emit('refresh-chat-data', { data: [updateChatDetails.individualDetails] });
   }
 };
+    
