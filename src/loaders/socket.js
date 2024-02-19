@@ -1,5 +1,6 @@
 const { findQuery, updateQuery} = require('../helpers/mongooseHelpers');
 const chatDetailsModel = require('../mongooseModels/chat-details.model');
+const therapistModel = require('../mongooseModels/therapist.model');
 
 module.exports = (io) => {
   io.on('connection', (socket) => {
@@ -14,6 +15,15 @@ module.exports = (io) => {
       const roomName = therapistId;
       socket.join(roomName);
       console.log(`Socket ${socket.id} joined room: ${roomName}`);
+    });
+    socket.on('therapist-active', async (data) => {
+      let therapistsData;
+      therapistsData = await findQuery(therapistModel, { _id: data.therapistId });
+      if(!therapistsData.isOnline) {
+        therapistsData.isOnline = true;
+      }
+      
+      socket.emit('show-therapist', therapistsData)
     });
     socket.on('disconnect', () => {
       console.log('User disconnected');
