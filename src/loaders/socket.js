@@ -6,6 +6,7 @@ module.exports = (io) => {
   io.on('connection', (socket) => {
     console.log('A user connected');
     socket.on('list-of-messages', async (userId) => {
+      console.log('list12', userId);
       await listOfMessages(userId, socket);
     });
     socket.on('individual-end-chat', async (data) => {
@@ -17,12 +18,13 @@ module.exports = (io) => {
       console.log(`Socket ${socket.id} joined room: ${roomName}`);
     });
     socket.on('therapist-active', async (data) => {
+      console.log('therapist', data);
       let therapistsData;
       therapistsData = await findQuery(therapistModel, { _id: data.therapistId });
       if(!therapistsData.isOnline) {
         therapistsData.isOnline = true;
       }
-      
+      console.log('therapist12', therapistsData);
       socket.emit('show-therapist', therapistsData)
     });
     socket.on('disconnect', () => {
