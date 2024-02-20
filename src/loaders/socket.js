@@ -25,7 +25,7 @@ module.exports = (io) => {
         therapistsData.isOnline = true;
       }
       console.log('therapist12', therapistsData);
-      io.emit('show-therapist', therapistsData);
+      io.emit('show-therapist', [therapistsData]);
 
     });
     socket.on('disconnect', () => {
