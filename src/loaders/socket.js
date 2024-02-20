@@ -1,6 +1,7 @@
 const { findQuery, updateQuery} = require('../helpers/mongooseHelpers');
 const chatDetailsModel = require('../mongooseModels/chat-details.model');
 const therapistModel = require('../mongooseModels/therapist.model');
+let timeLeft = 5 * 60; // 5 minutes in seconds
 
 module.exports = (io) => {
   io.on('connection', (socket) => {
@@ -28,10 +29,36 @@ module.exports = (io) => {
       io.emit('show-therapist', [therapistsData]);
 
     });
-    socket.on('disconnect', () => {
-      console.log('User disconnected');
+    
+    socket.on('start-timer', (data) => {
+      let countdownInterval = setInterval(() => {    
+        // Emit a `countdown` event to the client every second
+        io.emit('countdown', { timeLeft, data });
+      
+        if (timeLeft === 0) {
+          clearInterval(countdownInterval);
+          io.emit('countdown-complete', data);
+        }else {
+          timeLeft--;
+          console.log('time', timeLeft);
+        }
+      }, 1000);
     });
-  });      
+
+    socket.on('therapist-inactive', async (therapistId) => {
+      let therapistsData;
+      therapistsData = await findQuery(therapistModel, { _id: therapistId });
+      if(therapistsData.isOnline) {
+        therapistsData.isOnline = false;
+      }
+
+      io.emit('clear-therapist', [therapistsData]);
+    })
+
+      socket.on('disconnect', () => {
+        console.log('User disconnected');
+      });
+    })
 
   const listOfMessages = async (userId, socket) => { 
     console.log('userI1d', userId);
