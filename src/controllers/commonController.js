@@ -252,6 +252,7 @@ const startSession = (io) => async (req, res) => {
     therapistsId,
     isSessionStart: createSession.isSessionStart,
     sessionId: createSession._id,
+    startSession: sessionStartTime,
   };
 
   io.emit('startTimer', data);
