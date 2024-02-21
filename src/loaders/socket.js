@@ -31,6 +31,8 @@ module.exports = (io) => {
     });
     
     socket.on('start-timer', (data) => {
+      console.log('data56563553==>', data);
+      console.log('timeLeft===>', timeLeft);
       let countdownInterval = setInterval(() => {    
         // Emit a `countdown` event to the client every second
         io.emit('countdown', { timeLeft, data });
