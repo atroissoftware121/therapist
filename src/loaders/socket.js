@@ -1,10 +1,9 @@
 const { findQuery, updateQuery} = require('../helpers/mongooseHelpers');
 const chatDetailsModel = require('../mongooseModels/chat-details.model');
 const therapistModel = require('../mongooseModels/therapist.model');
-let timeLeft = 5 * 60; // 5 minutes in seconds
 
 module.exports = (io) => {
-  io.on('connection', (socket) => {
+  io.on('connection', async (socket) => {
     console.log('A user connected');
     socket.on('list-of-messages', async (userId) => {
       console.log('list12', userId);
@@ -20,43 +19,15 @@ module.exports = (io) => {
     });
     socket.on('therapist-active', async (data) => {
       console.log('therapist', data);
-      let therapistsData;
-      therapistsData = await findQuery(therapistModel, { _id: data.therapistId });
-      if(!therapistsData.isOnline) {
-        therapistsData.isOnline = true;
-      }
-      console.log('therapist12', therapistsData);
-      io.emit('show-therapist', [therapistsData]);
-
+      await updateQuery(therapistModel, { _id: data.therapistId }, { isOnline: true });
     });
     
-    socket.on('start-timer', (data) => {
-      console.log('data56563553==>', data);
-      console.log('timeLeft===>', timeLeft);
-      let countdownInterval = setInterval(() => {    
-        // Emit a `countdown` event to the client every second
-        io.emit('countdown', { timeLeft, data });
-      
-        if (timeLeft === 0) {
-          clearInterval(countdownInterval);
-          io.emit('countdown-complete', data);
-        }else {
-          timeLeft--;
-          console.log('time', timeLeft);
-        }
-      }, 1000);
-    });
 
     socket.on('therapist-inactive', async (therapistId) => {
-      let therapistsData;
-      therapistsData = await findQuery(therapistModel, { _id: therapistId });
-      if(therapistsData.isOnline) {
-        therapistsData.isOnline = false;
-      }
-
-      io.emit('clear-therapist', [therapistsData]);
+       await updateQuery(therapistModel, { _id: therapistId }, { isOnline: false });
     })
 
+      io.emit('list-of-active-therapist', await findQuery(therapistModel, {isOnline: true}));
       socket.on('disconnect', () => {
         console.log('User disconnected');
       });
