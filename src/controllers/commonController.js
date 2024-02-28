@@ -249,6 +249,7 @@ const startSession = (io) => async (req, res) => {
   const sessionStartTime = new Date();
   const [sessionDataExisted] = await findQuery(sessionModel, { individualId });
   let therapistObj = {
+    therapistsId,
     therapistName: therapistsData.name,
     isSessionStart: true,
     chat: 'message',
@@ -256,12 +257,9 @@ const startSession = (io) => async (req, res) => {
   }
   let session;
   if(sessionDataExisted) {
-    const isSessionExist = sessionDataExisted.therapistsDetails.some(detail => detail.therapistId === therapistsId);
-    if (!isSessionExist) {
       session = await updateQuery(sessionModel,
         {
           individualId,
-          'therapistsDetails.therapistId': { $ne: therapistsId }
         },
         {
           $addToSet: {
@@ -269,7 +267,6 @@ const startSession = (io) => async (req, res) => {
           },
         },
       )
-    }
   }else {
     session = await createQuery(sessionModel, {
       individualId,
@@ -313,7 +310,6 @@ const endSession = (io) => async (req, res) => {
 
     io.emit('endTimer', data);
     const sessionData = await findQuery(sessionModel, { _id: sessionId });
-
     if (!sessionData) {
       return SendBadResponse({
         res,
@@ -321,29 +317,45 @@ const endSession = (io) => async (req, res) => {
         data: { error: 'session not found!' },
       });
     }
-
+     let sessionEnd;
+    for(let data of sessionData.therapistsDetails) {
+      if(data.therapistsId === therapistsId && data.isSessionStart) {
+        sessionEnd = data.sessionStartTime 
+      }
+    }
     const sessionTime = new Date();
-  
-    const duration = (sessionTime - sessionData.sessionStartTime) / (1000 * 60);
 
-    // Assume session cost per minute
-    const costPerminute = 100; // used manually just for test
-    const updatedSession = await updateQuery(sessionModel, 
+    // duration in minutes
+    const duration = (sessionTime - new Date(sessionEnd))/ (1000 * 60);
+    const hours = Math.floor(duration / 60);
+    const remainingMinutes = Math.floor(duration % 60);
+    const seconds = Math.round((duration * 60) % 60);
+
+   // Format the result
+   const formattedDuration = `${String(hours).padStart(2, '0')}:${String(remainingMinutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
+   console.log(formattedDuration);
+    const updatedSession = await updateQuery(sessionModel,
       { individualId,
-        'therapistsDetails.therapistId': { $eq: therapistsId }
+        'therapistsDetails': {
+          $elemMatch: {
+            'therapistsId': therapistsId,
+            'isSessionStart': true
+          }
+        }
       }, 
       {
         $set: {
-          'individualDetails.$.sessionEndTime': sessionTime,
-          'individualDetails.$.isSessionStart': false,
-          'individualDetails.$.chatDuration': duration,
-          'individualDetails.$.consulted': costPerminute,
-          'individualDetails.$.chatCharges': duration * costPerminute,
+          'therapistsDetails.$.sessionEndTime': sessionTime,
+          'therapistsDetails.$.isSessionStart': false,
+          'therapistsDetails.$.chatDuration': formattedDuration,
+          'therapistsDetails.$.consulted': '',
+          'therapistsDetails.$.chatCharges': duration*50,
         },
       },
     );
 
-    console.log('updatedSession', updatedSession);
+    console.log('updatedSession', JSON.stringify(updatedSession));
 
     const updateChatDetails = await updateQuery(
       chatDetailsModel,
@@ -361,6 +373,14 @@ const endSession = (io) => async (req, res) => {
   }
 };
 
+const individualSessionDetails = async (req, res) => {
+  const { individualId } = req.query;
+  const [sessionDetails] =  await findQuery(sessionModel, {individualId});
+
+  return SendSuccessResponse({ res, data: {sessionDetails: sessionDetails.therapistsDetails }});
+};
+
+
 module.exports = {
   GetImage,
   UploadImages,
@@ -370,4 +390,5 @@ module.exports = {
   getProfile,
   startSession,
   endSession,
+  individualSessionDetails,
 };

@@ -8,6 +8,9 @@ const {
   getProfile,
   startSession,
   endSession,
+  sessionStartForCall,
+  endSessionForCall,
+  individualSessionDetails,
 } = require('../controllers/commonController');
 const { upload } = require('../helpers/s3Helper');
 
@@ -41,5 +44,8 @@ module.exports = (app, io) => {
   route.get('/getProfile', isAuthorized, injectUserDetails, getProfile);
   route.get('/session-start', startSession(io));
   route.get('/end-session', endSession(io));
+  route.get('/individual-session-details', individualSessionDetails);
+  // route.get('/call-session-start', sessionStartForCall);
+  // route.get('/call-session-end', endSessionForCall);
 };
    

@@ -5,7 +5,7 @@ const sessionDataSchema = new mongoose.Schema(
     individualId: { type: String, require: true },
     therapistsDetails: [
       {
-        therapistId: { type: String, require: true },
+        therapistsId: { type: String, require: true },
         therapistName: { type: String, require: true },
         sessionStartTime: { type: String, require: true },
         sessionEndTime: { type: String, require: true },
