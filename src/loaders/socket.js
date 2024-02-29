@@ -3,7 +3,7 @@ const chatDetailsModel = require('../mongooseModels/chat-details.model');
 const therapistModel = require('../mongooseModels/therapist.model');
 
 module.exports = (io) => {
-  io.on('connection', (socket) => {
+  io.on('connection', async(socket) => {
     console.log('A user connected');
     socket.on('list-of-messages', async (userId) => {
       console.log('list12', userId);
@@ -29,7 +29,7 @@ module.exports = (io) => {
        await updateQuery(therapistModel, { _id: therapistId }, { isOnline: false });
     })
 
-    // io.emit('list-of-active-therapist', await findQuery(therapistModel, {isOnline: true}));
+    io.emit('list-of-active-therapist', await findQuery(therapistModel, {isOnline: true}));
     socket.on('disconnect', () => {
       console.log('User disconnected');
     });
