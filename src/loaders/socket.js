@@ -3,7 +3,7 @@ const chatDetailsModel = require('../mongooseModels/chat-details.model');
 const therapistModel = require('../mongooseModels/therapist.model');
 
 module.exports = (io) => {
-  io.on('connection', async (socket) => {
+  io.on('connection', (socket) => {
     console.log('A user connected');
     socket.on('list-of-messages', async (userId) => {
       console.log('list12', userId);
@@ -13,6 +13,7 @@ module.exports = (io) => {
       await updatedList(data, io);
     });
     socket.on('join-therapist-room', (therapistId) => {
+      console.log('therapistId12', therapistId);
       const roomName = therapistId;
       socket.join(roomName);
       console.log(`Socket ${socket.id} joined room: ${roomName}`);
@@ -24,14 +25,15 @@ module.exports = (io) => {
     
 
     socket.on('therapist-inactive', async (therapistId) => {
+      console.log('therapistId', therapistId);
        await updateQuery(therapistModel, { _id: therapistId }, { isOnline: false });
     })
 
-      io.emit('list-of-active-therapist', await findQuery(therapistModel, {isOnline: true}));
-      socket.on('disconnect', () => {
-        console.log('User disconnected');
-      });
-    })
+    // io.emit('list-of-active-therapist', await findQuery(therapistModel, {isOnline: true}));
+    socket.on('disconnect', () => {
+      console.log('User disconnected');
+    });
+  });
 
   const listOfMessages = async (userId, socket) => { 
     console.log('userI1d', userId);
