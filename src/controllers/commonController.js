@@ -229,12 +229,15 @@ const getProfile = async (req, res) => {
 
 const startSession = (io) => async (req, res) => {
   const { individualId, therapistsId } = req.query;
-
+  console.log('therapistsId', therapistId);
   const [userChatDetails] = await findQuery(chatDetailsModel,
     {
       receiverId: therapistsId,
       'individualDetails.senderId': { $eq: individualId }
     });
+    
+    console.log('therapistsId122', therapistId);
+    console.log('userChatDetails', userChatDetails);
 
   if (!userChatDetails) {
     return SendBadResponse({
@@ -254,7 +257,7 @@ const startSession = (io) => async (req, res) => {
     sessionId: createSession._id,
     startSession: sessionStartTime,
   };
-
+  console.log('=========', therapistId)
   io.emit('startTimer', data);
 
   await updateQuery(chatDetailsModel,
