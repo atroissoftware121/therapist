@@ -27,9 +27,11 @@ module.exports = (io) => {
     socket.on('therapist-inactive', async (therapistId) => {
       console.log('therapistId', therapistId);
        await updateQuery(therapistModel, { _id: therapistId }, { isOnline: false });
+       io.emit('list-of-active-therapist', await findQuery(therapistModel, {isOnline: true}));
     })
-
+    
     io.emit('list-of-active-therapist', await findQuery(therapistModel, {isOnline: true}));
+
     socket.on('disconnect', () => {
       console.log('User disconnected');
     });
