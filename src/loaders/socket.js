@@ -21,6 +21,7 @@ module.exports = (io) => {
     socket.on('therapist-active', async (data) => {
       console.log('therapist', data);
       await updateQuery(therapistModel, { _id: data.therapistId }, { isOnline: true });
+      io.emit('list-of-active-therapist', await findQuery(therapistModel, {isOnline: true}));
     });
     
 
