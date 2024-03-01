@@ -4,7 +4,7 @@ const therapistModel = require('../mongooseModels/therapist.model');
 
 module.exports = (io) => {
   io.on('connection', async(socket) => {
-    console.log('A user connected');
+    console.log(`A user connected--${socket.id}`);
     socket.on('list-of-messages', async (userId) => {
       console.log('list12', userId);
       await listOfMessages(userId, socket);
