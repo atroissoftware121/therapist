@@ -47,6 +47,7 @@ module.exports = (app) => {
         location: Joi.string().required(),
         gender: Joi.string().required(),
         image: Joi.string().optional(),
+        experience: Joi.number().optional(),
       }),
     }),
     TherapistUpdateProfile
@@ -80,6 +81,7 @@ module.exports = (app) => {
         summary: Joi.string().required(),
         location: Joi.string().required(),
         documents: Joi.array().required(),
+        experience: Joi.number().optional(),
       }),
     }),
     TherapistRegisterStepSecond

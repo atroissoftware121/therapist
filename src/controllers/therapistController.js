@@ -67,6 +67,7 @@ const TherapistRegisterStepSecond = catchAsync(async (req, res) => {
     gender,
     summary,
     location,
+    experience,
     // image
     documents,
   } = req.body;
@@ -84,6 +85,7 @@ const TherapistRegisterStepSecond = catchAsync(async (req, res) => {
       location,
       documents,
       qualification,
+      experience,
     }
   );
   return SendSuccessResponse({
@@ -105,6 +107,7 @@ const TherapistUpdateProfile = catchAsync(async (req, res) => {
     qualification,
     image,
     gender,
+    experience,
   } = req.body;
   const { _id, mobileNumber, ...user } = req.user;
   
@@ -134,6 +137,7 @@ const TherapistUpdateProfile = catchAsync(async (req, res) => {
       qualification,
       image,
       gender,
+      experience,
     }
   );
   await updateQuery(

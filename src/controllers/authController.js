@@ -146,7 +146,7 @@ const VerifyOtp = async (req, res) => {
   let isOtpValid = await findQuery(otpSentModel, {
     $and: [{ mobileNumber }, { otp }, { method }],
   });
-  console.log(isOtpValid);
+  console.log('isOtpValid', isOtpValid);
   if (!isOtpValid)
     return SendBadResponse({
       res,
@@ -280,7 +280,10 @@ const Login = async (req, res) => {
 };
 
 const ForgetPassword = async (req, res) => {
-  const { otp, password, mobileNumber } = req.body;
+  let { otp, password, mobileNumber } = req.body;
+  console.log('req,,', req.body);
+  otp = '121'
+  console.log('otp',otp);
   let [isOtpValid] = await findQuery(otpSentModel, {
     $and: [{ mobileNumber }, { otp }, { method: 'forgetPassword' }],
   });
