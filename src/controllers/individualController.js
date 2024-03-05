@@ -51,6 +51,17 @@ const IndividualRegister = async (req, res) => {
   let [isEmailExist] = await findQuery(authCredtionalsModel, {
     email,
   });
+
+  if(isEmailExist && isEmailExist.userType === 'therapist') {
+    return SendBadResponse({
+      res,
+      status: 505,
+      data: {
+        error: "This email is been registered with therapist!",
+      },
+    });
+  }
+
   if (isEmailExist)
     return SendBadResponse({
       res,
@@ -62,7 +73,7 @@ const IndividualRegister = async (req, res) => {
   let isUserUpdated = await updateQuery(
     individualModel,
     { _id },
-    {
+    { 
       fname,
       lname,
       email,
