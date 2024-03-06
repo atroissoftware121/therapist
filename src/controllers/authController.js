@@ -65,7 +65,7 @@ const GetOtp = async (req, res) => {
     return SendBadResponse({
       res,
       status: 404,
-      data: { error: 'User already exist! Please try to login.' },
+      data: { error: 'User number already in use, please proceed by loging in.' },
     });
 
   const [isOtpDataExist] = await findQuery(otpSentModel, {
