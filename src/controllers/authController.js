@@ -232,6 +232,17 @@ const Login = async (req, res) => {
   let { email, password, userType, fcmToken, deviceInfo } = req.body; 
   const otherUserType = userType === 'therapist' ? 'individual' : 'therapist';
 
+  let [credential] = await findQuery(authCredtionalsModel, {
+    $and: [{ email }, { userType }],
+  });
+  
+  if (!credential)
+    return SendBadResponse({
+      res,
+      status: 403,
+      data: { error: 'User not found!' },
+    });
+
   const [isEmailExisted] = await findQuery(
     userType === 'therapist' ? individualModel : therapistModel
     ,{
@@ -246,21 +257,6 @@ const Login = async (req, res) => {
     });
   };
 
-  let [credential] = await findQuery(authCredtionalsModel, {
-    $and: [{ email }, { userType }],
-  });
-  
-  console.log('data', credential);
-
-
-
-  
-  if (!credential)
-    return SendBadResponse({
-      res,
-      status: 403,
-      data: { error: 'Invaild email/password!' },
-    });
   const isPasswordCorrect = await comparePassword(
     password,
     credential.password
@@ -269,7 +265,7 @@ const Login = async (req, res) => {
     return SendBadResponse({
       res,
       status: 403,
-      data: { error: 'Invaild email/password!' },
+      data: { error: 'Wrong Password!' },
     });
 
   let isUserExist = await findQuery(
