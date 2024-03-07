@@ -24,6 +24,7 @@ const therapistModel = require('../mongooseModels/therapist.model');
 const individualModel = require('../mongooseModels/individual.model');
 const chatDetailsModel = require('../mongooseModels/chat-details.model');
 const sessionModel = require('../mongooseModels/session.model');
+const reportModel = require('../mongooseModels/report.model');
 const individualTransactionModel = require('../mongooseModels/individual-transaction.model');
 
 const GetImage = async (req, res) => {
@@ -328,6 +329,28 @@ const endSession = (io) => async (req, res) => {
   }
 };
 
+const createReport = async(req, res) => {
+  const user = await authCredtionalsModel.findOne({
+    userId: req.body.userId,
+    email: req.body.email
+  });
+
+  if(!user) {
+    return SendBadResponse({
+      res,
+      status: 404,
+      data: { error: 'User not found!' },
+    });
+  }
+
+  await reportModel.create({
+    ...req.body,
+    userType: user.userType
+  });
+
+  return SendSuccessResponse({ res, data: { data: 'Sent Successfully' } });
+};
+
 module.exports = {
   GetImage,
   UploadImages,
@@ -337,4 +360,5 @@ module.exports = {
   getProfile,
   startSession,
   endSession,
+  createReport,
 };

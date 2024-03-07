@@ -8,6 +8,7 @@ const {
   getProfile,
   startSession,
   endSession,
+  createReport,
 } = require('../controllers/commonController');
 const { upload } = require('../helpers/s3Helper');
 
@@ -41,5 +42,14 @@ module.exports = (app, io) => {
   route.get('/getProfile', isAuthorized, injectUserDetails, getProfile);
   route.get('/session-start', startSession(io));
   route.get('/end-session', endSession(io));
+  route.post('/createReport', celebrate({
+    [Segments.BODY]: Joi.object().keys({
+      userId: Joi.string().required(),
+      email: Joi.string().required(),
+      description: Joi.string().required(),
+    }),
+  }),
+  createReport
+  )
 };
    
