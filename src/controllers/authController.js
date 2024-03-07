@@ -229,21 +229,41 @@ const VerifyOtp = async (req, res) => {
 };
 
 const Login = async (req, res) => {
-  let { email, password, userType, fcmToken, deviceInfo } = req.body;
+  let { email, password, userType, fcmToken, deviceInfo } = req.body; 
+  const otherUserType = userType === 'therapist' ? 'individual' : 'therapist';
 
-  let [isEmailExist] = await findQuery(authCredtionalsModel, {
+  const [isEmailExisted] = await findQuery(
+    userType === 'therapist' ? individualModel : therapistModel
+    ,{
+    email: email
+  });
+
+  if (isEmailExisted) {
+    return SendBadResponse({
+      res,
+      status: 403,
+      data: { error: `This Email is been registered with ${otherUserType}!` },
+    });
+  };
+
+  let [credential] = await findQuery(authCredtionalsModel, {
     $and: [{ email }, { userType }],
   });
-  if (!isEmailExist)
+  
+  console.log('data', credential);
+
+
+
+  
+  if (!credential)
     return SendBadResponse({
       res,
       status: 403,
       data: { error: 'Invaild email/password!' },
     });
-
   const isPasswordCorrect = await comparePassword(
     password,
-    isEmailExist.password
+    credential.password
   );
   if (!isPasswordCorrect)
     return SendBadResponse({
@@ -254,7 +274,7 @@ const Login = async (req, res) => {
 
   let isUserExist = await findQuery(
     userType === 'therapist' ? therapistModel : individualModel,
-    { _id: isEmailExist.userId }
+    { _id: credential.userId }
   );
   if (!isUserExist)
     return SendBadResponse({
