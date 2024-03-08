@@ -233,7 +233,7 @@ const Login = async (req, res) => {
   const otherUserType = userType === 'therapist' ? 'individual' : 'therapist';
 
   let [credential] = await findQuery(authCredtionalsModel, {
-    $and: [{ email }, { userType }],
+    $and: [{ email }],
   });
   
   if (!credential)
