@@ -194,8 +194,10 @@ const TherapistList = catchAsync(async (req, res) => {
     limit = page * 20;
     skip = (page - 1) * 20;
   }
-  if (languageArr.length > 0)
-    findQueryArr.push({ language: { $in: languageArr } });
+  if (languageArr.length > 0) {
+    const languageRegex = languageArr.map(lang => new RegExp(lang.trim(), 'i'));
+    findQueryArr.push({ language: { $in: languageRegex } });
+  }
   if (priceS) findQueryArr.push({ charges: { $gte: parseInt(priceS) } });
   if (priceE) findQueryArr.push({ charges: { $lte: parseInt(priceE) } });
   if (ageS) findQueryArr.push({ age: { $gte: parseInt(ageS) } });
