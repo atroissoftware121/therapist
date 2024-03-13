@@ -20,7 +20,7 @@ module.exports = (app) => {
     celebrate({
       [Segments.BODY]: Joi.object().keys({
         fname: Joi.string().required(),
-        lname: Joi.string().required(),
+        lname: Joi.string().optional(),
         email: Joi.string().required(),
         gender: Joi.string().required(),
         image: Joi.string().optional(),
@@ -36,7 +36,7 @@ module.exports = (app) => {
     celebrate({
       [Segments.BODY]: Joi.object().keys({
         fname: Joi.string().required(),
-        lname: Joi.string().required(),
+        lname: Joi.string().optional(),
         email: Joi.string().required(),
         password: Joi.string().required(),
         gender: Joi.string().required(),
