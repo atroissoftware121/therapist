@@ -381,6 +381,36 @@ const createNotificationData = async(req, res) => {
   return SendSuccessResponse({ res, data: { data: 'sent data successfully' } });
 }
 
+const sendNotificationToIndividual = async (therapistId) => {
+  const notificationData = await findQuery(individualNotificationModel, { therapistsIds: { $in: [ therapistId ] }});
+  const [therapistData] =  await findQuery(therapistModel, { _id: therapistId });
+  for(let notification of notificationData) {
+    const message = {
+        notification: {
+          title: 'send notification',
+          body: `${therapistData.name} is online now`,
+        },
+        data: {
+          senderId: therapistId,
+          receiverId: notification.individualId,
+          title: 'send notification',
+          body: `${therapistData.name} is online now`,
+        },
+        token: notification.fcmToken,
+      };
+
+    console.log('data122222', message);
+    const notify = await admin.messaging().send(message);
+    console.log('datat12', notify);
+    await updateQuery(individualNotificationModel, 
+      { individualId: notification.individualId }, 
+      { $pull: {
+        therapistsIds: therapistId
+      }}
+    )
+  }
+}
+
 module.exports = {
   GetImage,
   UploadImages,
@@ -392,4 +422,5 @@ module.exports = {
   endSession,
   createReport,
   createNotificationData,
+  sendNotificationToIndividual,
 };
