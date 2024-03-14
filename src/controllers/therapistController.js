@@ -183,7 +183,7 @@ const TherapistTopList = catchAsync(async (req, res) => {
 });
 
 const TherapistList = catchAsync(async (req, res) => {
-  let { page, priceS, priceE, ageS, ageE, lang, specialization,sKeyword } = req.query;
+  let { page, priceS, priceE, ageS, ageE, lang, specialization,sKeyword, gender  } = req.query;
   let findQueryArr=[]
   findQueryArr.push({ isProfileVerified: true });
   let skip = 0;
@@ -198,6 +198,11 @@ const TherapistList = catchAsync(async (req, res) => {
     const languageRegex = languageArr.map(lang => new RegExp(lang.trim(), 'i'));
     findQueryArr.push({ language: { $in: languageRegex } });
   }
+  if (gender) {
+    const genderArr = gender.split(',');
+    findQueryArr.push({ gender: { $in: genderArr } });
+  }
+  
   if (priceS) findQueryArr.push({ charges: { $gte: parseInt(priceS) } });
   if (priceE) findQueryArr.push({ charges: { $lte: parseInt(priceE) } });
   if (ageS) findQueryArr.push({ age: { $gte: parseInt(ageS) } });
@@ -216,7 +221,7 @@ const TherapistList = catchAsync(async (req, res) => {
   const list = await findQueryWithLimit(
     therapistModel,
     findQueryObj,
-    "name email mobileNumber gender image specialization qualification charges discountedCharges location language summary isOnline onCall",
+    "name email mobileNumber gender image specialization qualification charges discountedCharges location language summary isOnline onCall, experience",
     limit,
     skip
   );
