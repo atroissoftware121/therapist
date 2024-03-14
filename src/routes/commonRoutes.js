@@ -9,6 +9,7 @@ const {
   startSession,
   endSession,
   createReport,
+  createNotificationData,
 } = require('../controllers/commonController');
 const { upload } = require('../helpers/s3Helper');
 
@@ -50,6 +51,7 @@ module.exports = (app, io) => {
     }),
   }),
   createReport
-  )
+  );
+  route.post('/addIndividualNotification', createNotificationData);
 };
    

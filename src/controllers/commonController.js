@@ -26,6 +26,8 @@ const chatDetailsModel = require('../mongooseModels/chat-details.model');
 const sessionModel = require('../mongooseModels/session.model');
 const reportModel = require('../mongooseModels/report.model');
 const individualTransactionModel = require('../mongooseModels/individual-transaction.model');
+const individualNotificationModel = require('../mongooseModels/individual-notification.model');
+
 
 const GetImage = async (req, res) => {
   const key = req.params.key;
@@ -82,7 +84,6 @@ const sentPushNotifications = (io) => catchAsync(async (req, res) => {
     });
     const individualData = await findQuery(individualModel, { _id: data.senderId });
     const therapistsData = await findQuery(therapistModel, { _id: data.receiverId });
-    console.log('data', individualData, therapistsData);
     if (!individualData || !therapistsData) {
       return SendBadResponse({
         res,
@@ -109,7 +110,6 @@ const sentPushNotifications = (io) => catchAsync(async (req, res) => {
       };
 
       const response = await admin.messaging().send(message);
-
       const individualObj = {
         senderId: data.senderId,
         senderName: `${individualData.fname} ${individualData.lname}`,
@@ -351,6 +351,36 @@ const createReport = async(req, res) => {
   return SendSuccessResponse({ res, data: { data: 'Sent Successfully' } });
 };
 
+const createNotificationData = async(req, res) => {
+  const { individualId, therapistsId } = req.body;
+  let [receiverDetail] = await findQuery(userExtraDetailsModel, {
+    userId: individualId,
+  }); 
+  if(!receiverDetail) {
+    return SendBadResponse({
+      res,
+      status: 404,
+      data: { error: 'User not found!' },
+    });
+  } 
+  const notificatioData = await individualNotificationModel.findOne({individualId});
+  if(notificatioData) {
+    await updateQuery(individualNotificationModel, { individualId }, {
+      $addToSet: {
+        therapistsIds: therapistsId
+      }
+    })
+  } else {
+    await createQuery(individualNotificationModel, {
+      individualId,
+      fcmToken: receiverDetail.fcmToken,
+      therapistsIds: [therapistsId]
+    })
+  }
+  
+  return SendSuccessResponse({ res, data: { data: 'sent data successfully' } });
+}
+
 module.exports = {
   GetImage,
   UploadImages,
@@ -361,4 +391,5 @@ module.exports = {
   startSession,
   endSession,
   createReport,
+  createNotificationData,
 };
