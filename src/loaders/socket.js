@@ -22,7 +22,7 @@ module.exports = (io) => {
     });
     socket.on('therapist-active', async (data) => {
       console.log('therapist', data);
-      const isTherapistActive = await updateQuery(therapistModel, { _id: therapistId }, { isOnline: false });
+      const isTherapistActive = await updateQuery(therapistModel, { _id: data.therapistId }, { isOnline: false });
       if(isTherapistActive) {
         await sendNotificationToIndividual(data.therapistId);
       }
