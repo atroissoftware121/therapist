@@ -401,10 +401,8 @@ const sendNotificationToIndividual = async (therapistId) => {
   console.log('notificationData', notificationData);
   const therapistData =  await findQuery(therapistModel, { _id: therapistId });
   console.log('data12', therapistData);
-  let set = false;
-  if(!set) {
     for(let notification of notificationData) {
-      set = true;
+      const individualData = await findQuery(userExtraDetailsModel, {user_id: notification.individualId})
       const message = {
           notification: {
             title: `${therapistData.name}`,
@@ -416,12 +414,11 @@ const sendNotificationToIndividual = async (therapistId) => {
             title: `${therapistData.name}`,
             body: `${therapistData.name} is online now`,
           },
-          token: notification.fcmToken,
+          token: individualData.fcmToken,
         };
       console.log('data122222', message);
       const notify = await admin.messaging().send(message);
       console.log('datat12', notify);
-    }
   }
 }
 
