@@ -396,6 +396,7 @@ const createNotificationData = async(req, res) => {
 }
 
 const sendNotificationToIndividual = async (therapistId) => {
+  console.log('therapistId122', therapistId)
   const notificationData = await findQuery(individualNotificationModel, { therapistsIds: { $in: [ therapistId ] }});
   const therapistData =  await findQuery(therapistModel, { _id: therapistId });
   console.log('data12', therapistData);
