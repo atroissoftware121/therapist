@@ -355,7 +355,7 @@ const createNotificationData = async(req, res) => {
   const { individualId, therapistsId } = req.body;
   let [receiverDetail] = await findQuery(userExtraDetailsModel, {
     userId: individualId,
-  }); 
+  });
   if(!receiverDetail) {
     return SendBadResponse({
       res,
@@ -363,10 +363,23 @@ const createNotificationData = async(req, res) => {
       data: { error: 'User not found!' },
     });
   } 
+  const [individualData] = await findQuery(individualNotificationModel, { 
+    $and: [
+      { individualId },
+      { therapistsIds: { $in: [therapistsId] } }
+    ]
+  });
+  if(individualData) {
+    await updateQuery(individualNotificationModel, {individualId}, {
+      $pull: { therapistsIds: { $in: [therapistsId] }}
+    })
+    return SendSuccessResponse({ res, data: { data: false } });
+  }
+
   const notificatioData = await individualNotificationModel.findOne({individualId});
   if(notificatioData) {
     await updateQuery(individualNotificationModel, { individualId }, {
-      $addToSet: {
+      $push: {
         therapistsIds: therapistsId
       }
     })
@@ -374,11 +387,12 @@ const createNotificationData = async(req, res) => {
     await createQuery(individualNotificationModel, {
       individualId,
       fcmToken: receiverDetail.fcmToken,
-      therapistsIds: [therapistsId]
+      therapistsIds: [therapistsId],
+      isNotify: true,
     })
   }
   
-  return SendSuccessResponse({ res, data: { data: 'sent data successfully' } });
+  return SendSuccessResponse({ res, data: { data: true } });
 }
 
 const sendNotificationToIndividual = async (therapistId) => {
@@ -402,13 +416,21 @@ const sendNotificationToIndividual = async (therapistId) => {
     console.log('data122222', message);
     const notify = await admin.messaging().send(message);
     console.log('datat12', notify);
-    await updateQuery(individualNotificationModel, 
-      { individualId: notification.individualId }, 
-      { $pull: {
-        therapistsIds: therapistId
-      }}
-    )
   }
+}
+
+const getlistOfTherapistNotified = async(req, res) => {
+  const { individualId } = req.query;
+  const therapistData = await findQuery(individualNotificationModel, { individualId });
+  if(!therapistData) {
+    return SendBadResponse({
+      res,
+      status: 404,
+      data: { error: 'no therapist notified' },
+    });
+  }
+  
+  return SendSuccessResponse({ res, data: { data:  therapistData} });
 }
 
 module.exports = {
@@ -423,4 +445,5 @@ module.exports = {
   createReport,
   createNotificationData,
   sendNotificationToIndividual,
+  getlistOfTherapistNotified,
 };
