@@ -402,7 +402,9 @@ const sendNotificationToIndividual = async (therapistId) => {
   const therapistData =  await findQuery(therapistModel, { _id: therapistId });
   console.log('data12', therapistData);
     for(let notification of notificationData) {
-      const individualData = await findQuery(userExtraDetailsModel, {user_id: notification.individualId})
+      console.log('notification.individualId', notification.individualId);
+      const [individualData] = await findQuery(userExtraDetailsModel, {userId: notification.individualId})
+      console.log('individualData', individualData);
       const message = {
           notification: {
             title: `${therapistData.name}`,
