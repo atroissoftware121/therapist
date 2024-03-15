@@ -398,26 +398,30 @@ const createNotificationData = async(req, res) => {
 const sendNotificationToIndividual = async (therapistId) => {
   console.log('therapistId122', therapistId)
   const notificationData = await findQuery(individualNotificationModel, { therapistsIds: { $in: [ therapistId ] }});
+  console.log('notificationData', notificationData);
   const therapistData =  await findQuery(therapistModel, { _id: therapistId });
   console.log('data12', therapistData);
-  for(let notification of notificationData) {
-    const message = {
-        notification: {
-          title: `${therapistData.name}`,
-          body: `${therapistData.name} is online now`,
-        },
-        data: {
-          senderId: therapistId,
-          receiverId: notification.individualId,
-          title: `${therapistData.name}`,
-          body: `${therapistData.name} is online now`,
-        },
-        token: notification.fcmToken,
-      };
-
-    console.log('data122222', message);
-    const notify = await admin.messaging().send(message);
-    console.log('datat12', notify);
+  let set = false;
+  if(!set) {
+    for(let notification of notificationData) {
+      set = true;
+      const message = {
+          notification: {
+            title: `${therapistData.name}`,
+            body: `${therapistData.name} is online now`,
+          },
+          data: {
+            senderId: therapistId,
+            receiverId: notification.individualId,
+            title: `${therapistData.name}`,
+            body: `${therapistData.name} is online now`,
+          },
+          token: notification.fcmToken,
+        };
+      console.log('data122222', message);
+      const notify = await admin.messaging().send(message);
+      console.log('datat12', notify);
+    }
   }
 }
 
