@@ -397,17 +397,18 @@ const createNotificationData = async(req, res) => {
 
 const sendNotificationToIndividual = async (therapistId) => {
   const notificationData = await findQuery(individualNotificationModel, { therapistsIds: { $in: [ therapistId ] }});
-  const [therapistData] =  await findQuery(therapistModel, { _id: therapistId });
+  const therapistData =  await findQuery(therapistModel, { _id: therapistId });
+  console.log('data12', therapistData);
   for(let notification of notificationData) {
     const message = {
         notification: {
-          title: 'send notification',
+          title: `${therapistData.name}`,
           body: `${therapistData.name} is online now`,
         },
         data: {
           senderId: therapistId,
           receiverId: notification.individualId,
-          title: 'send notification',
+          title: `${therapistData.name}`,
           body: `${therapistData.name} is online now`,
         },
         token: notification.fcmToken,
