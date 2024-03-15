@@ -22,19 +22,13 @@ module.exports = (io) => {
     });
     socket.on('therapist-active', async (data) => {
       console.log('therapist', data);
-      // const isTherapistActive = await therapistModel.findOne(
-      //   { _id: data.therapistId, isOnline: false },
-      // );
-      // console.log('data', isTherapistActive);
-      // if (isTherapistActive) {
-      //   console.log('abcccccc', 'agghhjjjjjjjjjj========>')
-      //   await sendNotificationToIndividual(data.therapistId);
-      // }
-      // console.log('abcccccc');
       await updateQuery(therapistModel, { _id: data.therapistId }, { isOnline: true });
       io.emit('list-of-active-therapist', await findQuery(therapistModel, {isOnline: true}));
     });
     
+    socket.on('send-notification-individual', async (data) => {
+      await sendNotificationToIndividual(data.therapistId);
+    })
 
     socket.on('therapist-inactive', async (therapistId) => {
       console.log('therapistId', therapistId);
