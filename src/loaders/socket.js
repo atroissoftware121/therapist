@@ -27,6 +27,7 @@ module.exports = (io) => {
       );
       console.log('data', isTherapistActive);
       if (isTherapistActive) {
+        console.log('abcccccc', 'agghhjjjjjjjjjj========>')
         await sendNotificationToIndividual(data.therapistId);
       }
       console.log('abcccccc');
