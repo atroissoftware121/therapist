@@ -87,7 +87,10 @@ const sentPushNotifications = (io) => catchAsync(async (req, res) => {
     const therapistsId = data.userType === 'therapists' ? data.senderId : data.receiverId;
 
     const individualData = await findQuery(individualModel, { _id: individualId });
+    console.log('individualData', individualData);
     const therapistsData = await findQuery(therapistModel, { _id: therapistsId });
+    console.log('therapistsData', therapistsData);
+
     if (!individualData || !therapistsData) {
       return SendBadResponse({
         res,
@@ -104,15 +107,15 @@ const sentPushNotifications = (io) => catchAsync(async (req, res) => {
         },
         data: {
           senderId: data.senderId,
-          senderName: data.userType === 'individual' ? `${individualData.fname} ${individualData.lname}`: therapistsData.name,
+          senderName: data.userType === 'individual'? `${individualData.fname} ${individualData.lname}`: therapistsData.name,
           receiverId: data.receiverId,
-          receiverName: data.userType === 'therapists' ? therapistsData.name : `${individualData.fname} ${individualData.lname}`,
+          receiverName: data.userType === 'individual'? therapistsData.name : `${individualData.fname} ${individualData.lname}`,
           title: data.title,
           body: data.message,
         },
         token: receiverDetail.fcmToken,
       };
-
+      console.log('data12', message);
       let response;
       if(data.userType === 'therapists') {
         response = await admin.messaging().send(message);
