@@ -33,6 +33,7 @@ module.exports = (app, io) => {
         title: Joi.string().required(),
         image: Joi.string().optional(),
         message: Joi.string().optional(),
+        userType: Joi.string().required(),
       }),
     }),
     isAuthorized,
