@@ -225,11 +225,12 @@ const TherapistList = catchAsync(async (req, res) => {
     limit,
     skip
   );
+
   return SendSuccessResponse({
     res,
     data: { message: "Therapist list get successfully!", data: list },
   });
-});
+});                     
 
 const TherapistListForApproval = catchAsync(async (req, res) => {
   const { isAdmin } = req.user;
@@ -256,6 +257,7 @@ const ApproveTherapist = catchAsync(async (req, res) => {
     throw new ApiError(httpStatus.UNAUTHORIZED, "Permission Denied");
   }
   let therapist = await findQuery(therapistModel, { _id });
+  console.log('therapist', therapist);
   if (!therapist) {
     return SendBadResponse({
       res,
@@ -276,9 +278,11 @@ const ApproveTherapist = catchAsync(async (req, res) => {
     { _id },
     { isProfileVerified: true }
   );
-  const message =
-    "Congratulations! Your Therapist account on Sahhaya is active and ready to use.  Please login on ….. app link……\nTeam Sahhaya";
-  sendEmail(therapist.email, message);
+  const message = 'Profile Verified'
+    
+  const text = "Congratulations! Your Therapist account on Sahhaya is active and ready to use.  Please login on ….. app link……\nTeam Sahhaya";
+
+  sendEmail(therapist.email, message, text);
   sendSMS({
     to: therapist.mobileNumber,
     body: message,
