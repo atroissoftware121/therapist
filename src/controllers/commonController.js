@@ -453,6 +453,29 @@ const getlistOfTherapistNotified = async(req, res) => {
   return SendSuccessResponse({ res, data: { data:  therapistData} });
 }
 
+const addDiscountOffer = async(req, res) => {
+  const { therapistId, discount } = req.query;
+  const isUserExists = await findQuery(therapistModel, {
+    _id: therapistId
+  });
+
+  if(!isUserExists) {
+    return SendBadResponse({
+      res,
+      status: 404,
+      data: { error: 'Therapist not found' },
+    });
+  }
+  const user = await updateQuery(therapistModel, {
+    _id: therapistId
+  },{
+    discountedCharges: discount
+  }
+  )
+  
+  return SendSuccessResponse({ res, data: { data:  user} });
+}
+
 module.exports = {
   GetImage,
   UploadImages,
@@ -466,4 +489,5 @@ module.exports = {
   createNotificationData,
   sendNotificationToIndividual,
   getlistOfTherapistNotified,
+  addDiscountOffer
 };

@@ -11,6 +11,7 @@ const {
   createReport,
   createNotificationData,
   getlistOfTherapistNotified,
+  addDiscountOffer,
 } = require('../controllers/commonController');
 const { upload } = require('../helpers/s3Helper');
 
@@ -56,5 +57,6 @@ module.exports = (app, io) => {
   );
   route.post('/addIndividualNotification', createNotificationData);
   route.get('/getlistOfTherapistNotified', getlistOfTherapistNotified);
+  route.get('/addDiscountOffer', addDiscountOffer);
 };
    
