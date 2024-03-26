@@ -57,6 +57,6 @@ module.exports = (app, io) => {
   );
   route.post('/addIndividualNotification', createNotificationData);
   route.get('/getlistOfTherapistNotified', getlistOfTherapistNotified);
-  route.get('/addDiscountOffer', addDiscountOffer);
+  route.put('/addDiscountOffer', addDiscountOffer);
 };
-   
+    
