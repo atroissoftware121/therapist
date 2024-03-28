@@ -3,7 +3,7 @@ const { JWT_SECRET } = require("../config");
 
 const genrateToken = ({
   data,
-  exp = Math.floor(Date.now() / 1000) + 2 * 24 * 60 * 60,
+  exp = Math.floor(Date.now() / 1000) + 120,
 }) =>
   jwt.sign(
     {
