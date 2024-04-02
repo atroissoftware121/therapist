@@ -35,26 +35,12 @@ module.exports = (app, io) => {
         image: Joi.string().optional(),
         message: Joi.string().optional(),
         userType: Joi.string().required(),
-      }),
-    }),
-    isAuthorized,
-    sentPushNotifications(io),
-  );
-  route.post(
-    '/pushNotification-for-call',
-    celebrate({
-      [Segments.BODY]: Joi.object().keys({
-        senderId: Joi.string().required(),
-        receiverId: Joi.string().required(),
-        title: Joi.string().required(),
-        image: Joi.string().optional(),
-        message: Joi.string().optional(),
-        userType: Joi.string().required(),
+        chatType: Joi.string().required(),
         timing: Joi.string().optional(),
       }),
     }),
     isAuthorized,
-    sendPushNotificationForCall(io),
+    sentPushNotifications(io),
   );
   route.get('/chatHistory', isAuthorized, injectUserDetails, chatHistory);
   route.get('/image/:key', GetImage);
