@@ -131,7 +131,7 @@ const sentPushNotifications = (io) => catchAsync(async (req, res) => {
         gender: individualData.gender,
       }
       console.log('abcvccccccccccc');
-      const [isChatExisted] = await findQuery(chatDetailsModel, { receiverId: data.receiverId });
+      const [isChatExisted] = await findQuery(chatDetailsModel, { receiverId: data.receiverId, chatType: 'message' });
       console.log('isChatExisted', isChatExisted);
       let messageData;
       if (isChatExisted) {
@@ -145,7 +145,7 @@ const sentPushNotifications = (io) => catchAsync(async (req, res) => {
             },
             {
               $set: {
-                receiverName: therapistsData.name
+                receiverName: therapistsData.name,
               },
               $addToSet: {
                 individualDetails: individualObj,
@@ -157,6 +157,7 @@ const sentPushNotifications = (io) => catchAsync(async (req, res) => {
         messageData = await createQuery(chatDetailsModel, {
           receiverId: data.receiverId,
           receiverName: therapistsData.name,
+          chatType: 'message',
           individualDetails: [individualObj],
         });
       }
@@ -431,7 +432,7 @@ const sendNotificationToIndividual = async (therapistId) => {
             title: `${therapistData.name}`,
             body: `${therapistData.name} is online now`,
           },
-          token: individualData.fcmToken,
+          token: individualData.fcmToken, 
         };
       console.log('data122222', message);
       const notify = await admin.messaging().send(message);
@@ -453,6 +454,111 @@ const getlistOfTherapistNotified = async(req, res) => {
   return SendSuccessResponse({ res, data: { data:  therapistData} });
 }
 
+const sendPushNotificationForCall = (io) => async(req, res) => {
+  try {
+    const data = req.body;
+    let [receiverDetail] = await findQuery(userExtraDetailsModel, {
+      userId: data.receiverId,
+    });
+    console.log('receiverDetail', receiverDetail);
+    const individualId = data.userType === 'individual' ? data.senderId : data.receiverId;
+    const therapistsId = data.userType === 'therapists' ? data.senderId : data.receiverId;
+
+    const individualData = await findQuery(individualModel, { _id: individualId });
+    console.log('individualData', individualData);
+    const therapistsData = await findQuery(therapistModel, { _id: therapistsId });
+    console.log('therapistsData', therapistsData);
+
+    if (!individualData || !therapistsData) {
+      return SendBadResponse({
+        res,
+        status: 404,
+        data: { error: 'User not found!' },
+      });
+    };
+    console.log('reecceiei', )
+    if (receiverDetail && receiverDetail.fcmToken) {
+      const message = {
+        notification: {
+          title: data.title,
+          body: data.message,
+        },
+        data: {
+          senderId: data.senderId,
+          senderName: data.userType === 'individual'? `${individualData.fname} ${individualData.lname}`: therapistsData.name,
+          receiverId: data.receiverId,
+          receiverName: data.userType === 'individual'? therapistsData.name : `${individualData.fname} ${individualData.lname}`,
+          title: data.title,
+          body: data.message,
+        },
+        token: receiverDetail.fcmToken,
+      };
+      console.log('data12', message);
+      let response;
+      if(data.userType === 'therapists') {
+        response = await admin.messaging().send(message);
+        return SendSuccessResponse({ res, data: response });
+      }
+
+      response = await admin.messaging().send(message);
+      const individualObj = {
+        senderId: data.senderId,
+        senderName: `${individualData.fname} ${individualData.lname}`,
+        email: individualData.email,
+        mobileNumber: individualData.mobileNumber,
+        gender: individualData.gender,
+      }
+      console.log('abcvccccccccccc');
+      const [isChatExisted] = await findQuery(chatDetailsModel, { receiverId: data.receiverId, chatType: 'call' });
+      console.log('isChatExisted', isChatExisted);
+      let callData;
+      if (isChatExisted) {
+        const isSenderPresent = isChatExisted.individualDetails.some(detail => detail.senderId === data.senderId);
+        console.log('isSenderPresent', isSenderPresent);
+        if (!isSenderPresent) {
+          callData = await updateQuery(chatDetailsModel,
+            {
+              receiverId: data.receiverId,
+              'individualDetails.senderId': { $ne: data.senderId }
+            },
+            {
+              $set: {
+                receiverName: therapistsData.name,
+              },
+              $addToSet: {
+                individualDetails: individualObj,
+              },
+            },
+          )
+        }
+      } else {
+        callData = await createQuery(chatDetailsModel, {
+          receiverId: data.receiverId,
+          receiverName: therapistsData.name,
+          chatType: 'call',
+          individualDetails: [individualObj],
+        });
+      }
+
+      io.to(data.receiverId).emit('chat-details-for-call', { data: [callData?.individualDetails], image: individualData.image, timing: data.timing });
+      
+      return SendSuccessResponse({ res, data: response });
+
+    }
+    return SendBadResponse({
+      res,
+      status: 403,
+      data: { message: 'Receiver Not found' },
+    });
+  } catch (err) {
+    return SendBadResponse({
+      res,
+      status: 403,
+      data: { message: err.message },
+    });
+  }
+}
+
 module.exports = {
   GetImage,
   UploadImages,
@@ -466,4 +572,5 @@ module.exports = {
   createNotificationData,
   sendNotificationToIndividual,
   getlistOfTherapistNotified,
+  sendPushNotificationForCall,
 };

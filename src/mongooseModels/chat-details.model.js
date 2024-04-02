@@ -4,6 +4,7 @@ const chatDetailsSchema = new mongoose.Schema(
   {
     receiverId: { type: String, require: true },
     receiverName: { type: String, require: true },
+    chatType: { type: String, enum: ['message', 'call'], require: true },
     individualDetails: [{
       senderId: { type: String, require: true },
       senderName: { type: String, require: true },
