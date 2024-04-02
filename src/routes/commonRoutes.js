@@ -11,6 +11,7 @@ const {
   createReport,
   createNotificationData,
   getlistOfTherapistNotified,
+  sendPushNotificationForCall,
 } = require('../controllers/commonController');
 const { upload } = require('../helpers/s3Helper');
 
@@ -38,6 +39,22 @@ module.exports = (app, io) => {
     }),
     isAuthorized,
     sentPushNotifications(io),
+  );
+  route.post(
+    '/pushNotification-for-call',
+    celebrate({
+      [Segments.BODY]: Joi.object().keys({
+        senderId: Joi.string().required(),
+        receiverId: Joi.string().required(),
+        title: Joi.string().required(),
+        image: Joi.string().optional(),
+        message: Joi.string().optional(),
+        userType: Joi.string().required(),
+        timing: Joi.string().optional(),
+      }),
+    }),
+    isAuthorized,
+    sendPushNotificationForCall(io),
   );
   route.get('/chatHistory', isAuthorized, injectUserDetails, chatHistory);
   route.get('/image/:key', GetImage);
