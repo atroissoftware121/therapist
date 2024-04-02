@@ -14,6 +14,11 @@ module.exports = (io) => {
     socket.on('individual-end-chat', async (data) => {
       await updatedList(data, io);
     });
+
+    socket.on('individual-end-call-chat', async (data) => {
+      await updatedCallList(data, io);
+    })
+
     socket.on('join-therapist-room', (therapistId) => {
       console.log('therapistId12', therapistId);
       const roomName = therapistId;
@@ -49,7 +54,7 @@ module.exports = (io) => {
 
   const listOfMessages = async (userId, socket) => { 
     console.log('userI1d', userId);
-    const [isChatExisted] = await findQuery(chatDetailsModel, { receiverId: userId });
+    const [isChatExisted] = await findQuery(chatDetailsModel, { receiverId: userId, chatType: 'message' });
     console.log('isChatExitsed', isChatExisted);
     if (!isChatExisted) { 
         socket.emit('chat-not-found', { message: 'Chat does not exist with this userId' });
@@ -64,11 +69,23 @@ module.exports = (io) => {
     console.log('data', data);
     const updateChatDetails = await updateQuery(
       chatDetailsModel,
-      { receiverId: therapistsId },
+      { receiverId: therapistsId, chatType: 'message' },
       { $pull: { "individualDetails": { senderId: individualId } } },
     );
   
     io.to(therapistsId).emit('refresh-chat-data', { data: [updateChatDetails.individualDetails] });
+  }
+
+  const updatedCallList = async(data, io) => {
+    const { individualId, therapistsId } = data;
+    console.log('data', data);
+    const updateChatDetails = await updateQuery(
+      chatDetailsModel,
+      { receiverId: therapistsId, chatType: 'call' },
+      { $pull: { "individualDetails": { senderId: individualId } } },
+    );
+  
+    io.to(therapistsId).emit('refresh-call-data', { data: [updateChatDetails.individualDetails] });
   }
 };
     
