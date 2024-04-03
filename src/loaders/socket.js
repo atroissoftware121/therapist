@@ -45,15 +45,15 @@ module.exports = (io) => {
        io.emit('list-of-active-therapist', await findQuery(therapistModel, {isOnline: true}));
     })
 
+    socket.on('individual-show-to-therapist', async(therapistId) => {
+      io.emit('list-of-individual-for-call', await findQuery(chatDetailsModel, {receiverId: therapistId, chatType: 'call'}));
+    })
+
     socket.on('therapist-show-to-individual', async () => {
        io.emit('list-of-active-therapist', await findQuery(therapistModel, {isOnline: true}));
     })
     
     io.emit('list-of-active-therapist', await findQuery(therapistModel, {isOnline: true}));
-
-    socket.on('event-emit-call-connected', () => {
-      io.emit('accept-call-emit', 'we will connect after some time');
-    })
 
     socket.on('disconnect', () => {
       console.log('User disconnected');
