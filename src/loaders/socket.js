@@ -1,6 +1,5 @@
 const { findQuery, updateQuery} = require('../helpers/mongooseHelpers');
 const chatDetailsModel = require('../mongooseModels/chat-details.model');
-const individualNotificationModel = require('../mongooseModels/individual-notification.model');
 const therapistModel = require('../mongooseModels/therapist.model');
 const { sendNotificationToIndividual } = require('../controllers/commonController');
 
@@ -16,6 +15,7 @@ module.exports = (io) => {
     });
 
     socket.on('individual-end-call-chat', async (data) => {
+      console.log('data12', data);
       await updatedCallList(data, io);
     })
 
@@ -78,7 +78,7 @@ module.exports = (io) => {
 
   const updatedCallList = async(data, io) => {
     const { individualId, therapistsId } = data;
-    console.log('data', data);
+    console.log('data000909909999999eee', data);
     const updateChatDetails = await updateQuery(
       chatDetailsModel,
       { receiverId: therapistsId, chatType: 'call' },
@@ -88,4 +88,3 @@ module.exports = (io) => {
     io.to(therapistsId).emit('refresh-call-data', { data: [updateChatDetails.individualDetails] });
   }
 };
-    
