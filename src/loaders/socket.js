@@ -47,6 +47,10 @@ module.exports = (io) => {
     
     io.emit('list-of-active-therapist', await findQuery(therapistModel, {isOnline: true}));
 
+    socket.on('event-emit-call-connected', () => {
+      io.emit('accept-call-emit', 'we will connect after some time');
+    })
+
     socket.on('disconnect', () => {
       console.log('User disconnected');
     });
