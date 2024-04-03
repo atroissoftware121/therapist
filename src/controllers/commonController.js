@@ -127,6 +127,7 @@ const sentPushNotifications = (io) => catchAsync(async (req, res) => {
         senderName: `${individualData.fname} ${individualData.lname}`,
         email: individualData.email,
         mobileNumber: individualData.mobileNumber,
+        
         gender: individualData.gender,
       }
       const [isChatExisted] = await findQuery(chatDetailsModel, { receiverId: data.receiverId, chatType: data.chatType });
@@ -151,6 +152,8 @@ const sentPushNotifications = (io) => catchAsync(async (req, res) => {
               },
             },
           )
+        } else {
+          messageData = isChatExisted;
         }
       } else {
         messageData = await createQuery(chatDetailsModel, {
