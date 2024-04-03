@@ -27,7 +27,7 @@ const sessionModel = require('../mongooseModels/session.model');
 const reportModel = require('../mongooseModels/report.model');
 const individualTransactionModel = require('../mongooseModels/individual-transaction.model');
 const individualNotificationModel = require('../mongooseModels/individual-notification.model');
-
+const callDetailsModel = require('../mongooseModels/callChat-details.model');
 
 const GetImage = async (req, res) => {
   const key = req.params.key;
@@ -127,7 +127,7 @@ const sentPushNotifications = (io) => catchAsync(async (req, res) => {
         senderName: `${individualData.fname} ${individualData.lname}`,
         email: individualData.email,
         mobileNumber: individualData.mobileNumber,
-        
+
         gender: individualData.gender,
       }
       const [isChatExisted] = await findQuery(chatDetailsModel, { receiverId: data.receiverId, chatType: data.chatType });
@@ -464,6 +464,39 @@ const getlistOfTherapistNotified = async(req, res) => {
   return SendSuccessResponse({ res, data: { data:  therapistData} });
 }
 
+const getCalldata = async(req, res) => {
+  const dataMapper = chatMapper(req.body);
+  await createQuery(callDetailsModel, dataMapper)
+
+  return SendSuccessResponse({ res, data: { data:  'Received request successfully'} });
+
+}
+
+const chatMapper = (data) => {
+  return {
+    callerId: data.CallSid,
+    eventType: data.EventType,
+    startTime: data.StartTime,
+    endTime: data.EndTime,
+    status: data.Status,
+    from: data.From,
+    to: data.To,
+    phoneNumberSid: data.PhoneNumberSid,
+    direction: data.Direction,
+    recordingUrl: data.RecordingUrl,
+    conversationDuration: data.ConversationDuration,
+    legs: [{
+      userType: 'therapist',
+      onCallDuration: data.Legs[0].OnCallDuration,
+      status: data.Legs[0].Status
+    },{
+      userType: 'individual',
+      onCallDuration: data.Legs[1].OnCallDuration,
+      status: data.Legs[1].Status
+    }
+  ]
+  }
+}
 
 module.exports = {
   GetImage,
@@ -478,4 +511,5 @@ module.exports = {
   createNotificationData,
   sendNotificationToIndividual,
   getlistOfTherapistNotified,
+  getCalldata,
 };
