@@ -464,7 +464,7 @@ const getlistOfTherapistNotified = async(req, res) => {
   return SendSuccessResponse({ res, data: { data:  therapistData} });
 }
 
-const getCalldata = (io) => async(req, res) => {
+const getCalldata =  async(req, res) => {
   console.log('12233333===>');
   console.log('req1222', req.body);
   // const { therapistsId, individualId } = req;
