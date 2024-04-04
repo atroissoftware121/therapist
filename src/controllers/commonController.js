@@ -465,7 +465,7 @@ const getlistOfTherapistNotified = async(req, res) => {
 }
 
 const getCalldata = (io) => async(req, res) => {
-  const { therapistsId, individualId } = req.query;
+  const { therapistsId, individualId } = req.body;
   
   console.log('data12233333===>', req.body);
   const dataMapper = chatMapper(req.body);
@@ -497,16 +497,16 @@ const chatMapper = (data) => {
     direction: data.Direction || null,
     recordingUrl: data.RecordingUrl || null,
     conversationDuration: data.ConversationDuration || null,
-    legs: [{
-      userType: 'therapist',
-      onCallDuration: data?.Legs[0].OnCallDuration,
-      status: data.Legs[0].Status
-    },{
-      userType: 'individual',
-      onCallDuration: data?.Legs[1].OnCallDuration,
-      status: data.Legs[1].Status
-    }
-  ]
+  //   legs: [{
+  //     userType: 'therapist',
+  //     onCallDuration: data?.Legs[0].OnCallDuration,
+  //     status: data.Legs[0].Status
+  //   },{
+  //     userType: 'individual',
+  //     onCallDuration: data?.Legs[1].OnCallDuration,
+  //     status: data.Legs[1].Status
+  //   }
+  // ]
   }
 }
 
