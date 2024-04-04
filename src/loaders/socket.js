@@ -35,8 +35,8 @@ module.exports = (io) => {
       await sendNotificationToIndividual(data.therapistId);
     });
 
-    socket.on('event-emit-call-connected', () => {
-      io.emit('accept-call-emit', 'we will connect after some time');
+    socket.on('event-emit-call-connected', (individualId) => {
+      io.to(individualId).emit('accept-call-emit', 'we will connect after some time');
     });
 
     socket.on('therapist-inactive', async (therapistId) => {
