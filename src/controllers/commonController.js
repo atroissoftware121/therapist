@@ -466,16 +466,15 @@ const getlistOfTherapistNotified = async(req, res) => {
 
 const getCalldata = async(req, res) => {
   const { therapistsId, individualId } = req.query;
-  console.log('req1222', req);
-  console.log('req.body', req.body);
   const dataMapper = chatMapper(req.body, therapistsId, individualId);
   if(dataMapper.status) {
     await updateQuery(
-      chatDetailsModel,
-      { receiverId: therapistsId, chatType: 'call' },
-      { $pull: { "individualDetails": { senderId: individualId } } },
+        chatDetailsModel,
+        { receiverId: therapistsId, chatType: "call"},
+        { $pull: { "individualDetails": { senderId: individualId} } },
     );
   }
+  
   await createQuery(callDetailsModel, dataMapper);
 
   return SendSuccessResponse({ res, data: { data:  'Received request successfully'} });
