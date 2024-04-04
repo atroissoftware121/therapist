@@ -464,21 +464,21 @@ const getlistOfTherapistNotified = async(req, res) => {
   return SendSuccessResponse({ res, data: { data:  therapistData} });
 }
 
-const getCalldata = (io) => async(req, res) => {  
-  console.log('data12233333===>', req.body);
-  const { therapistsId, individualId } = req.query;
-  const dataMapper = chatMapper(req.body);
-  console.log('12233333===>', therapistsId, individualId);
-  await updateQuery(
-    chatDetailsModel,
-      { receiverId: therapistsId, chatType: "call"},
-      { $pull: { "individualDetails": { senderId: individualId} } },
-  );
-  const [data] = await findQuery(chatDetailsModel, {receiverId: therapistsId, chatType: 'call'})
-  console.log('data1266667766522 ==> ', data);
-  await createQuery(callDetailsModel, {...dataMapper, therapistsId, individualId});
+const getCalldata = async(req, res) => {  
+  // console.log('data12233333===>', req.body);
+  // const { therapistsId, individualId } = req.query;
+  // const dataMapper = chatMapper(req.body);
+  // console.log('12233333===>', therapistsId, individualId);
+  // await updateQuery(
+  //   chatDetailsModel,
+  //     { receiverId: therapistsId, chatType: "call"},
+  //     { $pull: { "individualDetails": { senderId: individualId} } },
+  // );
+  // const [data] = await findQuery(chatDetailsModel, {receiverId: therapistsId, chatType: 'call'})
+  // console.log('data1266667766522 ==> ', data);
+  // await createQuery(callDetailsModel, {...dataMapper, therapistsId, individualId});
 
-  io.to(therapistsId).emit('refresh-call-lists', {data: data.individualDetails});
+  // io.to(therapistsId).emit('refresh-call-lists', {data: data.individualDetails});
 
   return SendSuccessResponse({ res, data: { data:  'Received request successfully'} });
 }
