@@ -466,7 +466,6 @@ const getlistOfTherapistNotified = async(req, res) => {
 
 const getCalldata = (io) => async(req, res) => {
   const { therapistsId, individualId } = req.query;
-  console.log('ioqqqqqq', io);
   const dataMapper = chatMapper(req.body);
   await updateQuery(
     chatDetailsModel,
@@ -474,26 +473,27 @@ const getCalldata = (io) => async(req, res) => {
       { $pull: { "individualDetails": { senderId: individualId} } },
   );
   const [data] = await findQuery(chatDetailsModel, {receiverId: therapistsId, chatType: 'call'})
-  console.log('data1222', data);
+  console.log('data1266667766522 ==> ', data);
   await createQuery(callDetailsModel, {...dataMapper, therapistsId, individualId});
-  io.emit('refresh-call-lists', {data: data.individualDetails});
+
+  io.to(therapistsId).emit('refresh-call-lists', {data: data.individualDetails});
 
   return SendSuccessResponse({ res, data: { data:  'Received request successfully'} });
 }
 
 const chatMapper = (data) => {
   return {
-    callerId: data.CallSid,
-    eventType: data.EventType,
-    startTime: data.StartTime,
-    endTime: data.EndTime,
-    status: data.Status,
-    from: data.From,
-    to: data.To,
-    phoneNumberSid: data.PhoneNumberSid,
-    direction: data.Direction,
-    recordingUrl: data.RecordingUrl,
-    conversationDuration: data.ConversationDuration,
+    callerId: data.CallSid || null,
+    eventType: data.EventType || null,
+    startTime: data.StartTime || null,
+    endTime: data.EndTime || null,
+    status: data.Status || null,
+    from: data.From || null,
+    to: data.To || null,
+    phoneNumberSid: data.PhoneNumberSid || null,
+    direction: data.Direction || null,
+    recordingUrl: data.RecordingUrl || null,
+    conversationDuration: data.ConversationDuration || null,
     legs: [{
       userType: 'therapist',
       onCallDuration: data?.Legs[0].OnCallDuration,
