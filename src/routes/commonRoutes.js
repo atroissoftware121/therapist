@@ -59,5 +59,5 @@ module.exports = (app, io) => {
   );
   route.post('/addIndividualNotification', createNotificationData);
   route.get('/getlistOfTherapistNotified', getlistOfTherapistNotified);
-  route.post('/get-call-details', getCalldata);
+  route.post('/get-call-details', getCalldata(io));
 };
