@@ -3,6 +3,8 @@ const mongoose = require('mongoose');
 const callDetailsSchema = new mongoose.Schema(
   {
     callerId: { type: String, require: true },
+    therapistsId: { type: String, require: true },
+    individualId: { type: String, require: true },
     eventType: { type: String, require: true },
     startTime: { type: Date, require: true },
     endTime: { type: Date, require: true },
