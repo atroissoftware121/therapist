@@ -466,7 +466,7 @@ const getlistOfTherapistNotified = async(req, res) => {
 
 const getCalldata = async(req, res) => {
   const { therapistsId, individualId } = req.query;
-  const dataMapper = chatMapper(req.body, therapistsId, individualId);
+  const dataMapper = chatMapper(req.body);
   if(dataMapper.status) {
     await updateQuery(
         chatDetailsModel,
@@ -475,17 +475,14 @@ const getCalldata = async(req, res) => {
     );
   }
   
-  await createQuery(callDetailsModel, dataMapper);
+  await createQuery(callDetailsModel, {...dataMapper, therapistsId, individualId});
 
   return SendSuccessResponse({ res, data: { data:  'Received request successfully'} });
 
 }
 
-const chatMapper = (data, therapistsId, individualId) => {
-  console.log('data123243535535333', data,  'therapist', therapistsId, 'individualId', individualId);
+const chatMapper = (data) => {
   return {
-    therapistsId,
-    individualId,
     callerId: data.CallSid,
     eventType: data.EventType,
     startTime: data.StartTime,
