@@ -474,9 +474,9 @@ const getCalldata = (io) => async(req, res) => {
       { $pull: { "individualDetails": { senderId: individualId} } },
   );
   const [data] = await findQuery(chatDetailsModel, {receiverId: therapistsId, chatType: 'call'})
-  console.log('data12233', data.individualDetails);
+  console.log('data1222', data);
   await createQuery(callDetailsModel, {...dataMapper, therapistsId, individualId});
-  io.to(therapistsId).emit('refresh-call-lists', {data: data.individualDetails});
+  io.emit('refresh-call-lists', {data: data.individualDetails});
 
   return SendSuccessResponse({ res, data: { data:  'Received request successfully'} });
 }
