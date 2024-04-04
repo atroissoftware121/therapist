@@ -465,49 +465,50 @@ const getlistOfTherapistNotified = async(req, res) => {
 }
 
 const getCalldata = (io) => async(req, res) => {
-  const { therapistsId, individualId } = req.body;
+  console.log('12233333===>');
+  console.log('req1222', req.body);
+  // const { therapistsId, individualId } = req;
   
-  console.log('data12233333===>', req.body);
-  const dataMapper = chatMapper(req.body);
-  console.log('12233333===>', therapistsId, individualId);
-  await updateQuery(
-    chatDetailsModel,
-      { receiverId: therapistsId, chatType: "call"},
-      { $pull: { "individualDetails": { senderId: individualId} } },
-  );
-  const [data] = await findQuery(chatDetailsModel, {receiverId: therapistsId, chatType: 'call'})
-  console.log('data1266667766522 ==> ', data);
-  await createQuery(callDetailsModel, {...dataMapper, therapistsId, individualId});
+  // console.log('data12233333===>', therapistsId.toString());
+  // const dataMapper = chatMapper(req.body);
+//   await updateQuery(
+//     chatDetailsModel,
+//       { receiverId: therapistsId, chatType: "call"},
+//       { $pull: { "individualDetails": { senderId: individualId} } },
+//   );
+//   const [data] = await findQuery(chatDetailsModel, {receiverId: therapistsId, chatType: 'call'})
+//   console.log('data1266667766522 ==> ', data);
+//   await createQuery(callDetailsModel, {...dataMapper, therapistsId, individualId});
 
-  io.to(therapistsId).emit('refresh-call-lists', {data: data.individualDetails});
+//   io.to(therapistsId).emit('refresh-call-lists', {data: data.individualDetails});
 
-  return SendSuccessResponse({ res, data: { data:  'Received request successfully'} });
-}
+//   return SendSuccessResponse({ res, data: { data:  'Received request successfully'} });
+// }
 
-const chatMapper = (data) => {
-  return {
-    callerId: data.CallSid || null,
-    eventType: data.EventType || null,
-    startTime: data.StartTime || null,
-    endTime: data.EndTime || null,
-    status: data.Status || null,
-    from: data.From || null,
-    to: data.To || null,
-    phoneNumberSid: data.PhoneNumberSid || null,
-    direction: data.Direction || null,
-    recordingUrl: data.RecordingUrl || null,
-    conversationDuration: data.ConversationDuration || null,
-  //   legs: [{
-  //     userType: 'therapist',
-  //     onCallDuration: data?.Legs[0].OnCallDuration,
-  //     status: data.Legs[0].Status
-  //   },{
-  //     userType: 'individual',
-  //     onCallDuration: data?.Legs[1].OnCallDuration,
-  //     status: data.Legs[1].Status
-  //   }
-  // ]
-  }
+// const chatMapper = (data) => {
+//   return {
+//     callerId: data.CallSid || null,
+//     eventType: data.EventType || null,
+//     startTime: data.StartTime || null,
+//     endTime: data.EndTime || null,
+//     status: data.Status || null,
+//     from: data.From || null,
+//     to: data.To || null,
+//     phoneNumberSid: data.PhoneNumberSid || null,
+//     direction: data.Direction || null,
+//     recordingUrl: data.RecordingUrl || null,
+//     conversationDuration: data.ConversationDuration || null,
+//   //   legs: [{
+//   //     userType: 'therapist',
+//   //     onCallDuration: data?.Legs[0].OnCallDuration,
+//   //     status: data.Legs[0].Status
+//   //   },{
+//   //     userType: 'individual',
+//   //     onCallDuration: data?.Legs[1].OnCallDuration,
+//   //     status: data.Legs[1].Status
+//   //   }
+//   // ]
+//   }
 }
 
 module.exports = {
