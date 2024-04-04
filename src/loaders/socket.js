@@ -25,6 +25,11 @@ module.exports = (io) => {
       socket.join(roomName);
       console.log(`Socket ${socket.id} joined room: ${roomName}`);
     });
+    socket.on('join-individual-room', (individualId) => {
+      const roomName = individualId;
+      socket.join(roomName);
+      console.log(`Socket ${socket.id} joined room: ${roomName}`);
+    });
     socket.on('therapist-active', async (data) => {
       console.log('therapist', data);
       await updateQuery(therapistModel, { _id: data.therapistId }, { isOnline: true });
@@ -36,6 +41,7 @@ module.exports = (io) => {
     });
 
     socket.on('event-emit-call-connected', (individualId) => {
+      console.log('122299909999', individualId);
       io.to(individualId).emit('accept-call-emit', 'we will connect after some time');
     });
 
