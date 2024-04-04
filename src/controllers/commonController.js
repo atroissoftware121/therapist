@@ -466,7 +466,10 @@ const getlistOfTherapistNotified = async(req, res) => {
 
 const getCalldata = (io) => async(req, res) => {
   const { therapistsId, individualId } = req.query;
+
+  console.log('data12233333===>', req.body);
   const dataMapper = chatMapper(req.body);
+  console.log('12233333===>', req.body);
   await updateQuery(
     chatDetailsModel,
       { receiverId: therapistsId, chatType: "call"},
@@ -483,17 +486,17 @@ const getCalldata = (io) => async(req, res) => {
 
 const chatMapper = (data) => {
   return {
-    callerId: data.CallSid || null,
-    eventType: data.EventType || null,
-    startTime: data.StartTime || null,
-    endTime: data.EndTime || null,
-    status: data.Status || null,
-    from: data.From || null,
-    to: data.To || null,
-    phoneNumberSid: data.PhoneNumberSid || null,
-    direction: data.Direction || null,
-    recordingUrl: data.RecordingUrl || null,
-    conversationDuration: data.ConversationDuration || null,
+    callerId: data.CallSid,
+    eventType: data.EventType,
+    startTime: data.StartTime,
+    endTime: data.EndTime,
+    status: data.Status,
+    from: data.From,
+    to: data.To,
+    phoneNumberSid: data.PhoneNumberSid,
+    direction: data.Direction,
+    recordingUrl: data.RecordingUrl,
+    conversationDuration: data.ConversationDuration,
     legs: [{
       userType: 'therapist',
       onCallDuration: data?.Legs[0].OnCallDuration,
