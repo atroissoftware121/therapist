@@ -483,7 +483,7 @@ const getCalldata = async(req, res) => {
 }
 
 const chatMapper = (data, therapistsId, individualId) => {
-  console.log('data12', data);
+  console.log('data123243535535333', data,  'therapist', therapistsId, 'individualId', individualId);
   return {
     therapistsId,
     individualId,
