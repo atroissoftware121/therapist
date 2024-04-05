@@ -1,13 +1,24 @@
 const { findQuery, updateQuery} = require('../helpers/mongooseHelpers');
 const chatDetailsModel = require('../mongooseModels/chat-details.model');
 const therapistModel = require('../mongooseModels/therapist.model');
-const { sendNotificationToIndividual } = require('../controllers/commonController');
+const { sendNotificationToIndividual } = require('../controllers/individualController');
+const express = require("express");
+const http = require("http");
+const app = express();
+const socketIo = require('socket.io');
+const server = http.createServer(app);
 
-module.exports = (io) => {
+const io = socketIo(server, {
+  cors: {
+      origin: '*',
+      methods: ['GET', 'POST']
+  }
+});
+
+async function handleSocket() {
   io.on('connection', async(socket) => {
     console.log(`A user connected--${socket.id}`);
     socket.on('list-of-messages', async (userId) => {
-      console.log('list12', userId);
       await listOfMessages(userId, socket);
     });
     socket.on('individual-end-chat', async (data) => {
@@ -15,23 +26,20 @@ module.exports = (io) => {
     });
 
     socket.on('individual-end-call-chat', async (data) => {
-      console.log('data12', data);
       await updatedCallList(data, io);
     })
 
     socket.on('join-therapist-room', (therapistId) => {
-      console.log('therapistId12', therapistId);
       const roomName = therapistId;
       socket.join(roomName);
-      console.log(`Socket ${socket.id} joined room: ${roomName}`);
+      console.log(`Socket ${socket.id} therapist joined room: ${roomName}`);
     });
     socket.on('join-individual-room', (individualId) => {
       const roomName = individualId;
       socket.join(roomName);
-      console.log(`Socket ${socket.id} joined room: ${roomName}`);
+      console.log(`Socket ${socket.id} individual joined room: ${roomName}`);
     });
     socket.on('therapist-active', async (data) => {
-      console.log('therapist', data);
       await updateQuery(therapistModel, { _id: data.therapistId }, { isOnline: true });
       io.emit('list-of-active-therapist', await findQuery(therapistModel, {isOnline: true}));
     });
@@ -41,12 +49,10 @@ module.exports = (io) => {
     });
 
     socket.on('event-emit-call-connected', (individualId) => {
-      console.log('122299909999', individualId);
       io.to(individualId).emit('accept-call-emit', 'we will connect after some time');
     });
 
     socket.on('therapist-inactive', async (therapistId) => {
-      console.log('therapistId', therapistId);
        await updateQuery(therapistModel, { _id: therapistId }, { isOnline: false });
        io.emit('list-of-active-therapist', await findQuery(therapistModel, {isOnline: true}));
     })
@@ -66,39 +72,68 @@ module.exports = (io) => {
     });
   });
 
-  const listOfMessages = async (userId, socket) => { 
-    console.log('userI1d', userId);
-    const [isChatExisted] = await findQuery(chatDetailsModel, { receiverId: userId, chatType: 'message' });
-    console.log('isChatExitsed', isChatExisted);
-    if (!isChatExisted) { 
-        socket.emit('chat-not-found', { message: 'Chat does not exist with this userId' });
-    } else {
-        console.log('isChat', isChatExisted.individualDetails);
-        socket.emit('chat-data', { data: [isChatExisted.individualDetails] });
-    }
-  };
-  
-  const updatedList = async(data, io) => {
-    const { individualId, therapistsId } = data;
-    console.log('data', data);
-    const updateChatDetails = await updateQuery(
-      chatDetailsModel,
-      { receiverId: therapistsId, chatType: 'message' },
-      { $pull: { "individualDetails": { senderId: individualId } } },
-    );
-  
-    io.to(therapistsId).emit('refresh-chat-data', { data: [updateChatDetails.individualDetails] });
-  }
+};
 
-  const updatedCallList = async(data, io) => {
-    const { individualId, therapistsId } = data;
-    console.log('data000909909999999eee', data);
-    const updateChatDetails = await updateQuery(
-      chatDetailsModel,
-      { receiverId: therapistsId, chatType: 'call' },
-      { $pull: { "individualDetails": { senderId: individualId } } },
-    );
-  
-    io.to(therapistsId).emit('refresh-call-data', { data: [updateChatDetails.individualDetails] });
+const listOfMessages = async (userId, socket) => { 
+  const [isChatExisted] = await findQuery(chatDetailsModel, { receiverId: userId, chatType: 'message' });
+  if (!isChatExisted) { 
+      socket.emit('chat-not-found', { message: 'Chat does not exist with this userId' });
+  } else {
+      socket.emit('chat-data', { data: [isChatExisted.individualDetails] });
   }
+};
+
+const updatedList = async(data, io) => {
+  const { individualId, therapistsId } = data;
+  const updateChatDetails = await updateQuery(
+    chatDetailsModel,
+    { receiverId: therapistsId, chatType: 'message' },
+    { $pull: { "individualDetails": { senderId: individualId } } },
+  );
+
+  io.to(therapistsId).emit('refresh-chat-data', { data: [updateChatDetails.individualDetails] });
+};
+
+const updatedCallList = async(data, io) => {
+  const { individualId, therapistsId } = data;
+  const updateChatDetails = await updateQuery(
+    chatDetailsModel,
+    { receiverId: therapistsId, chatType: 'call' },
+    { $pull: { "individualDetails": { senderId: individualId } } },
+  );
+
+  io.to(therapistsId).emit('refresh-call-data', { data: [updateChatDetails.individualDetails] });
+};
+
+// Refresh-Call-list after call terminated
+const refreshCallListsEvent = async(data, therapistsId) => {
+  io.to(therapistsId).emit('refresh-call-lists', {data: data.individualDetails});
+};
+
+// chat- detail event shows list of chat;
+const chatDetailsEvent = async(data, messageData, individualData) => {
+  if(data.chatType === 'message') {
+    io.to(data.receiverId).emit('chat-details', { data: [messageData?.individualDetails], image: individualData.image });
+  } else {
+    io.to(data.receiverId).emit('chat-details-for-call', { data: [messageData?.individualDetails], image: individualData.image, timing: data.timing });
+  }
+};
+
+const startTimerEvent = async(data) => {
+  io.emit('startTimer', data);
+};
+
+const endTimerEvent = async(data) => {
+  io.emit('endTimer', data);
+};
+
+module.exports = {
+  app,
+  io,
+  server,
+  handleSocket,
+  refreshCallListsEvent,
+  chatDetailsEvent,
+  startTimerEvent,
+  endTimerEvent,
 };
