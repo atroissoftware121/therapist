@@ -1,7 +1,7 @@
 const { findQuery, updateQuery} = require('../helpers/mongooseHelpers');
 const chatDetailsModel = require('../mongooseModels/chat-details.model');
 const therapistModel = require('../mongooseModels/therapist.model');
-const { sendNotificationToIndividual } = require('../controllers/individualController');
+const { sendNotificationToIndividual } = require('../notification');
 const express = require("express");
 const http = require("http");
 const app = express();
