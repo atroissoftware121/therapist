@@ -7,17 +7,9 @@ const { Server } = require("socket.io");
 const { PORT } = require("./src/config");
 const bodyParser = require("body-parser");
 const mongodb = require("./src/loaders/mongodb");
-const socket = require("./src/loaders/socket");
-const socketIo = require('socket.io');
+const {handleSocket, server, app} = require("./src/loaders/socket");
 
-const app = express();
-const server = http.createServer(app);
-const io = socketIo(server, {
-  cors: {
-      origin: '*',
-      methods: ['GET', 'POST']
-  }
-});
+handleSocket();
 mongodb();
 // Allow all incoming traffic (not recommended for production)
 app.use(cors({
@@ -39,7 +31,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 
 app.use(bodyParser.json());
 
-app.use("/", Routes(io));
+app.use("/", Routes());
 
 app.use(errors());
 
@@ -64,5 +56,4 @@ app.use((err, req, res, next) => {
     },
   });
 });
-socket(io);
 server.listen(PORT, () => console.log("App listen on PORT:" + PORT));

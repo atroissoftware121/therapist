@@ -4,11 +4,11 @@ const therapistRoutes = require("./therapistRoutes");
 const individualRoutes = require("./individualRoutes");
 const commonRoutes = require("./commonRoutes");
 
-module.exports = (io) => {
+module.exports = () => {
   const app = Router();
   authRoutes(app);
   therapistRoutes(app);
   individualRoutes(app);
-  commonRoutes(app, io);
+  commonRoutes(app);
   return app;
 };

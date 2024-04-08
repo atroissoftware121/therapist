@@ -28,6 +28,8 @@ const reportModel = require('../mongooseModels/report.model');
 const individualTransactionModel = require('../mongooseModels/individual-transaction.model');
 const individualNotificationModel = require('../mongooseModels/individual-notification.model');
 const callDetailsModel = require('../mongooseModels/callChat-details.model');
+const { refreshCallListsEvent, chatDetailsEvent, startTimerEvent, endTimerEvent } = require('../loaders/socket');
+
 
 const GetImage = async (req, res) => {
   const key = req.params.key;
@@ -76,7 +78,7 @@ const Logout = async (req, res) => {
   }
 };
 
-const sentPushNotifications = (io) => catchAsync(async (req, res) => {
+const sentPushNotifications = catchAsync(async (req, res) => {
   try {
     const data = req.body;
     let [receiverDetail] = await findQuery(userExtraDetailsModel, {
@@ -164,11 +166,7 @@ const sentPushNotifications = (io) => catchAsync(async (req, res) => {
         });
       }
       console.log('emit', messageData);
-      if(data.chatType === 'message') {
-        io.to(data.receiverId).emit('chat-details', { data: [messageData?.individualDetails], image: individualData.image });
-      } else {
-        io.to(data.receiverId).emit('chat-details-for-call', { data: [messageData?.individualDetails], image: individualData.image, timing: data.timing });
-      }
+      await chatDetailsEvent(data, messageData, individualData);
       
       return SendSuccessResponse({ res, data: response });
 
@@ -249,8 +247,9 @@ const getProfile = async (req, res) => {
   }
 }
 
-const startSession = (io) => async (req, res) => {
+const startSession = async (req, res) => {
   const { individualId, therapistsId } = req.query;
+  console.log('therapistId', therapistsId);
   const [userChatDetails] = await findQuery(chatDetailsModel,
     {
       receiverId: therapistsId,
@@ -258,7 +257,6 @@ const startSession = (io) => async (req, res) => {
       'individualDetails.senderId': { $eq: individualId }
     });
     
-
   if (!userChatDetails) {
     return SendBadResponse({
       res,
@@ -278,8 +276,8 @@ const startSession = (io) => async (req, res) => {
     sessionId: createSession._id,
     startSession: sessionStartTime,
   };
-  io.emit('startTimer', data);
 
+  await startTimerEvent(data);
   await updateQuery(chatDetailsModel,
     {
       receiverId: therapistsId,
@@ -296,7 +294,7 @@ const startSession = (io) => async (req, res) => {
   return SendSuccessResponse({ res, data: { createSession } });
 };
 
-const endSession = (io) => async (req, res) => {
+const endSession = async (req, res) => {
   try {
     const { individualId, therapistsId, sessionId } = req.query;
     const data = {
@@ -305,8 +303,7 @@ const endSession = (io) => async (req, res) => {
       sessionId,
       isSessionStart: false,
     };
-
-    io.emit('endTimer', data);
+    await endTimerEvent(data);
     const sessionData = await findQuery(sessionModel, { _id: sessionId });
 
     if (!sessionData) {
@@ -464,8 +461,7 @@ const getlistOfTherapistNotified = async(req, res) => {
   return SendSuccessResponse({ res, data: { data:  therapistData} });
 }
 
-const getCalldata = (io) => async(req, res) => {  
-  console.log('data12233333===>', req.body);
+const getCalldata = async(req, res) => {  
   const { therapistsId, individualId } = req.query;
   const dataMapper = chatMapper(req.body);
   console.log('12233333===>', therapistsId, individualId);
@@ -475,10 +471,8 @@ const getCalldata = (io) => async(req, res) => {
       { $pull: { "individualDetails": { senderId: individualId} } },
   );
   const [data] = await findQuery(chatDetailsModel, {receiverId: therapistsId, chatType: 'call'})
-  console.log('data1266667766522 ==> ', data);
   await createQuery(callDetailsModel, {...dataMapper, therapistsId, individualId});
-
-  io.to(therapistsId).emit('refresh-call-lists', {data: data.individualDetails});
+  await refreshCallListsEvent(data, therapistsId);
 
   return SendSuccessResponse({ res, data: { data:  'Received request successfully'} });
 }

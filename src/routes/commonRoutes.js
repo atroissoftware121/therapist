@@ -21,7 +21,7 @@ const {
 } = require('../middlewares/authMiddlewares');
 const { Logout } = require('../controllers/commonController');
 
-module.exports = (app, io) => {
+module.exports = (app) => {
   const route = Router();
   app.use('/', route);
   route.patch('/logout', isAuthorized, injectUserDetails, Logout);
@@ -40,14 +40,14 @@ module.exports = (app, io) => {
       }),
     }),
     isAuthorized,
-    sentPushNotifications(io),
+    sentPushNotifications,
   );
   route.get('/chatHistory', isAuthorized, injectUserDetails, chatHistory);
   route.get('/image/:key', GetImage);
   route.post('/image', upload.single('image'), UploadImages);
   route.get('/getProfile', isAuthorized, injectUserDetails, getProfile);
-  route.get('/session-start', startSession(io));
-  route.get('/end-session', endSession(io));
+  route.get('/session-start', startSession);
+  route.get('/end-session', endSession);
   route.post('/createReport', celebrate({
     [Segments.BODY]: Joi.object().keys({
       userId: Joi.string().required(),
@@ -59,5 +59,5 @@ module.exports = (app, io) => {
   );
   route.post('/addIndividualNotification', createNotificationData);
   route.get('/getlistOfTherapistNotified', getlistOfTherapistNotified);
-  route.post('/get-call-details', getCalldata(io));
+  route.post('/get-call-details', getCalldata);
 };
