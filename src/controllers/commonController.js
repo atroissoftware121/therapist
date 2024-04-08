@@ -9,12 +9,8 @@ const {
   createQuery,
 } = require('../helpers/mongooseHelpers');
 
-const admin = require('firebase-admin');
-const { firebaseConfig } = require('../config/firebase-admin');
+const {admin} = require('../config/messaging-system');
 const catchAsync = require('../utils/catchAsync');
-admin.initializeApp({
-  credential: admin.credential.cert(firebaseConfig),
-});
 const pick = require('../utils/pick');
 const { getFileStream, uploadFileS3 } = require('../helpers/s3Helper');
 const userExtraDetailsModel = require('../mongooseModels/userExtraDetails.model');
@@ -416,37 +412,6 @@ const createNotificationData = async(req, res) => {
   return SendSuccessResponse({ res, data: { data: true } });
 }
 
-const sendNotificationToIndividual = async (therapistId) => {
-  console.log('therapistId122', therapistId)
-  const notificationData = await findQuery(individualNotificationModel, { therapistsIds: { $in: [ therapistId ] }});
-  console.log('notificationData', notificationData);
-  const therapistData =  await findQuery(therapistModel, { _id: therapistId });
-  console.log('data12', therapistData);
-    for(let notification of notificationData) {
-      console.log('notification.individualId', notification.individualId);
-      const [individualData] = await findQuery(userExtraDetailsModel, {userId: notification.individualId})
-      console.log('individualData', individualData);
-      if(individualData && individualData.fcmToken) {
-        const message = {
-            notification: {
-              title: `${therapistData.name}`,
-              body: `${therapistData.name} is online now`,
-            },
-            data: {
-              senderId: therapistId,
-              receiverId: notification.individualId,
-              title: `${therapistData.name}`,
-              body: `${therapistData.name} is online now`,
-            },
-            token: individualData.fcmToken, 
-          };
-        console.log('data122222', message);
-        const notify = await admin.messaging().send(message);
-        console.log('datat12', notify);
-      }
-  }
-}
-
 const getlistOfTherapistNotified = async(req, res) => {
   const { individualId } = req.query;
   const therapistData = await findQuery(individualNotificationModel, { individualId });
@@ -514,7 +479,6 @@ module.exports = {
   endSession,
   createReport,
   createNotificationData,
-  sendNotificationToIndividual,
   getlistOfTherapistNotified,
   getCalldata,
 };
