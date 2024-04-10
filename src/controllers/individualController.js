@@ -6,6 +6,7 @@ const {
 } = require("../helpers/responseHelpers");
 const authCredtionalsModel = require("../mongooseModels/authCredtionals.model");
 const individualModel = require("../mongooseModels/individual.model");
+const sendEmail = require("../utils/emailer");
 
 const IndividualProfileUpdate = async (req, res) => {
   const { fname, lname, email, gender, image } = req.body;
@@ -90,6 +91,11 @@ const IndividualRegister = async (req, res) => {
       password: hashedPassword,
     }
   );
+  const message = 'Individual Registeration on Sahhaya'
+    
+  const text = "Congratulations! Your Individual account on Sahhaya is registered now and ready to use.  Please login on ….. app link……\nTeam Sahhaya";
+
+  sendEmail(email, message, text);
   return SendSuccessResponse({
     res,
     data: { message: "Register successfully!", data: isUserUpdated },
