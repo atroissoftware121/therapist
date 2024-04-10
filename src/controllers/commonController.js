@@ -507,7 +507,7 @@ const chatUserlist = async(req, res) => {
 }
 
 const therapistChatList = async(req, res) => {
-  const { individualId, chatType, page } = req.query;
+  const { individualId, page } = req.query;
 
   let offset = 0;
   let limit = 20;  
@@ -521,20 +521,14 @@ const therapistChatList = async(req, res) => {
   };
   const pushUserData = [];
 
-  if(chatType ==='message') {
     const userMsgData = await findQueryWithPagining(sessionModel, {individualId}, options);
-    for(const data of userMsgData.docs) {
+    const individualCallData = await findQueryWithPagining(callDetailsModel, {individualId}, options);
+    const userData = [...userMsgData.docs, ...individualCallData.docs];
+    for(const data of userData) {
       const therapistMsgData = await findQuery(therapistModel, {_id: data.therapistsId})
       pushUserData.push(therapistMsgData)
     }
-  }
-  else {
-    const individualCallData = await findQueryWithPagining(callDetailsModel, {individualId}, options);
-    for (const data of individualCallData.docs) {
-      const therapistCallData = await findQuery(therapistModel, {_id: data.therapistsId})
-      pushUserData.push(therapistCallData)
-    }
-  }
+ 
   const uniquePushUserData = Array.from(new Set(pushUserData.map(data => String(data._id))))
     .map(id => pushUserData.find(data => String(data._id) === id));
 
