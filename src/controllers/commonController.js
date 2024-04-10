@@ -263,7 +263,7 @@ const startSession = async (req, res) => {
 
   const sessionStartTime = new Date();
 
-  const createSession = await createQuery(sessionModel, { sessionStartTime, isSessionStart: true });
+  const createSession = await createQuery(sessionModel, { sessionStartTime, individualId, therapistsId, isSessionStart: true });
   const data = {
     individualId,
     therapistsId,
