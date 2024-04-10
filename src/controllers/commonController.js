@@ -468,6 +468,79 @@ const chatMapper = (data) => {
   }
 }
 
+const chatUserlist = async(req, res) => {
+  let { individualId, therapistsId, chatType, page } = req.query;
+
+  let offset = 0;
+  let limit = 20;
+  const pushUserData = [];
+  
+  if (page) {
+    offset = (page - 1) * limit;
+  }
+  
+  const options = {
+    limit,
+    offset
+  };
+  const userId = individualId ? { individualId }: { therapistsId };
+  const userModel = individualId ? therapistModel: individualModel;
+  if(chatType === 'message') {
+    const userMsgData = await findQueryWithPagining(sessionModel, userId, options);
+    for(const data of userMsgData.docs) {
+      const id = individualId ? { _id: data.therapistsId }: { _id: data.individualId };
+      const therapistMsgData = await findQuery(userModel, id);
+      pushUserData.push(therapistMsgData);
+    }
+  }
+  else {
+    const individualCallData = await findQueryWithPagining(callDetailsModel, userId, options);
+    for(const data of individualCallData.docs) {
+      const id = individualId ? { _id: data.therapistsId }: { _id: data.individualId };
+      const therapistCallData = await findQuery(userModel, id);
+      console.log('therapistCallData', therapistCallData);
+      pushUserData.push(therapistCallData);
+    }
+  }
+
+  return SendSuccessResponse({ res, data: { data:  pushUserData, length: pushUserData.length} });
+}
+
+const therapistChatList = async(req, res) => {
+  const { individualId, chatType, page } = req.query;
+
+  let offset = 0;
+  let limit = 20;  
+  if (page) {
+    offset = (page - 1) * limit;
+  }
+  
+  const options = {
+    limit,
+    offset
+  };
+  const pushUserData = [];
+
+  if(chatType ==='message') {
+    const userMsgData = await findQueryWithPagining(sessionModel, {individualId}, options);
+    for(const data of userMsgData.docs) {
+      const therapistMsgData = await findQuery(therapistModel, {_id: data.therapistsId})
+      pushUserData.push(therapistMsgData)
+    }
+  }
+  else {
+    const individualCallData = await findQueryWithPagining(callDetailsModel, {individualId}, options);
+    for (const data of individualCallData.docs) {
+      const therapistCallData = await findQuery(therapistModel, {_id: data.therapistsId})
+      pushUserData.push(therapistCallData)
+    }
+  }
+  const uniquePushUserData = Array.from(new Set(pushUserData.map(data => String(data._id))))
+    .map(id => pushUserData.find(data => String(data._id) === id));
+
+  return SendSuccessResponse({ res, data: { data: uniquePushUserData, length: uniquePushUserData.length } });
+}
+
 module.exports = {
   GetImage,
   UploadImages,
@@ -481,4 +554,6 @@ module.exports = {
   createNotificationData,
   getlistOfTherapistNotified,
   getCalldata,
+  chatUserlist,
+  therapistChatList,
 };

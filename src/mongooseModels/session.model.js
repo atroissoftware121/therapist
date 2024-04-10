@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const mongoosePaginate = require('mongoose-paginate-v2');
 
 const sessionDataSchema = new mongoose.Schema(
   {
@@ -6,10 +7,12 @@ const sessionDataSchema = new mongoose.Schema(
     chatType: { type: String, enum: ['message', 'call'], require: true },
     sessionEndTime: { type: String, require: true },
     isSessionStart: { type: Boolean, default: false },
+    individualId: { type: String, require: true },
+    therapistsId: { type: String, require: true }
   },
   {
     timestamps: true,
   }
 );
-
+sessionDataSchema.plugin(mongoosePaginate);
 module.exports = mongoose.model('sessions', sessionDataSchema);
