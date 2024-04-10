@@ -91,7 +91,7 @@ const IndividualRegister = async (req, res) => {
       password: hashedPassword,
     }
   );
-  const message = 'Individual Registeration on Sahhaya'
+  const message = 'Individual Registration on Sahhaya'
     
   const text = "Congratulations! Your Individual account on Sahhaya is registered now and ready to use.  Please login on ….. app link……\nTeam Sahhaya";
 
