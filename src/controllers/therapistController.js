@@ -11,7 +11,7 @@ const sendEmail = require("../utils/emailer");
 const { sendSMS } = require("../helpers/twilloHelpers");
 const ApiError = require("../utils/ApiError");
 const httpStatus = require("http-status");
-
+const userExtraDetailsModel = require('../mongooseModels/userExtraDetails.model');
 const {
   SendSuccessResponse,
   SendBadResponse,
@@ -19,6 +19,7 @@ const {
 const authCredtionalsModel = require("../mongooseModels/authCredtionals.model");
 const therapistModel = require("../mongooseModels/therapist.model");
 const pick = require("../utils/pick");
+const {admin} = require('../config/messaging-system');
 
 const TherapistRegisterStepFirst = catchAsync(async (req, res) => {
   const { name, email, password, image } = req.body;
@@ -265,7 +266,10 @@ const ApproveTherapist = catchAsync(async (req, res) => {
       data: { error: "Therapist Not Found!" },
     });
   }
-
+  const [therapistData] = await findQuery(userExtraDetailsModel, {
+    userId: _id,
+  });
+  console.log('therapistData', therapistData);
   if (!therapist.email || !therapist.documents.length) {
     return SendBadResponse({
       res,
@@ -287,6 +291,23 @@ const ApproveTherapist = catchAsync(async (req, res) => {
     to: therapist.mobileNumber,
     body: message,
   });
+  if (therapistData && therapistData.fcmToken) {
+    const message = {
+      notification: {
+        title: `${response.name}`,
+        body: `Profile Verified`,
+      },
+      data: {
+        // senderId: therapistId,
+        receiverId: _id,
+        title: `${response.name}`,
+        body: `Profile Verified`,
+      },
+      token: therapistData.fcmToken,
+    };
+    console.log('data122222', message);
+    await admin.messaging().send(message);
+  }
   return SendSuccessResponse({
     res,
     data: { message: "Therapist sucessfully approved!", data: response },
