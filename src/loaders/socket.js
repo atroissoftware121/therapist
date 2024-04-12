@@ -71,6 +71,7 @@ async function handleSocket() {
     socket.on('disconnect', async() => {
       const userId = socket.handshake.auth.userId;
       const userUpdateOffline = await updateQuery(therapistModel, { _id: userId }, { isOnline: false });
+      io.emit('list-of-active-therapist', await findQuery(therapistModel, {isOnline: true}));
       console.log('userUpdateOffline', userUpdateOffline);
 
       console.log('User disconnected');
