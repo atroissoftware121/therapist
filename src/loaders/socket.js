@@ -42,7 +42,7 @@ async function handleSocket() {
     });
     socket.on('therapist-active', async (data) => {
       await updateQuery(therapistModel, { _id: data.therapistId }, { isOnline: true });
-      io.emit('list-of-active-th  erapist', await findQuery(therapistModel, {isOnline: true}));
+      io.emit('list-of-active-therapist', await findQuery(therapistModel, {isOnline: true}));
     });
     
     socket.on('send-notification-individual', async (data) => {
@@ -125,11 +125,12 @@ const chatDetailsEvent = async(data, messageData, individualData) => {
 };
 
 const startTimerEvent = async(data) => {
-  io.emit('startTimer', data);
+  console.log('datat12', data);
+  io.to(data.individualId).emit('startTimer', data);
 };
 
 const endTimerEvent = async(data) => {
-  io.emit('endTimer', data);
+  io.to(data.therapistsId).emit('endTimer', data);
 };
 
 module.exports = {
