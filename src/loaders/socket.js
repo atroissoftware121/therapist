@@ -67,6 +67,7 @@ async function handleSocket() {
     });
 
     socket.on('user-inactive', async(userId) => {
+      console.log('userId12000', userId);
       const userUpdateOffline = await updateQuery(therapistModel, { _id: userId }, { isOnline: false });
       io.emit('list-of-active-therapist', await findQuery(therapistModel, {isOnline: true}));
       console.log('userUpdateOffline', userUpdateOffline);
