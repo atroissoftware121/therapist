@@ -17,8 +17,8 @@ const io = socketIo(server, {
 
 async function handleSocket() {
   io.on('connection', async(socket) => {
-    const userId = socket.handshake.auth.userId;
-    console.log(`A user connected with :, ${userId}`);
+    // const userId = socket.handshake.auth.userId;
+    console.log(`A user connected with :, ${socket.id}`);
     socket.on('list-of-messages', async (userId) => {
       await listOfMessages(userId, socket);
     });
@@ -64,15 +64,17 @@ async function handleSocket() {
 
     socket.on('therapist-show-to-individual', async () => {
        io.emit('list-of-active-therapist', await findQuery(therapistModel, {isOnline: true}));
-    })
-    
-    io.emit('list-of-active-therapist', await findQuery(therapistModel, {isOnline: true}));
+    });
 
-    socket.on('disconnect', async() => {
-      const userId = socket.handshake.auth.userId;
+    socket.on('user-inactive', async(userId) => {
       const userUpdateOffline = await updateQuery(therapistModel, { _id: userId }, { isOnline: false });
       io.emit('list-of-active-therapist', await findQuery(therapistModel, {isOnline: true}));
       console.log('userUpdateOffline', userUpdateOffline);
+    }); 
+    
+    io.emit('list-of-active-therapist', await findQuery(therapistModel, {isOnline: true}));
+
+    socket.on('disconnect', () => {
       console.log('User disconnected');
     });
   });
