@@ -17,8 +17,8 @@ const io = socketIo(server, {
 
 async function handleSocket() {
   io.on('connection', async(socket) => {
-    const userId = socket.handshake.auth.userId;
-    console.log(`A user connected with :, ${userId}`);
+    // const userId = socket.handshake.auth.userId;
+    console.log(`A user connected with :, ${socket.id}`);
     socket.on('list-of-messages', async (userId) => {
       await listOfMessages(userId, socket);
     });
@@ -68,11 +68,11 @@ async function handleSocket() {
     
     io.emit('list-of-active-therapist', await findQuery(therapistModel, {isOnline: true}));
 
-    socket.on('disconnect', async() => {
-      const userId = socket.handshake.auth.userId;
-      const userUpdateOffline = await updateQuery(therapistModel, { _id: userId }, { isOnline: false });
-      io.emit('list-of-active-therapist', await findQuery(therapistModel, {isOnline: true}));
-      console.log('userUpdateOffline', userUpdateOffline);
+    socket.on('disconnect', () => {
+      // const userId = socket.handshake.auth.userId;
+      // const userUpdateOffline = await updateQuery(therapistModel, { _id: userId }, { isOnline: false });
+      // io.emit('list-of-active-therapist', await findQuery(therapistModel, {isOnline: true}));
+      // console.log('userUpdateOffline', userUpdateOffline);
       console.log('User disconnected');
     });
   });
@@ -125,7 +125,8 @@ const chatDetailsEvent = async(data, messageData, individualData) => {
 };
 
 const startTimerEvent = async(data) => {
-  console.log('datat12', data);
+  console.log('datat12', data.individualId);
+  console.log('dat5655', data);
   io.to(data.individualId).emit('startTimer', data);
 };
 
