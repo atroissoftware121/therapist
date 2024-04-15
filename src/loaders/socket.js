@@ -125,11 +125,11 @@ const chatDetailsEvent = async(data, messageData, individualData) => {
 };
 
 const startTimerEvent = async(data) => {
-  io.to(data.individualId).emit('startTimer', data);
+  io.emit('startTimer', data);
 };
 
 const endTimerEvent = async(data) => {
-  io.to(data.individualId).emit('endTimer', data);
+  io.emit('endTimer', data);
 };
 
 module.exports = {
