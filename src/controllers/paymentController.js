@@ -5,11 +5,13 @@ const catchAsync = require('../utils/catchAsync');
 const {
   createQuery,
   findQuery,
+  updateQuery,
 } = require('../helpers/mongooseHelpers');
 const {
   SendBadResponse,
   SendSuccessResponse,
 } = require('../helpers/responseHelpers');
+const individualModel = require('../mongooseModels/individual.model');
 
 const instance = new razorpay({
   key_id: RAZOR_API_KEY,
@@ -17,11 +19,12 @@ const instance = new razorpay({
 });
 
 const fetchPayment = catchAsync(async (req, res) => {
-  const { paymentId, recieverId, senderId } = req.query;
+  const { paymentId, senderId } = req.query;
   let paymentData = await instance.payments.fetch(paymentId);
-  const payment = paymentMapper(paymentData, recieverId, senderId);
-  const paymentCreated = await createQuery(paymentModel, payment)
-  res.status(200).send(paymentCreated);
+  const payment = paymentMapper(paymentData, senderId);
+  await createQuery(paymentModel, payment);
+  const addWallet = await updateQuery(individualModel, {_id: senderId}, {$inc: {wallet: payment.amount}});
+  return SendSuccessResponse({ res, data: { data: addWallet } });
 });
 
 const refundPayment = catchAsync(async (req, res) => {
@@ -34,7 +37,7 @@ const refundPayment = catchAsync(async (req, res) => {
   res.status(200).send(refundData);
 });
 
-const paymentMapper = (paymentData, recieverId, senderId) => {
+const paymentMapper = (paymentData, senderId) => {
   switch(true) {
     case 'card' in paymentData:
       paymentData = { card: paymentData.card, ...paymentData };
@@ -51,7 +54,6 @@ const paymentMapper = (paymentData, recieverId, senderId) => {
   }
   
   return {
-    recieverId,
     senderId,
     paymentId: paymentData.id,
     paymentType: paymentData.method,

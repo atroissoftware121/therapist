@@ -9,6 +9,7 @@ const individualSchema = new mongoose.Schema(
     mobileNumber: { type: String, default: null },
     gender: { type: String, default: null },
     notification: { type: mongoose.Types.ObjectId, ref: "notification" },
+    wallet: { type: Number, default: 0 },
     userExtraDetails: {
       type: mongoose.Types.ObjectId,
       ref: "userExtraDetails",
