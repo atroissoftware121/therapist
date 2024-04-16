@@ -14,7 +14,7 @@ module.exports = (app) => {
     "/fetch-payment",
     celebrate({
       [Segments.QUERY]: Joi.object().keys({
-        paymentId: Joi.string().required(),
+        paymentId: Joi.string().optional(),
         senderId: Joi.string().required(),
       }),
     }),
