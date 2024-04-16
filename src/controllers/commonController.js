@@ -50,6 +50,7 @@ const UploadImages = async (req, res) => {
       message: 'Image upload successfully!',
       imageURI,
     },
+
   });
 };
 const Logout = async (req, res) => {
@@ -125,7 +126,6 @@ const sentPushNotifications = catchAsync(async (req, res) => {
         senderName: `${individualData.fname} ${individualData.lname}`,
         email: individualData.email,
         mobileNumber: individualData.mobileNumber,
-
         gender: individualData.gender,
       }
       const [isChatExisted] = await findQuery(chatDetailsModel, { receiverId: data.receiverId, chatType: data.chatType });
@@ -136,7 +136,7 @@ const sentPushNotifications = catchAsync(async (req, res) => {
         console.log('isSenderPresent', isSenderPresent);
         if (!isSenderPresent) {
           messageData = await updateQuery(chatDetailsModel,
-            {
+            {  
               receiverId: data.receiverId,
               chatType: data.chatType,
               'individualDetails.senderId': { $ne: data.senderId }
@@ -488,18 +488,28 @@ const chatUserlist = async(req, res) => {
   if(chatType === 'message') {
     const userMsgData = await findQueryWithPagining(sessionModel, userId, options);
     for(const data of userMsgData.docs) {
+      const timeDifference = new Date(data.sessionEndTime) - new Date(data.sessionStartTime);
+      const chatTiming = timeDifference / 1000;
       const id = individualId ? { _id: data.therapistsId }: { _id: data.individualId };
-      const therapistMsgData = await findQuery(userModel, id);
-      pushUserData.push(therapistMsgData);
+      const userMsgData = await findQuery(userModel, id);
+      const obj = {
+        chatTiming, 
+        ...userMsgData?._doc,
+      };
+      pushUserData.push(obj);
     }
   }
   else {
     const individualCallData = await findQueryWithPagining(callDetailsModel, userId, options);
     for(const data of individualCallData.docs) {
       const id = individualId ? { _id: data.therapistsId }: { _id: data.individualId };
-      const therapistCallData = await findQuery(userModel, id);
-      console.log('therapistCallData', therapistCallData);
-      pushUserData.push(therapistCallData);
+      const userCallData = await findQuery(userModel, id);
+      const obj = {
+        callTiming: data.conversationDuration, 
+        ...userCallData?._doc,
+      };
+      console.log('obj12', obj);
+      pushUserData.push(obj)
     }
   }
 
@@ -526,7 +536,7 @@ const therapistChatList = async(req, res) => {
     const userData = [...userMsgData.docs, ...individualCallData.docs];
     for(const data of userData) {
       const therapistMsgData = await findQuery(therapistModel, {_id: data.therapistsId})
-      pushUserData.push(therapistMsgData)
+      pushUserData.push(therapistMsgData);
     }
  
   const uniquePushUserData = Array.from(new Set(pushUserData.map(data => String(data._id))))
@@ -535,7 +545,8 @@ const therapistChatList = async(req, res) => {
   return SendSuccessResponse({ res, data: { data: uniquePushUserData, length: uniquePushUserData.length } });
 }
 
-module.exports = {
+
+module.exports = { 
   GetImage,
   UploadImages,
   Logout,
@@ -549,5 +560,5 @@ module.exports = {
   getlistOfTherapistNotified,
   getCalldata,
   chatUserlist,
-  therapistChatList,
+  therapistChatList, 
 };

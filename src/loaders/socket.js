@@ -79,7 +79,6 @@ async function handleSocket() {
       console.log('User disconnected');
     });
   });
-
 };
 
 const listOfMessages = async (userId, socket) => { 
@@ -121,9 +120,9 @@ const refreshCallListsEvent = async(data, therapistsId) => {
 // chat- detail event shows list of chat;
 const chatDetailsEvent = async(data, messageData, individualData) => {
   if(data.chatType === 'message') {
-    io.to(data.receiverId).emit('chat-details', { data: [messageData?.individualDetails], image: individualData.image });
+    io.to(data.receiverId).emit('chat-details', { data: [messageData?.individualDetails], image: individualData.image, timing: data.chatDuration });
   } else {
-    io.to(data.receiverId).emit('chat-details-for-call', { data: [messageData?.individualDetails], image: individualData.image, timing: data.timing });
+    io.to(data.receiverId).emit('chat-details-for-call', { data: [messageData?.individualDetails], image: individualData.image, timing: data.chatDuration });
   }
 };
 
