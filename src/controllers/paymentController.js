@@ -20,10 +20,27 @@ const instance = new razorpay({
 
 const fetchPayment = catchAsync(async (req, res) => {
   const { paymentId, senderId } = req.query;
-  let paymentData = await instance.payments.fetch(paymentId);
-  const payment = paymentMapper(paymentData, senderId);
-  await createQuery(paymentModel, payment);
-  const addWallet = await updateQuery(individualModel, {_id: senderId}, {$inc: {wallet: payment.amount}});
+  
+  let addWallet;
+  if (!paymentId) {
+    addWallet = await findQuery(individualModel, { _id: senderId });
+  } else {
+    const [isPaymentExist] = await findQuery(paymentModel, { paymentId });
+    if (!isPaymentExist) {
+        let paymentData = await instance.payments.fetch(paymentId);
+        let formattedAmount = (paymentData.amount / 100).toFixed(2);
+        paymentData = {
+          ...paymentData,
+          amount: formattedAmount,
+        };
+        const payment = paymentMapper(paymentData, senderId);
+        await createQuery(paymentModel, payment);
+        addWallet = await updateQuery(individualModel, { _id: senderId }, { $inc: { wallet: formattedAmount } });
+    } else {
+      addWallet = await findQuery(individualModel, { _id: senderId });
+    }
+  }
+
   return SendSuccessResponse({ res, data: { data: addWallet } });
 });
 
@@ -52,7 +69,7 @@ const paymentMapper = (paymentData, senderId) => {
       paymentData = { wallet_transaction_id: paymentData.acquirer_data?.transaction_id, ...paymentData };
       break;
   }
-  
+  console.log('paymentData', paymentData);
   return {
     senderId,
     paymentId: paymentData.id,
