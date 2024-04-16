@@ -12,8 +12,8 @@ const {
 } = require('../helpers/responseHelpers');
 
 const instance = new razorpay({
-  key_id: 'rzp_test_boGgK2ISPb6yKi',
-  key_secret: 'GjBdUnPdO9CymkMwaX8H7p3T',
+  key_id: RAZOR_API_KEY,
+  key_secret: RAZOR_API_SECRET,
 });
 
 const fetchPayment = catchAsync(async (req, res) => {
