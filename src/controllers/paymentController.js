@@ -13,6 +13,7 @@ const {
 } = require('../helpers/responseHelpers');
 const individualModel = require('../mongooseModels/individual.model');
 const { points } = require('../constants/loyalty-points.constant');
+const { walletPoints } = require('../constants/add-points-to-wallet.constant');
 
 const instance = new razorpay({
   key_id: RAZOR_API_KEY,
@@ -104,6 +105,26 @@ function originalValueAfterPercentage(totalAmount) {
   const decimalPercentage = gstPercentage / 100;
   const originalValue = totalAmount / (1 + decimalPercentage);
   return originalValue;
+};
+
+const addWallet = async(req, res) => {
+  const { individualId, points } = req.query;
+  const wallet = walletPoints[points];
+  // const [individualData] = await findQuery(individualModel, {"_id": individualId, "loyaltyPoints": { "$gte": 11500 }});
+  const individualData = await individualModel.findOne({"_id": individualId, "loyaltyPoints": { "$gte": 11500 }});
+  console.log('individualData', individualData);
+  if(!individualData) {
+    return SendBadResponse({
+      res,
+      status: 404,  
+      data: {
+        error: 'User not found or loyalty points are insufficient.',
+      },
+    });
+  };
+
+  const updateWallet = await updateQuery(individualModel, {_id: individualId}, {$inc: {wallet, loyaltyPoints: -points}});
+  return SendSuccessResponse({ res, data: { data: updateWallet } });
 }
 
-module.exports = { fetchPayment, refundPayment, paymentfetchByUser };
+module.exports = { fetchPayment, refundPayment, paymentfetchByUser, addWallet };

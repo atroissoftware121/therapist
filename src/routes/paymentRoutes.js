@@ -4,6 +4,7 @@ const {
   fetchPayment,
   refundPayment,
   paymentfetchByUser,
+  addWallet,
 } = require("../controllers/paymentController");
 
 module.exports = (app) => {
@@ -40,5 +41,16 @@ module.exports = (app) => {
       }),
     }),
     paymentfetchByUser,
+  );
+
+  route.put(
+    "/add-wallet",
+    celebrate({
+      [Segments.QUERY]: Joi.object().keys({
+        points: Joi.number().required(),
+        individualId: Joi.string().required(),
+      }),
+    }),
+    addWallet,
   );
 };
