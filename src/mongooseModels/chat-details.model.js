@@ -12,6 +12,7 @@ const chatDetailsSchema = new mongoose.Schema(
       mobileNumber: { type: String, require: true},
       gender: { type: String, require: true},
       sessionId: { type: String, default: null},
+      timing: { type: Number, default: 0 },
     }]
   },
   {

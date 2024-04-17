@@ -38,7 +38,7 @@ module.exports = (app) => {
         message: Joi.string().optional(),
         userType: Joi.string().required(),
         chatType: Joi.string().required(),
-        chatDuration: Joi.string().optional(),
+        chatDuration: Joi.number().optional(),
       }),
     }),
     isAuthorized,

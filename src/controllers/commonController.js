@@ -116,11 +116,13 @@ const sentPushNotifications = catchAsync(async (req, res) => {
       console.log('data12', message);
       let response;
       if(data.userType === 'therapists') {
+        console.log('alpha122');
         response = await admin.messaging().send(message);
         return SendSuccessResponse({ res, data: response });
       }
-
+      console.log('beta122');
       response = await admin.messaging().send(message);
+      console.log('response', response);
       const individualObj = {
         senderId: data.senderId,
         senderName: `${individualData.fname} ${individualData.lname}`,
@@ -161,9 +163,14 @@ const sentPushNotifications = catchAsync(async (req, res) => {
           individualDetails: [individualObj],
         });
       }
-      console.log('emit', messageData);
+       messageData.individualDetails.forEach((item) => {
+        if (item.senderId === data.senderId) {
+          item.timing = data.chatDuration;
+        }
+      });
+      console.log('data12', messageData);
       await chatDetailsEvent(data, messageData, individualData);
-      
+  
       return SendSuccessResponse({ res, data: response });
 
     }
@@ -315,21 +322,21 @@ const endSession = async (req, res) => {
     const updatedSession = await updateQuery(sessionModel, { _id: sessionId }, { sessionEndTime: sessionTime, isSessionStart: false });
     const startTime = new Date(updatedSession.sessionStartTime);
     const endTime = new Date(updatedSession.sessionEndTime);
-
-    // Calculate the duration in minutes
+    const therapisData = await findQuery(therapistModel, {_id: therapistsId});
+    console.log('startTime12', startTime);
+    console.log('startTime122', endTime);
     const duration = (endTime - startTime) / (1000 * 60);
-
-    // Assume session cost per minute
-    const costPerminute = 100; // used manually just for test
+    console.log('therapisData.charges', therapisData.charges);
+    console.log('duration', duration);
 
     const saveObj = {
       sessionId: sessionId,
       userId: individualId,
       sessionDuration: duration,
-      cost: duration * costPerminute, 
+      cost: duration * therapisData.charges, 
     }
-    await createQuery(individualTransactionModel, saveObj);
-
+    // await createQuery(individualTransactionModel, saveObj);
+    await updateQuery(individualModel, {_id:individualId}, {$inc: { wallet: -saveObj.cost}})
     const updateChatDetails = await updateQuery(
       chatDetailsModel,
       { receiverId: therapistsId, chatType: 'message' },
@@ -437,6 +444,9 @@ const getCalldata = async(req, res) => {
   );
   const [data] = await findQuery(chatDetailsModel, {receiverId: therapistsId, chatType: 'call'})
   await createQuery(callDetailsModel, {...dataMapper, therapistsId, individualId});
+  const therapisData = await findQuery(therapistModel, {_id: therapistsId});
+  const costPerCall = therapisData.charges*(dataMapper.conversationDuration/60);
+  await updateQuery(individualModel, {_id:individualId}, {$inc: { wallet: -costPerCall}})
   await refreshCallListsEvent(data, therapistsId);
 
   return SendSuccessResponse({ res, data: { data:  'Received request successfully'} });
@@ -535,7 +545,7 @@ const therapistChatList = async(req, res) => {
     const individualCallData = await findQueryWithPagining(callDetailsModel, {individualId}, options);
     const userData = [...userMsgData.docs, ...individualCallData.docs];
     for(const data of userData) {
-      const therapistMsgData = await findQuery(therapistModel, {_id: data.therapistsId})
+      const therapistMsgData = await findQuery(therapistModel, {_id: data.therapistsId}); 
       pushUserData.push(therapistMsgData);
     }
  
