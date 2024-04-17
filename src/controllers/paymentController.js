@@ -12,6 +12,7 @@ const {
   SendSuccessResponse,
 } = require('../helpers/responseHelpers');
 const individualModel = require('../mongooseModels/individual.model');
+const { points } = require('../constants/loyalty-points.constant');
 
 const instance = new razorpay({
   key_id: RAZOR_API_KEY,
@@ -29,13 +30,15 @@ const fetchPayment = catchAsync(async (req, res) => {
     if (!isPaymentExist) {
         let paymentData = await instance.payments.fetch(paymentId);
         let formattedAmount = (paymentData.amount / 100).toFixed(2);
+        const amountAfterGst = originalValueAfterPercentage(formattedAmount);
+        const loyaltyPoints = points[amountAfterGst];
         paymentData = {
           ...paymentData,
-          amount: formattedAmount,
+          amount: amountAfterGst,
         };
         const payment = paymentMapper(paymentData, senderId);
         await createQuery(paymentModel, payment);
-        addWallet = await updateQuery(individualModel, { _id: senderId }, { $inc: { wallet: formattedAmount } });
+        addWallet = await updateQuery(individualModel, { _id: senderId }, { $inc: { wallet: amountAfterGst, loyaltyPoints  } });
     } else {
       addWallet = await findQuery(individualModel, { _id: senderId });
     }
@@ -68,8 +71,8 @@ const paymentMapper = (paymentData, senderId) => {
     default:
       paymentData = { wallet_transaction_id: paymentData.acquirer_data?.transaction_id, ...paymentData };
       break;
-  }
-  console.log('paymentData', paymentData);
+  };
+
   return {
     senderId,
     paymentId: paymentData.id,
@@ -95,5 +98,12 @@ const paymentfetchByUser = catchAsync(async(req,res) => {
 
   return SendSuccessResponse({ res, data: { data: fetchPayment } });
 });
+
+function originalValueAfterPercentage(totalAmount) {
+  const gstPercentage = 18;
+  const decimalPercentage = gstPercentage / 100;
+  const originalValue = totalAmount / (1 + decimalPercentage);
+  return originalValue;
+}
 
 module.exports = { fetchPayment, refundPayment, paymentfetchByUser };

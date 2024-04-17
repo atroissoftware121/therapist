@@ -10,6 +10,7 @@ const individualSchema = new mongoose.Schema(
     gender: { type: String, default: null },
     notification: { type: mongoose.Types.ObjectId, ref: "notification" },
     wallet: { type: Number, default: 0 },
+    loyaltyPoints: { type: Number, default: 0 },
     userExtraDetails: {
       type: mongoose.Types.ObjectId,
       ref: "userExtraDetails",
