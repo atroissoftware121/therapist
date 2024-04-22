@@ -170,7 +170,8 @@ const addFundAccount = catchAsync(async (req, res) => {
     upi_id,
     isEdit,
   } = req.body;
-  const isAccountExists = await findQuery(transactionModel, { therapistId });
+  const [isAccountExists] = await findQuery(transactionModel, { therapistId });
+  console.log('isAccountExists', isAccountExists);
   if (isAccountExists && !isEdit) {
     return SendBadResponse({
       res,
