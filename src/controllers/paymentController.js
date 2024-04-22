@@ -225,7 +225,7 @@ const addFundAccount = catchAsync(async (req, res) => {
     fund_id: createFund.id,
     ...createFund,
   };
-  if (therapistId && isEdit) {
+  if (therapistId) {
     await updateQuery(transactionModel, { therapistId }, transactionData);
   } else {
     await createQuery(transactionModel, transactionData);
