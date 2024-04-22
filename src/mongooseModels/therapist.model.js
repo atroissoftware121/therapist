@@ -21,6 +21,7 @@ const therapistSchema = new mongoose.Schema(
     isProfileVerified: { type: Boolean, default: false },
     documents: [{ name: { type: String }, image: { type: String } }],
     isAdmin: { type: Boolean, default: false },
+    wallet: { type: Number, default: 0 },
     notification: {
       type: mongoose.Types.ObjectId,
       ref: "notification",

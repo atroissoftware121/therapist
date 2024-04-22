@@ -5,6 +5,10 @@ const {
   refundPayment,
   paymentfetchByUser,
   addWallet,
+  addFundAccount,
+  createPayout,
+  updateStatus,
+  fetchAccountDetails,
 } = require("../controllers/paymentController");
 
 module.exports = (app) => {
@@ -53,4 +57,38 @@ module.exports = (app) => {
     }),
     addWallet,
   );
+  route.post(
+    "/add-account",
+    celebrate({
+      [Segments.BODY]: Joi.object().keys({
+        name: Joi.string().optional(),
+        email: Joi.string().optional(),
+        mobileNumber: Joi.string().optional(),
+        therapistId: Joi.string().required(),
+        account_type: Joi.string().required(),
+        account_number: Joi.string().optional(),
+        ifsc: Joi.string().optional(),
+        upi_id: Joi.string().optional(),
+        isEdit: Joi.boolean().optional(),
+      }),
+    }),
+    addFundAccount,
+  );
+  route.post(
+    "/create-payout",
+    celebrate({
+      [Segments.BODY]: Joi.object().keys({
+        amount: Joi.number().required(),
+      }),
+    }),
+    createPayout,
+  );
+  route.post('/createData', updateStatus);
+  route.get('/fetchAccountDetails', celebrate({
+    [Segments.QUERY]: Joi.object().keys({
+      therapistId: Joi.string().required(),
+    }),
+  }),
+  fetchAccountDetails,
+  )
 };
