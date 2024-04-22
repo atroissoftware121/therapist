@@ -65,7 +65,7 @@ module.exports = (app) => {
         email: Joi.string().optional(),
         mobileNumber: Joi.string().optional(),
         therapistId: Joi.string().required(),
-        account_type: Joi.string().required(),
+        account_type: Joi.string().optional(),
         account_number: Joi.string().optional(),
         ifsc: Joi.string().optional(),
         upi_id: Joi.string().optional(),
