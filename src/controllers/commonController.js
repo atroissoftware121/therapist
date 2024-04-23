@@ -503,7 +503,8 @@ const chatUserlist = async(req, res) => {
       const userMsgData = await findQuery(userModel, id);
       const obj = {
         chatTiming,
-        isReview: data.isReview, 
+        consultationId: data._id,
+        isReview: data?.isReview, 
         ...userMsgData?._doc,
       };
       pushUserData.push(obj);
@@ -516,7 +517,8 @@ const chatUserlist = async(req, res) => {
       const userCallData = await findQuery(userModel, id);
       const obj = {
         callTiming: data.conversationDuration, 
-        isReview: data.isReview,
+        consultationId: data._id,
+        isReview: data?.isReview,
         ...userCallData?._doc,
       };
       console.log('obj12', obj);
