@@ -172,15 +172,6 @@ const addFundAccount = catchAsync(async (req, res) => {
   } = req.body;
   const [isAccountExists] = await findQuery(transactionModel, { therapistId });
   console.log('isAccountExists', isAccountExists);
-  if (isAccountExists && isEdit === false) {
-    return SendBadResponse({
-      res,
-      status: 400,
-      data: {
-        error: 'account already exists',
-      },
-    });
-  }
 
   const contactData = {
     name,
@@ -226,7 +217,7 @@ const addFundAccount = catchAsync(async (req, res) => {
     fund_id: createFund.id,
     ...createFund,
   };
-  if (therapistId) {
+  if (isAccountExists && isEdit === true) {
     await updateQuery(transactionModel, { therapistId }, transactionData);
   } else {
     await createQuery(transactionModel, transactionData);
