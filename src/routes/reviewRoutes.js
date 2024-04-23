@@ -1,6 +1,6 @@
 const { Router } = require('express');
 const { celebrate, Joi, Segments } = require('celebrate');
-const { postReview, getReview } = require('../controllers/review.Controller');
+const { postReview, getReview } = require('../controllers/reviewController');
 
 module.exports = (app) => {
   const route = Router();
