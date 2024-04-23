@@ -57,20 +57,46 @@ const getReview = async (req, res) => {
     userId = individualId ? { individualId } : { therapistId };
   }
 
-  const review = await findQuery(reviewModel, userId);
-
-  if (!review)
-    return SendBadResponse({
-      res,
-      status: 404,
-      data: {
-        error: 'no reviews',
-      },
-    });
+  const reviews = await findQuery(reviewModel, userId);
+  if (!reviews) {
+      return SendBadResponse({
+        res,
+        status: 404,
+        data: {
+          error: 'no reviews',
+        },
+      });
+  };
+  let pushUserData = [];
+    if(therapistId) {
+        for(let review of reviews ){
+          const user = await findQuery(individualModel, {
+            _id: review.individualId
+          });
+          const data = {
+              ...user._doc,
+            comments: review.comments,
+            rating: review.rating,
+          }
+          pushUserData.push(data);
+        }
+    }else {
+        for(let review of reviews ){
+            const user = await findQuery(therapistModel, {
+              _id: review.therapistId
+            });
+            const data = {
+                ...user._doc,
+              comments: review.comments,
+              rating: review.rating,
+            }
+            pushUserData.push(data);
+          }
+    }
 
   return SendSuccessResponse({
     res,
-    data: { data: review },
+    data: { data: pushUserData },
   });
 };
 
