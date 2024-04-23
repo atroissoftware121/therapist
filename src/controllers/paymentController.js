@@ -295,6 +295,13 @@ const fetchAccountDetails = catchAsync(async (req, res) => {
   return SendSuccessResponse({ res, data: { data: fetchData } });
 });
 
+const fetchTherapistWallet = async(req, res) => {
+  const { therapistId } = req.query;
+  const therapistWallet = await findQuery(therapistModel, {_id: therapistId});
+
+  return SendSuccessResponse({ res, data: { data: therapistWallet } });
+};
+
 module.exports = {
   fetchPayment,
   refundPayment,
@@ -304,4 +311,5 @@ module.exports = {
   createPayout,
   updateStatus,
   fetchAccountDetails,
+  fetchTherapistWallet,
 };

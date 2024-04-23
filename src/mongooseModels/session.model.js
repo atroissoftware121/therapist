@@ -8,7 +8,8 @@ const sessionDataSchema = new mongoose.Schema(
     sessionEndTime: { type: String, require: true },
     isSessionStart: { type: Boolean, default: false },
     individualId: { type: String, require: true },
-    therapistsId: { type: String, require: true }
+    therapistsId: { type: String, require: true },
+    isReview: { type: Boolean, default: false },
   },
   {
     timestamps: true,

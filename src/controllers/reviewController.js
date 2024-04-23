@@ -5,10 +5,11 @@ const {
   SendBadResponse,
   SendSuccessResponse,
 } = require('../helpers/responseHelpers');
-const { findQuery } = require('../helpers/mongooseHelpers');
-
+const { findQuery, updateQuery } = require('../helpers/mongooseHelpers');
+const sessionModel = require('../mongooseModels/session.model');
+const callDetailsModel = require('../mongooseModels/callChat-details.model');
 const postReview = async (req, res) => {
-  const { individualId, therapistId } = req.body;
+  const { individualId, therapistId, consultationId, chatType } = req.body;
   const individualIdExist = await findQuery(individualModel, {
     _id: individualId,
   });
@@ -34,6 +35,12 @@ const postReview = async (req, res) => {
   const createReview = await reviewModel.create({
     ...req.body,
   });
+
+  if(chatType === 'message') {
+    await updateQuery(sessionModel, {_id: consultationId }, {isReview: true})
+  }else {
+    await updateQuery(callDetailsModel, {_id: consultationId }, {isReview: true})
+  }
 
   return SendSuccessResponse({
     res,

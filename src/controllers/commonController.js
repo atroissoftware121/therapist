@@ -168,7 +168,6 @@ const sentPushNotifications = catchAsync(async (req, res) => {
           item.timing = data.chatDuration;
         }
       });
-      console.log('data12', messageData);
       await chatDetailsEvent(data, messageData, individualData);
   
       return SendSuccessResponse({ res, data: response });
@@ -503,7 +502,8 @@ const chatUserlist = async(req, res) => {
       const id = individualId ? { _id: data.therapistsId }: { _id: data.individualId };
       const userMsgData = await findQuery(userModel, id);
       const obj = {
-        chatTiming, 
+        chatTiming,
+        isReview: data.isReview, 
         ...userMsgData?._doc,
       };
       pushUserData.push(obj);
@@ -516,6 +516,7 @@ const chatUserlist = async(req, res) => {
       const userCallData = await findQuery(userModel, id);
       const obj = {
         callTiming: data.conversationDuration, 
+        isReview: data.isReview,
         ...userCallData?._doc,
       };
       console.log('obj12', obj);

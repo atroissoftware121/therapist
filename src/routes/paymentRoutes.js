@@ -9,6 +9,7 @@ const {
   createPayout,
   updateStatus,
   fetchAccountDetails,
+  fetchTherapistWallet,
 } = require("../controllers/paymentController");
 
 module.exports = (app) => {
@@ -90,5 +91,13 @@ module.exports = (app) => {
     }),
   }),
   fetchAccountDetails,
-  )
+  );
+
+  route.get('/fetchTherapistWallet', celebrate({
+    [Segments.QUERY]: Joi.object().keys({
+      therapistId: Joi.string().required(),
+    }),
+  }),
+  fetchTherapistWallet,
+  );
 };

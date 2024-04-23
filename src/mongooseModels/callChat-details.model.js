@@ -16,6 +16,7 @@ const callDetailsSchema = new mongoose.Schema(
     direction: { type: String, require: true },
     recordingUrl: { type: String, require: true, default: null },
     conversationDuration: { type: Number, require: true },
+    isReview: { type: Boolean, default: false },
     legs: [
       {
         userType: { type: String, require: true },
