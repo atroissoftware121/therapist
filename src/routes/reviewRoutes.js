@@ -11,12 +11,22 @@ module.exports = (app) => {
       [Segments.BODY]: Joi.object().keys({
         individualId: Joi.string().required(),
         therapistId: Joi.string().required(),
+        consultationId: Joi.string().required(),
         comments: Joi.string().optional(),
         rating: Joi.number().optional(),
+        chatType: Joi.string().required(),
       }),
     }),
     postReview
   );
 
-  route.get('/getReview', getReview);
+  route.get('/getReview',
+  celebrate({
+    [Segments.BODY]: Joi.object().keys({
+      individualId: Joi.string().optional(),
+      therapistId: Joi.string().optional(),
+      consultationId: Joi.string().optional(),
+    }),
+  }),
+   getReview);
 };

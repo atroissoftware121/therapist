@@ -49,8 +49,8 @@ const postReview = async (req, res) => {
 };
 
 const getReview = async (req, res) => {
-  const { therapistId, individualId } = req.query;
-  const userId = individualId ? { individualId } : { therapistId };
+  const { therapistId, individualId, consultationId } = req.query;
+  const userId = individualId ? { individualId, consultationId } : { therapistId };
 
   const review = await findQuery(reviewModel, userId);
 
