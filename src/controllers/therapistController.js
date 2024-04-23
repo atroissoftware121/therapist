@@ -222,7 +222,7 @@ const TherapistList = catchAsync(async (req, res) => {
   const list = await findQueryWithLimit(
     therapistModel,
     findQueryObj,
-    "name email mobileNumber gender image specialization qualification charges discountedCharges location language summary isOnline onCall, experience",
+    "name email mobileNumber gender image specialization qualification charges discountedCharges location language summary isOnline onCall experience review",
     limit,
     skip
   );
