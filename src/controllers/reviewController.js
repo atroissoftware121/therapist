@@ -36,10 +36,18 @@ const postReview = async (req, res) => {
     ...req.body,
   });
 
-  if(chatType === 'message') {
-    await updateQuery(sessionModel, {_id: consultationId }, {isReview: true})
-  }else {
-    await updateQuery(callDetailsModel, {_id: consultationId }, {isReview: true})
+  if (chatType === 'message') {
+    await updateQuery(
+      sessionModel,
+      { _id: consultationId },
+      { isReview: true }
+    );
+  } else {
+    await updateQuery(
+      callDetailsModel,
+      { _id: consultationId },
+      { isReview: true }
+    );
   }
 
   return SendSuccessResponse({
@@ -51,48 +59,50 @@ const postReview = async (req, res) => {
 const getReview = async (req, res) => {
   const { therapistId, individualId, consultationId } = req.query;
   let userId;
-  if(consultationId) {
+  if (consultationId) {
     userId = individualId ? { individualId, consultationId } : { therapistId };
-  }else {
+  } else {
     userId = individualId ? { individualId } : { therapistId };
   }
 
   const reviews = await findQuery(reviewModel, userId);
   if (!reviews) {
-      return SendBadResponse({
-        res,
-        status: 404,
-        data: {
-          error: 'no reviews',
-        },
-      });
-  };
+    return SendBadResponse({
+      res,
+      status: 404,
+      data: {
+        error: 'no reviews',
+      },
+    });
+  }
   let pushUserData = [];
-    if(therapistId) {
-        for(let review of reviews ){
-          const user = await findQuery(individualModel, {
-            _id: review.individualId
-          });
-          const data = {
-              ...user._doc,
-            comments: review.comments,
-            rating: review.rating,
-          }
-          pushUserData.push(data);
-        }
-    }else {
-        for(let review of reviews ){
-            const user = await findQuery(therapistModel, {
-              _id: review.therapistId
-            });
-            const data = {
-                ...user._doc,
-              comments: review.comments,
-              rating: review.rating,
-            }
-            pushUserData.push(data);
-          }
+  if (therapistId) {
+    for (let review of reviews) {
+      const user = await findQuery(individualModel, {
+        _id: review.individualId,
+      });
+      const data = {
+        ...user._doc,
+        postCreated: review.createdAt,
+        comments: review.comments,
+        rating: review.rating,
+      };
+      pushUserData.push(data);
     }
+  } else {
+    for (let review of reviews) {
+      const user = await findQuery(therapistModel, {
+        _id: review.therapistId,
+      });
+      const data = {
+        ...user._doc,
+        postCreated: review.createdAt,
+        comments: review.comments,
+        rating: review.rating,
+      };
+      pushUserData.push(data);
+    }
+  }
 
   return SendSuccessResponse({
     res,
