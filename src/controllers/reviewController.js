@@ -9,7 +9,8 @@ const { findQuery, updateQuery } = require('../helpers/mongooseHelpers');
 const sessionModel = require('../mongooseModels/session.model');
 const callDetailsModel = require('../mongooseModels/callChat-details.model');
 const postReview = async (req, res) => {
-  const { individualId, therapistId, consultationId, chatType } = req.body;
+  const { individualId, therapistId, consultationId, chatType, rating } = req.body;
+  const review = await findQuery(reviewModel, { therapistId });
   const individualIdExist = await findQuery(individualModel, {
     _id: individualId,
   });
@@ -35,7 +36,6 @@ const postReview = async (req, res) => {
   const createReview = await reviewModel.create({
     ...req.body,
   });
-
   if (chatType === 'message') {
     await updateQuery(
       sessionModel,
@@ -48,8 +48,20 @@ const postReview = async (req, res) => {
       { _id: consultationId },
       { isReview: true }
     );
-  }
+  };
 
+  const averageRating =
+    ((therapistIdExist.review * review.length) + rating) / (review.length + 1);
+    console.log('average', averageRating);
+  await updateQuery(
+    therapistModel,
+    {
+      _id: therapistId,
+    },
+    {
+      review: averageRating,
+    }
+  );
   return SendSuccessResponse({
     res,
     data: { message: 'review update', data: createReview },
