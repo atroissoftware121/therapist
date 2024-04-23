@@ -50,7 +50,12 @@ const postReview = async (req, res) => {
 
 const getReview = async (req, res) => {
   const { therapistId, individualId, consultationId } = req.query;
-  const userId = individualId ? { individualId, consultationId } : { therapistId };
+  let userId;
+  if(consultationId) {
+    userId = individualId ? { individualId, consultationId } : { therapistId };
+  }else {
+    userId = individualId ? { individualId } : { therapistId };
+  }
 
   const review = await findQuery(reviewModel, userId);
 
