@@ -22,6 +22,7 @@ const therapistSchema = new mongoose.Schema(
     documents: [{ name: { type: String }, image: { type: String } }],
     isAdmin: { type: Boolean, default: false },
     wallet: { type: Number, default: 0 },
+    review: { type: Number, default: 0 },
     notification: {
       type: mongoose.Types.ObjectId,
       ref: "notification",

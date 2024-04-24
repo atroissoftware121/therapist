@@ -4,6 +4,7 @@ const {
   isAuthorized,
   injectTherapistDetails,
   injectIndividualDetails,
+  injectUserDetails,
 } = require("../middlewares/authMiddlewares");
 const {
   TherapistRegisterStepFirst,
@@ -22,7 +23,7 @@ module.exports = (app) => {
   const route = Router();
   app.use("/therapist", route);
 
-  route.get("/get-top-list", isAuthorized, TherapistTopList);
+  route.get("/get-top-list", isAuthorized, injectUserDetails, TherapistTopList);
   route.get("/get-list", isAuthorized, TherapistList);
   route.get(
     "/get-list-for-approval",
