@@ -81,14 +81,14 @@ const injectUserDetails = async (req, res, next) => {
   let userExtraDetail = await findQuery(userExtraDetailsModel, {
     userId: decodedValue._id,
   });
-  // let issuedData = await getTokenData(userExtraDetail[0].lastJWTToken);
-  // if(issuedData.iat !== decodedValue.iat) {
-  //   return SendBadResponse({
-  //     res,
-  //     status: 401,
-  //     data: { error: "session expired" },
-  //   });
-  // }
+  let issuedData = await getTokenData(userExtraDetail[0].lastJWTToken);
+  if(issuedData.iat !== decodedValue.iat) {
+    return SendBadResponse({
+      res,
+      status: 401,
+      data: { error: "session expired" },
+    });
+  }
   if (!userExtraDetail.length)
     return SendBadResponse({
       res,

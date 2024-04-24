@@ -16,7 +16,7 @@ const genrateToken = ({
 const getTokenData = (token) =>
   new Promise((resolve) =>
     jwt.verify(token, JWT_SECRET, function (err, decoded) {
-      // decoded.data = {...decoded.data, iat: decoded.iat};
+      decoded.data = {...decoded.data, iat: decoded.iat};
       resolve(decoded.data);
     })
   );
