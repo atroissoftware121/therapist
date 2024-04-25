@@ -121,6 +121,7 @@ const VerifyOtp = async (req, res) => {
     fcmToken,
     deviceInfo,
   } = req.query;
+  console.log('fcmtoken122', fcmToken);
   if (!mobileNumber || !userType || !method || !otp || !fcmToken || !deviceInfo)
     return SendBadResponse({
       res,
