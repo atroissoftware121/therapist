@@ -1,6 +1,6 @@
 const { Router } = require('express');
 const { celebrate, Joi, Segments } = require('celebrate');
-const { postReview, getReview } = require('../controllers/reviewController');
+const { postReview, getReview, replyTherapist } = require('../controllers/reviewController');
 
 module.exports = (app) => {
   const route = Router();
@@ -20,13 +20,25 @@ module.exports = (app) => {
     postReview
   );
 
-  route.get('/getReview',
-  celebrate({
-    [Segments.BODY]: Joi.object().keys({
-      individualId: Joi.string().optional(),
-      therapistId: Joi.string().optional(),
-      consultationId: Joi.string().optional(),
+  route.get(
+    '/getReview',
+    celebrate({
+      [Segments.BODY]: Joi.object().keys({
+        individualId: Joi.string().optional(),
+        therapistId: Joi.string().optional(),
+        consultationId: Joi.string().optional(),
+      }),
     }),
-  }),
-   getReview);
+    getReview
+  );
+  route.put(
+    '/reply-review-therapist',
+    celebrate({
+      [Segments.BODY]: Joi.object().keys({
+        reviewId: Joi.string().required(),
+        comments: Joi.string().required(),
+      }),
+    }),
+    replyTherapist
+  );
 };

@@ -14,6 +14,7 @@ const {
   getCalldata,
   chatUserlist,
   therapistChatList,
+  deleteChat,
 } = require('../controllers/commonController');
 const { upload } = require('../helpers/s3Helper');
 
@@ -64,4 +65,5 @@ module.exports = (app) => {
   route.post('/get-call-details', getCalldata);
   route.get('/fetchingChatUserlist', chatUserlist);
   route.get('/therapistChatList', therapistChatList);
+  route.delete('/deleteChat',deleteChat);
 };

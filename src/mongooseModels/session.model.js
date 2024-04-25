@@ -10,6 +10,7 @@ const sessionDataSchema = new mongoose.Schema(
     individualId: { type: String, require: true },
     therapistsId: { type: String, require: true },
     isReview: { type: Boolean, default: false },
+    isDeleted: { type: Boolean, default: false },
   },
   {
     timestamps: true,

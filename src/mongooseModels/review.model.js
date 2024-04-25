@@ -7,6 +7,7 @@ const reviewSchema = new mongoose.Schema(
     consultationId: { type: String, require: true },
     comments: { type: String, default: null },
     rating: { type: Number, default: 0 },
+    therapistComment: { type: String, default: null },
   },
   {
     timestamps: true,

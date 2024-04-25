@@ -98,6 +98,8 @@ const getReview = async (req, res) => {
         postCreated: review.createdAt,
         comments: review.comments,
         rating: review.rating,
+        reviewId: review._id,
+        therapistComment: review?.therapistComment,
       };
       pushUserData.push(data);
     }
@@ -111,6 +113,8 @@ const getReview = async (req, res) => {
         postCreated: review.createdAt,
         comments: review.comments,
         rating: review.rating,
+        reviewId: review._id,
+        therapistComment: review?.therapistComment,
       };
       pushUserData.push(data);
     }
@@ -122,7 +126,20 @@ const getReview = async (req, res) => {
   });
 };
 
+const replyTherapist = async(req, res) => {
+  const { reviewId, therapistComment } = req.query;
+  
+  const updateReview = await updateQuery(reviewModel, {_id: reviewId}, {therapistComment});
+  return SendSuccessResponse({
+    res,
+    data: { data: updateReview },
+  });
+};
+
+
+
 module.exports = {
   postReview,
   getReview,
+  replyTherapist,
 };

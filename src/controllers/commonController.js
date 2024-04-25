@@ -129,7 +129,7 @@ const sentPushNotifications = catchAsync(async (req, res) => {
         email: individualData.email,
         mobileNumber: individualData.mobileNumber,
         gender: individualData.gender,
-      }
+      };
       const [isChatExisted] = await findQuery(chatDetailsModel, { receiverId: data.receiverId, chatType: data.chatType });
       console.log('isChatExisted', isChatExisted);
       let messageData;
@@ -169,9 +169,8 @@ const sentPushNotifications = catchAsync(async (req, res) => {
         }
       });
       await chatDetailsEvent(data, messageData, individualData);
-  
-      return SendSuccessResponse({ res, data: response });
 
+      return SendSuccessResponse({ res, data: response })
     }
     return SendBadResponse({
       res,
@@ -493,9 +492,11 @@ const chatUserlist = async(req, res) => {
     offset
   };
   const userId = individualId ? { individualId }: { therapistsId };
+
   const userModel = individualId ? therapistModel: individualModel;
   if(chatType === 'message') {
-    const userMsgData = await findQueryWithPagining(sessionModel, userId, options);
+    const userMsgData = await findQueryWithPagining(sessionModel, {...userId, isDeleted: false}, options);
+    console.log('userMsgData', userMsgData);
     for(const data of userMsgData.docs) {
       const timeDifference = new Date(data.sessionEndTime) - new Date(data.sessionStartTime);
       const chatTiming = timeDifference / 1000;
@@ -544,7 +545,7 @@ const therapistChatList = async(req, res) => {
   };
   const pushUserData = [];
 
-    const userMsgData = await findQueryWithPagining(sessionModel, {individualId}, options);
+    const userMsgData = await findQueryWithPagining(sessionModel, {individualId, isDeleted: false}, options);
     const individualCallData = await findQueryWithPagining(callDetailsModel, {individualId}, options);
     const userData = [...userMsgData.docs, ...individualCallData.docs];
     for(const data of userData) {
@@ -558,6 +559,14 @@ const therapistChatList = async(req, res) => {
   return SendSuccessResponse({ res, data: { data: uniquePushUserData, length: uniquePushUserData.length } });
 }
 
+const deleteChat = async(req,res) => {
+  const {sessionId, chatType} = req.query;
+  if(chatType === 'message'){
+    await updateQuery(sessionModel, {_id:sessionId}, {isDeleted: true})
+  }
+  return SendSuccessResponse({ res, data: { data:"chat deleted successfully "}})
+
+}
 
 module.exports = { 
   GetImage,
@@ -574,4 +583,5 @@ module.exports = {
   getCalldata,
   chatUserlist,
   therapistChatList, 
+  deleteChat,
 };
