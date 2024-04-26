@@ -15,7 +15,20 @@ module.exports = (app) => {
 
   route.get('/getOtp', GetOtp);
 
-  route.get('/verifyOtp', VerifyOtp);
+  route.get(
+    '/verifyOtp',
+    celebrate({
+      [Segments.QUERY]: Joi.object().keys({
+        n: Joi.string().required(),
+        t: Joi.string().required(),
+        m: Joi.string().required(),
+        o: Joi.string().required(),
+        fcmToken: Joi.string().invalid('undefined').required(),
+        deviceInfo: Joi.string().required(),
+      }),
+    }),
+    VerifyOtp
+  );
 
   route.post(
     '/login',
@@ -24,7 +37,7 @@ module.exports = (app) => {
         email: Joi.string().required(),
         password: Joi.string().required(),
         userType: Joi.string().required(),
-        fcmToken: Joi.string().required(),
+        fcmToken: Joi.string().invalid('undefined').required(),
         deviceInfo: Joi.string().required(),
       }),
     }),
