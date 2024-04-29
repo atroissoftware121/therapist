@@ -184,7 +184,7 @@ const TherapistTopList = catchAsync(async (req, res) => {
 });
 
 const TherapistList = catchAsync(async (req, res) => {
-  let { page, priceS, priceE, ageS, ageE, lang, specialization,sKeyword, gender  } = req.query;
+  let { page, priceS, priceE, ageS, ageE, lang, specialization,sKeyword, gender, isActive  } = req.query;
   let findQueryArr=[]
   findQueryArr.push({ isProfileVerified: true });
   let skip = 0;
@@ -215,10 +215,14 @@ const TherapistList = catchAsync(async (req, res) => {
       { name: { $regex: sKeyword, $options: 'i' } }, // 'i' makes the search case-insensitive
       { specialization: { $in: [new RegExp(sKeyword, 'i')] } } // 'i' for case-insensitive
     ],});
+  };
+  if(isActive === 'true') {
+    findQueryArr.push({isOnline: true});
   }
 
   let findQueryObj = {};
   if (findQueryArr.length > 0) findQueryObj = { $and: findQueryArr };
+  console.log('findQuery12', findQueryArr);
   const list = await findQueryWithLimit(
     therapistModel,
     findQueryObj,
