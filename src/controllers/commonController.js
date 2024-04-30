@@ -384,7 +384,8 @@ const report = async(req, res) => {
     });
   }
   await reportModel.create({
-    ...req.body
+    ...req.body,
+    description: message
   })
   return SendSuccessResponse({ res, data:{ data: 'Sent Successfully'}});
 }
