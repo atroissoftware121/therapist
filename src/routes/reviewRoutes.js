@@ -36,7 +36,7 @@ module.exports = (app) => {
     celebrate({
       [Segments.BODY]: Joi.object().keys({
         reviewId: Joi.string().required(),
-        comments: Joi.string().required(),
+        therapistComment: Joi.string().required(),
       }),
     }),
     replyTherapist

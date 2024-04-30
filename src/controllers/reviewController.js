@@ -127,7 +127,7 @@ const getReview = async (req, res) => {
 };
 
 const replyTherapist = async(req, res) => {
-  const { reviewId, therapistComment } = req.query;
+  const { reviewId, therapistComment } = req.body;
   
   const updateReview = await updateQuery(reviewModel, {_id: reviewId}, {therapistComment});
   return SendSuccessResponse({
