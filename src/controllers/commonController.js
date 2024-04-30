@@ -373,6 +373,22 @@ const createReport = async(req, res) => {
   return SendSuccessResponse({ res, data: { data: 'Sent Successfully' } });
 };
 
+const report = async(req, res) => {
+  const { message, email } = req.body;
+  const user = await individualModel.findOne({email})
+  if(!user) {
+    return SendBadResponse({
+      res,
+      status: 404,
+      data: {error: 'User not found! '},
+    });
+  }
+  await reportModel.create({
+    ...req.body
+  })
+  return SendSuccessResponse({ res, data:{ data: 'Sent Successfully'}});
+}
+
 const createNotificationData = async(req, res) => {
   const { individualId, therapistsId } = req.body;
   let [receiverDetail] = await findQuery(userExtraDetailsModel, {
@@ -578,6 +594,7 @@ module.exports = {
   startSession,
   endSession,
   createReport,
+  report,
   createNotificationData,
   getlistOfTherapistNotified,
   getCalldata,

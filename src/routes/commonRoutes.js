@@ -9,12 +9,14 @@ const {
   startSession,
   endSession,
   createReport,
+  report,
   createNotificationData,
   getlistOfTherapistNotified,
   getCalldata,
   chatUserlist,
   therapistChatList,
   deleteChat,
+  
 } = require('../controllers/commonController');
 const { upload } = require('../helpers/s3Helper');
 
@@ -60,6 +62,14 @@ module.exports = (app) => {
   }),
   createReport
   );
+  route.post('/report',celebrate({
+    [Segments.BODY]:Joi.object().keys({
+      message:Joi.string().required(),
+      email:Joi.string().required(),
+    }),
+  }),
+report
+)
   route.post('/addIndividualNotification', createNotificationData);
   route.get('/getlistOfTherapistNotified', getlistOfTherapistNotified);
   route.post('/get-call-details', getCalldata);
