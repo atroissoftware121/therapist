@@ -18,6 +18,8 @@ const therapistSchema = new mongoose.Schema(
     summary: { type: String, default: null },
     isOnline: { type: Boolean, default: false },
     onCall: { type: Boolean, default: false },
+    isMessageQueue: { type: Boolean, default: false },
+    isCallQueue: { type: Boolean, default: false },
     isProfileVerified: { type: Boolean, default: false },
     documents: [{ name: { type: String }, image: { type: String } }],
     isAdmin: { type: Boolean, default: false },
