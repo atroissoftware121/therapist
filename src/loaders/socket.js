@@ -70,13 +70,21 @@ async function handleSocket() {
       await updateQuery(therapistModel, {_id: therapistsId}, { isMessageQueue: true });
     });
 
+    socket.on('message-queue-off', async(therapistsId) => {
+      await updateQuery(therapistModel, {_id: therapistsId}, { isMessageQueue: false });
+    });
+
     socket.on('call-queue-on', async(therapistsId) => {
       await updateQuery(therapistModel, {_id: therapistsId}, { isCallQueue: true });
     });
 
+    socket.on('call-queue-off', async(therapistsId) => {
+      await updateQuery(therapistModel, {_id: therapistsId}, { isCallQueue: false });
+    });
+
     socket.on('user-inactive', async(userId) => {
       console.log('userId12000', userId);
-      const userUpdateOffline = await updateQuery(therapistModel, { _id: userId }, { isOnline: false });
+      const userUpdateOffline = await updateQuery(therapistModel, { _id: userId }, { isOnline: false, isMessageQueue: false,  isCallQueue: false});
       io.emit('list-of-active-therapist', await findQuery(therapistModel, {isOnline: true}));
       console.log('userUpdateOffline', userUpdateOffline);
     }); 
