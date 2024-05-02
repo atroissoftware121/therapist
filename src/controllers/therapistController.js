@@ -174,7 +174,7 @@ const TherapistTopList = catchAsync(async (req, res) => {
   const list = await findQuery(
     therapistModel,
     { isProfileVerified: true },
-    "name email mobileNumber gender image specialization qualification charges discountedCharges location language summary isOnline onCall experience review",
+    "name email mobileNumber gender image specialization qualification charges discountedCharges location language summary isOnline onCall experience review isCallQueue isMessageQueue",
     5
   );
   return SendSuccessResponse({
@@ -226,7 +226,7 @@ const TherapistList = catchAsync(async (req, res) => {
   const list = await findQueryWithLimit(
     therapistModel,
     findQueryObj,
-    "name email mobileNumber gender image specialization qualification charges discountedCharges location language summary isOnline onCall experience review",
+    "name email mobileNumber gender image specialization qualification charges discountedCharges location language summary isOnline onCall experience review isMessageQueue isCallQueue",
     limit,
     skip
   );
