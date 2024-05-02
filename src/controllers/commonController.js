@@ -163,8 +163,11 @@ const sentPushNotifications = catchAsync(async (req, res) => {
           individualDetails: [individualObj],
         });
       }
+
+
        messageData.individualDetails.forEach((item) => {
         if (item.senderId === data.senderId) {
+          console.log('chatDuration12', data.chatDuration);
           item.timing = data.chatDuration;
         }
       });

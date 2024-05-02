@@ -56,11 +56,11 @@ async function handleSocket() {
     socket.on('therapist-inactive', async (therapistId) => {
        await updateQuery(therapistModel, { _id: therapistId }, { isOnline: false });
        io.emit('list-of-active-therapist', await findQuery(therapistModel, {isOnline: true}));
-    })
+    });
 
     socket.on('individual-show-to-therapist', async(therapistId) => {
       io.emit('list-of-individual-for-call', await findQuery(chatDetailsModel, {receiverId: therapistId, chatType: 'call'}));
-    })
+    }); 
 
     socket.on('therapist-show-to-individual', async () => {
        io.emit('list-of-active-therapist', await findQuery(therapistModel, {isOnline: true}));
@@ -136,6 +136,7 @@ const refreshCallListsEvent = async(data, therapistsId) => {
 // chat- detail event shows list of chat;
 const chatDetailsEvent = async(data, messageData, individualData) => {
   if(data.chatType === 'message') {
+    console.log('data122222', messageData);
     io.to(data.receiverId).emit('chat-details', { data: [messageData?.individualDetails], image: individualData.image});
   } else {
     io.to(data.receiverId).emit('chat-details-for-call', { data: [messageData?.individualDetails], image: individualData.image});
