@@ -320,22 +320,23 @@ const endSession = async (req, res) => {
     }
 
     const sessionTime = new Date();
-
+    
+    const startTime = new Date(sessionData.sessionStartTime);
+    const endTime = new Date(sessionTime);
     const duration = (endTime - startTime) / (1000 * 60);
+    const therapisData = await findQuery(therapistModel, { _id: therapistsId });
+    console.log(duration);
     const saveObj = {
       sessionId: sessionId,
       userId: individualId,
       sessionDuration: duration,
       cost: duration * therapisData.charges,
     }
-    const updatedSession = await updateQuery(
+    await updateQuery(
       sessionModel,
       { _id: sessionId },
-      { sessionEndTime: sessionTime, isSessionStart: false, sessionCost: saveObj.cost }
+      { sessionEndTime: endTime, isSessionStart: false, sessionCost: saveObj.cost }
     );
-    const startTime = new Date(updatedSession.sessionStartTime);
-    const endTime = new Date(updatedSession.sessionEndTime);
-    const therapisData = await findQuery(therapistModel, { _id: therapistsId });
 
     // await createQuery(individualTransactionModel, saveObj);
     await updateQuery(individualModel, { _id: individualId }, { $inc: { wallet: -saveObj.cost } })
