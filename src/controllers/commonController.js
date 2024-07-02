@@ -271,8 +271,7 @@ const startSession = async (req, res) => {
   }
 
   const sessionStartTime = new Date();
-
-  const createSession = await createQuery(sessionModel, { sessionStartTime: new Date(sessionStartTime), individualId, therapistsId, isSessionStart: true });
+  const createSession = await createQuery(sessionModel, { sessionStartTime, individualId, therapistsId, isSessionStart: true });
   const data = {
     individualId,
     therapistsId,
@@ -319,14 +318,11 @@ const endSession = async (req, res) => {
       });
     }
 
-    const sessionTime = new Date();
     
-    const startTime = new Date(sessionData.sessionStartTime);
-    const endTime = new Date(sessionTime);
+    const startTime = sessionData.sessionStartTime;
+    const endTime = new Date();
     const duration = (endTime - startTime) / (1000 * 60);
-    console.log(duration);
     const therapisData = await findQuery(therapistModel, { _id: therapistsId });
-    console.log(duration);
     const saveObj = {
       sessionId: sessionId,
       userId: individualId,

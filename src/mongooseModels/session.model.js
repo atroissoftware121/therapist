@@ -3,9 +3,9 @@ const mongoosePaginate = require('mongoose-paginate-v2');
 
 const sessionDataSchema = new mongoose.Schema(
   {
-    sessionStartTime: { type: String, require: true },
+    sessionStartTime: { type: Date, require: true },
     chatType: { type: String, enum: ['message', 'call'], require: true },
-    sessionEndTime: { type: String, require: true },
+    sessionEndTime: { type: Date, require: true },
     isSessionStart: { type: Boolean, default: false },
     individualId: { type: String, require: true },
     therapistsId: { type: String, require: true },
