@@ -35,6 +35,7 @@ const GetImage = async (req, res) => {
 
 const UploadImages = async (req, res) => {
   const file = req.file;
+  console.log('file122', file);
   let { success, imageURI } = await uploadFileS3(file);
   if (!success)
     return SendBadResponse({
@@ -524,6 +525,7 @@ const chatUserlist = async(req, res) => {
       const userMsgData = await findQuery(userModel, id);
       const obj = {
         chatTiming,
+        sessionCost: 0,
         consultationId: data._id,
         isReview: data?.isReview, 
         ...userMsgData?._doc,
@@ -540,9 +542,10 @@ const chatUserlist = async(req, res) => {
         callTiming: data.conversationDuration, 
         consultationId: data._id,
         isReview: data?.isReview,
+        sessionCost: 0,
         ...userCallData?._doc,
       };
-      console.log('obj12', obj);
+      
       pushUserData.push(obj)
     }
   }
