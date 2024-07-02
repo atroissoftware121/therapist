@@ -520,13 +520,14 @@ const chatUserlist = async (req, res) => {
   if (chatType === 'message') {
     const userMsgData = await findQueryWithPagining(sessionModel, { ...userId, isDeleted: false }, options);
     for (const data of userMsgData.docs) {
+      console.log('data122', data);
       const timeDifference = new Date(data.sessionEndTime) - new Date(data.sessionStartTime);
       const chatTiming = timeDifference / 1000;
       const id = individualId ? { _id: data.therapistsId } : { _id: data.individualId };
       const userMsgData = await findQuery(userModel, id);
       const obj = {
         chatTiming,
-        sessionCost: data.sessionCost,
+        sessionCost: data.sessionCost || 0,
         consultationId: data._id,
         isReview: data?.isReview,
         ...userMsgData?._doc,
