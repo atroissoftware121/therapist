@@ -13,6 +13,7 @@ const { admin } = require('../config/messaging-system');
 const catchAsync = require('../utils/catchAsync');
 const pick = require('../utils/pick');
 const { getFileStream, uploadFileS3 } = require('../helpers/s3Helper');
+const adminSettingModel = require('../mongooseModels/admin-setting.model');
 const userExtraDetailsModel = require('../mongooseModels/userExtraDetails.model');
 const chatNotificationsModel = require('../mongooseModels/chatNotifications.model');
 const authCredtionalsModel = require('../mongooseModels/authCredtionals.model');
@@ -82,12 +83,9 @@ const sentPushNotifications = catchAsync(async (req, res) => {
     let [receiverDetail] = await findQuery(userExtraDetailsModel, {
       userId: data.receiverId,
     });
-    console.log('receiverDetail', receiverDetail);
     const individualId = data.userType === 'individual' ? data.senderId : data.receiverId;
     const therapistsId = data.userType === 'therapists' ? data.senderId : data.receiverId;
-    console.log('therapistsId', therapistsId, 'individualId', individualId);
     const individualData = await findQuery(individualModel, { _id: individualId });
-    console.log('individualData', individualData);
     const therapistsData = await findQuery(therapistModel, { _id: therapistsId });
 
     if (!individualData || !therapistsData) {
@@ -97,7 +95,6 @@ const sentPushNotifications = catchAsync(async (req, res) => {
         data: { error: 'User not found!' },
       });
     };
-    console.log('reecceiei',)
     if (receiverDetail && receiverDetail.fcmToken) {
       const message = {
         notification: {
@@ -114,16 +111,12 @@ const sentPushNotifications = catchAsync(async (req, res) => {
         },
         token: receiverDetail.fcmToken,
       };
-      console.log('data12', message);
       let response;
       if (data.userType === 'therapists') {
-        console.log('alpha122');
         response = await admin.messaging().send(message);
         return SendSuccessResponse({ res, data: response });
       }
-      console.log('beta122');
       response = await admin.messaging().send(message);
-      console.log('response', response);
       const individualObj = {
         senderId: data.senderId,
         senderName: `${individualData.fname} ${individualData.lname}`,
@@ -132,11 +125,9 @@ const sentPushNotifications = catchAsync(async (req, res) => {
         gender: individualData.gender,
       };
       const [isChatExisted] = await findQuery(chatDetailsModel, { receiverId: data.receiverId, chatType: data.chatType });
-      console.log('isChatExisted', isChatExisted);
       let messageData;
       if (isChatExisted) {
         const isSenderPresent = isChatExisted.individualDetails.some(detail => detail.senderId === data.senderId);
-        console.log('isSenderPresent', isSenderPresent);
         if (!isSenderPresent) {
           messageData = await updateQuery(chatDetailsModel,
             {
@@ -318,7 +309,7 @@ const endSession = async (req, res) => {
       });
     }
 
-    
+
     const startTime = sessionData.sessionStartTime;
     const endTime = new Date();
     const duration = (endTime - startTime) / (1000 * 60);
@@ -336,7 +327,10 @@ const endSession = async (req, res) => {
     );
 
     // await createQuery(individualTransactionModel, saveObj);
-    await updateQuery(individualModel, { _id: individualId }, { $inc: { wallet: -saveObj.cost } })
+    await updateQuery(individualModel, { _id: individualId }, { $inc: { wallet: -saveObj.cost } });
+    const adminConfig = await adminSettingModel.findOne({});
+    const percentageCutoff = saveObj.cost - (saveObj.cost*(adminConfig.commissionPercentage/100));
+    await updateQuery(therapistModel, { _id: therapistsId }, { $inc: { wallet:  percentageCutoff} });
     const updateChatDetails = await updateQuery(
       chatDetailsModel,
       { receiverId: therapistsId, chatType: 'message' },
@@ -538,7 +532,7 @@ const chatUserlist = async (req, res) => {
       const userCallData = await findQuery(userModel, id);
       const obj = {
         callTiming: data.conversationDuration,
-        sessionCost: ((data.conversationDuration)/60)*userCallData?.charges || 0,
+        sessionCost: ((data.conversationDuration) / 60) * userCallData?.charges || 0,
         consultationId: data._id,
         isReview: data?.isReview,
         sessionCost: 0,
