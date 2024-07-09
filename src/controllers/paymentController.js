@@ -211,6 +211,7 @@ const addFundAccount = catchAsync(async (req, res) => {
       account_type,
       contact_id: response.data.id,
     };
+    console.log('options12', options);
     const createFund = await instance.fundAccount.create(options);
     console.log('createFund', createFund);
     const transactionData = {
