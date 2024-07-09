@@ -139,7 +139,6 @@ const addWallet = async (req, res) => {
     _id: individualId,
     loyaltyPoints: { $gte: 11500 },
   });
-  console.log('individualData', individualData);
   if (!individualData) {
     return SendBadResponse({
       res,
@@ -159,70 +158,76 @@ const addWallet = async (req, res) => {
 };
 
 const addFundAccount = catchAsync(async (req, res) => {
-  const {
-    name,
-    email,
-    mobileNumber,
-    therapistId,
-    account_type,
-    account_number,
-    ifsc,
-    upi_id,
-    isEdit,
-  } = req.body;
-  const [isAccountExists] = await findQuery(transactionModel, { therapistId });
-  console.log('isAccountExists', isAccountExists);
+  try{
 
-  const contactData = {
-    name,
-    email,
-    contact: mobileNumber,
-    type: 'customer',
-  };
-
-  const response = await axios.post(
-    'https://api.razorpay.com/v1/contacts',
-    contactData,
-    {
-      auth: {
-        username: RAZOR_API_KEY,
-        password: RAZOR_API_SECRET,
-      },
+    const {
+      name,
+      email,
+      mobileNumber,
+      therapistId,
+      account_type,
+      account_number,
+      ifsc,
+      upi_id,
+      isEdit,
+    } = req.body;
+    console.log('req.body', req.body);
+    const [isAccountExists] = await findQuery(transactionModel, { therapistId });
+    console.log('isAccountExists', isAccountExists);
+  
+    const contactData = {
+      name,
+      email,
+      contact: mobileNumber,
+      type: 'customer',
+    };
+  
+    const response = await axios.post(
+      'https://api.razorpay.com/v1/contacts',
+      contactData,
+      {
+        auth: {
+          username: RAZOR_API_KEY,
+          password: RAZOR_API_SECRET,
+        },
+      }
+    );
+    const data =
+      account_type === 'bank_account'
+        ? {
+            bank_account: {
+              ifsc,
+              name,
+              account_number,
+            },
+          }
+        : {
+            vpa: {
+              address: upi_id,
+            },
+          };
+    const options = {
+      ...data,
+      account_type,
+      contact_id: response.data.id,
+    };
+    const createFund = await instance.fundAccount.create(options);
+    console.log('createFund', createFund);
+    const transactionData = {
+      therapistId,
+      fund_id: createFund.id,
+      ...createFund,
+    };
+    console.log('transactionData', transactionData);
+    if (isAccountExists && isEdit === true) {
+      await updateQuery(transactionModel, { therapistId }, transactionData);
+    } else {
+      await createQuery(transactionModel, transactionData);
     }
-  );
-  console.log('response', response);
-  const data =
-    account_type === 'bank_account'
-      ? {
-          bank_account: {
-            ifsc,
-            name,
-            account_number,
-          },
-        }
-      : {
-          vpa: {
-            address: upi_id,
-          },
-        };
-  const options = {
-    ...data,
-    account_type,
-    contact_id: response.data.id,
-  };
-  console.log('options12', options);
-  const createFund = await instance.fundAccount.create(options);
-  const transactionData = {
-    therapistId,
-    fund_id: createFund.id,
-    ...createFund,
-  };
-  if (isAccountExists && isEdit === true) {
-    await updateQuery(transactionModel, { therapistId }, transactionData);
-  } else {
-    await createQuery(transactionModel, transactionData);
+    return SendSuccessResponse({ res, data: { data: createFund } });
+  }catch(err) {
+    console.log('errr1222', err.message);
   }
-  return SendSuccessResponse({ res, data: { data: createFund } });
 });
 
 const createPayout = catchAsync(async (req, res) => {
