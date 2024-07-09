@@ -211,15 +211,13 @@ const addFundAccount = catchAsync(async (req, res) => {
       account_type,
       contact_id: response.data.id,
     };
-    console.log('options12', options);
     const createFund = await instance.fundAccount.create(options);
-    console.log('createFund', createFund);
+    console.log('createFund12', createFund);
     const transactionData = {
       therapistId,
       fund_id: createFund.id,
       ...createFund,
     };
-    console.log('transactionData', transactionData);
     if (isAccountExists && isEdit === true) {
       await updateQuery(transactionModel, { therapistId }, transactionData);
     } else {
@@ -227,7 +225,13 @@ const addFundAccount = catchAsync(async (req, res) => {
     }
     return SendSuccessResponse({ res, data: { data: createFund } });
   }catch(err) {
-    console.log('errr1222', err.message);
+    return SendBadResponse({
+      res,
+      status: 400,
+      data: {
+        error: err.error.description,
+      },
+    });
   }
 });
 
