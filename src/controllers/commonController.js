@@ -337,7 +337,12 @@ const endSession = async (req, res) => {
       { $pull: { "individualDetails": { senderId: individualId, sessionId: sessionId } } },
     );
 
-    return SendSuccessResponse({ res, data: { updateChatDetails } });
+    return SendSuccessResponse({ res, data: { 
+      updateChatDetails, 
+      costOfSession: saveObj.cost,  
+      therapistCostCutOff: percentageCutoff, 
+      commission: adminConfig.commissionPercentage
+    } });
   } catch (err) {
     return SendBadResponse({
       res,
