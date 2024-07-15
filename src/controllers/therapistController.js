@@ -321,7 +321,7 @@ const ApproveTherapist = catchAsync(async (req, res) => {
 const TherapistDetailGet = catchAsync(async (req, res) => {
   let { _id } = req.params;
   let  selection =
-      "name image specialization qualification charges discountedCharges location language summary isOnline onCall";
+      "name image specialization qualification charges discountedCharges location language summary isOnline onCall wallet";
   let therapist = await findQuery(therapistModel, { _id }, selection);
   return SendSuccessResponse({
     res,
