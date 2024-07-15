@@ -273,6 +273,7 @@ const startSession = async (req, res) => {
   };
 
   await startTimerEvent(data);
+  const adminConfig = await adminSettingModel.findOne({});
   await updateQuery(chatDetailsModel,
     {
       receiverId: therapistsId,
@@ -286,7 +287,7 @@ const startSession = async (req, res) => {
     },
   );
 
-  return SendSuccessResponse({ res, data: { createSession } });
+  return SendSuccessResponse({ res, data: { createSession, adminCharge: adminConfig.commissionPercentage } });
 };
 
 const endSession = async (req, res) => {
