@@ -20,6 +20,7 @@ const authCredtionalsModel = require("../mongooseModels/authCredtionals.model");
 const therapistModel = require("../mongooseModels/therapist.model");
 const pick = require("../utils/pick");
 const {admin} = require('../config/messaging-system');
+// const { sendSms  } = require('../helpers/exotelHelper');
 
 const TherapistRegisterStepFirst = catchAsync(async (req, res) => {
   const { name, email, password, image } = req.body;
@@ -185,6 +186,13 @@ const TherapistTopList = catchAsync(async (req, res) => {
 
 const TherapistList = catchAsync(async (req, res) => {
   let { page, priceS, priceE, ageS, ageE, lang, specialization,sKeyword, gender, isActive  } = req.query;
+  if(!Object.keys(req.query).length) {
+    const therapistList  = await findQuery(therapistModel, {});
+    return SendSuccessResponse({
+      res,
+      data: { message: "Therapist list get successfully!", data: therapistList, length: therapistList.length },
+    });
+  }
   let findQueryArr=[]
   findQueryArr.push({ isProfileVerified: true });
   let skip = 0;
@@ -291,10 +299,10 @@ const ApproveTherapist = catchAsync(async (req, res) => {
   const text = "Congratulations! Your Therapist account on Sahhaya is active and ready to use.  Please login on ….. app link……\nTeam Sahhaya";
 
   sendEmail(therapist.email, message, text);
-  sendSMS({
-    to: therapist.mobileNumber,
-    body: message,
-  });
+  // sendSms({
+  //   to: therapist.mobileNumber,
+  //   body: message,
+  // });
   if (therapistData && therapistData.fcmToken) {
     const message = {
       notification: {
