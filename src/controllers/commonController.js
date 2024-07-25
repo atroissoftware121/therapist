@@ -294,7 +294,7 @@ const startSession = async (req, res) => {
 
 const endSession = async (req, res) => {
   try {
-    const { individualId, therapistsId, sessionId, charges, endSessionTime } = req.query;
+    const { individualId, therapistsId, sessionId, charges, sessionDuration } = req.query;
     const data = {
       individualId,
       therapistsId,
@@ -311,17 +311,12 @@ const endSession = async (req, res) => {
         data: { error: 'session not found!' },
       });
     }
-    const startTime = sessionData.sessionStartTime;
-    console.log('startTime', startTime);
     const endTime = new Date();
-    console.log('endTime', endTime);
-    const duration = (endTime - startTime) / (1000 * 60);
-    console.log('duration', duration);
     const saveObj = {
       sessionId: sessionId,
       userId: individualId,
-      sessionDuration: duration,
-      cost: duration * charges,
+      sessionDuration,
+      cost: sessionDuration * charges,
     }
     console.log('saveObj', saveObj);
     await updateQuery(
