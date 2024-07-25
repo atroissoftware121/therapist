@@ -315,8 +315,8 @@ const endSession = async (req, res) => {
     const saveObj = {
       sessionId: sessionId,
       userId: individualId,
-      sessionDuration,
-      cost: sessionDuration * charges,
+      sessionDuration: sessionDuration/60,
+      cost: (sessionDuration/60) * charges,
     }
     console.log('saveObj', saveObj);
     await updateQuery(
