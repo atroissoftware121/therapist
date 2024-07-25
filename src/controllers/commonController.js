@@ -313,7 +313,7 @@ const endSession = async (req, res) => {
     }
     const startTime = sessionData.sessionStartTime;
     console.log('startTime', startTime);
-    const endTime = new Date(endSessionTime);
+    const endTime = new Date();
     console.log('endTime', endTime);
     const duration = (endTime - startTime) / (1000 * 60);
     console.log('duration', duration);
