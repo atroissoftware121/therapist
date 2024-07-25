@@ -114,9 +114,11 @@ const sentPushNotifications = catchAsync(async (req, res) => {
       let response;
       if (data.userType === 'therapists') {
         response = await admin.messaging().send(message);
+        console.log(response)
         return SendSuccessResponse({ res, data: response });
       }
       response = await admin.messaging().send(message);
+      console.log(response)
       const individualObj = {
         senderId: data.senderId,
         senderName: `${individualData.fname} ${individualData.lname}`,
@@ -292,7 +294,7 @@ const startSession = async (req, res) => {
 
 const endSession = async (req, res) => {
   try {
-    const { individualId, therapistsId, sessionId } = req.query;
+    const { individualId, therapistsId, sessionId, charges, endSessionTime } = req.query;
     const data = {
       individualId,
       therapistsId,
@@ -309,28 +311,47 @@ const endSession = async (req, res) => {
         data: { error: 'session not found!' },
       });
     }
-
-
     const startTime = sessionData.sessionStartTime;
-    const endTime = new Date();
+    console.log('startTime', startTime);
+    const endTime = new Date(endSessionTime);
+    console.log('endTime', endTime);
     const duration = (endTime - startTime) / (1000 * 60);
-    const therapisData = await findQuery(therapistModel, { _id: therapistsId });
+    console.log('duration', duration);
     const saveObj = {
       sessionId: sessionId,
       userId: individualId,
       sessionDuration: duration,
-      cost: duration * therapisData.charges,
+      cost: duration * charges,
     }
+    console.log('saveObj', saveObj);
     await updateQuery(
       sessionModel,
       { _id: sessionId },
       { sessionEndTime: endTime, isSessionStart: false, sessionCost: saveObj.cost }
     );
 
-    // await createQuery(individualTransactionModel, saveObj);
-    await updateQuery(individualModel, { _id: individualId }, { $inc: { wallet: -saveObj.cost } });
+    await createQuery(individualTransactionModel, saveObj);
+    await individualModel.updateOne(
+      { _id: individualId },
+      [
+        {
+          $set: {
+            wallet: {
+              $cond: [
+                { $gte: ["$wallet", saveObj.cost] },
+                { $subtract: ["$wallet", saveObj.cost] },
+                0 // Set wallet to 0 if saveObj.cost is greater than the wallet balance
+              ]
+            }
+          }
+        }
+      ]
+    );
+
     const adminConfig = await adminSettingModel.findOne({});
-    const percentageCutoff = saveObj.cost - (saveObj.cost*(adminConfig.commissionPercentage/100));
+    console.log('adminConfig', adminConfig);
+    const percentageCutoff = saveObj.cost - (saveObj.cost * (adminConfig.commissionPercentage / 100));
+    console.log('percentageCutoff', percentageCutoff);
     await updateQuery(therapistModel, { _id: therapistsId }, { $inc: { wallet:  percentageCutoff} });
     const updateChatDetails = await updateQuery(
       chatDetailsModel,
@@ -338,12 +359,14 @@ const endSession = async (req, res) => {
       { $pull: { "individualDetails": { senderId: individualId, sessionId: sessionId } } },
     );
 
-    return SendSuccessResponse({ res, data: { 
-      updateChatDetails, 
-      costOfSession: saveObj.cost,  
-      therapistCostCutOff: percentageCutoff, 
-      commission: adminConfig.commissionPercentage
-    } });
+    return SendSuccessResponse({
+      res, data: {
+        updateChatDetails,
+        costOfSession: saveObj.cost,
+        therapistCostCutOff: percentageCutoff,
+        commission: adminConfig.commissionPercentage
+      }
+    });
   } catch (err) {
     return SendBadResponse({
       res,
