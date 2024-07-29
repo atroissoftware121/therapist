@@ -14,7 +14,7 @@ const therapistSchema = new mongoose.Schema(
     discountedCharges: { type: Number, default: 0 },
     location: { type: String, default: null },
     language: { type: String, default: null },
-    experience: { type: Number, default: 0},
+    experience: { type: Number, default: 0 },
     summary: { type: String, default: null },
     isOnline: { type: Boolean, default: false },
     onCall: { type: Boolean, default: false },
@@ -25,6 +25,7 @@ const therapistSchema = new mongoose.Schema(
     isAdmin: { type: Boolean, default: false },
     wallet: { type: Number, default: 0 },
     review: { type: Number, default: 0 },
+    isInChat: { type: Boolean, default: false },
     notification: {
       type: mongoose.Types.ObjectId,
       ref: "notification",

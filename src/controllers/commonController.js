@@ -275,6 +275,7 @@ const startSession = async (req, res) => {
   };
 
   await startTimerEvent(data);
+  await updateQuery(therapistModel, { _id: therapistsId }, { isInChat: true })
   const adminConfig = await adminSettingModel.findOne({});
   await updateQuery(chatDetailsModel,
     {
@@ -314,11 +315,11 @@ const endSession = async (req, res) => {
     const saveObj = {
       sessionId: sessionId,
       userId: individualId,
-      sessionDuration: sessionDuration/60,
-      cost: (sessionDuration/60) * charges,
+      sessionDuration: sessionDuration / 60,
+      cost: (sessionDuration / 60) * charges,
     }
     const startTime = new Date(sessionData.sessionStartTime);
-    const endTime = new Date(startTime.getTime() + sessionDuration* 1000);;
+    const endTime = new Date(startTime.getTime() + sessionDuration * 1000);;
     console.log('saveObj', saveObj);
     await updateQuery(
       sessionModel,
@@ -348,7 +349,7 @@ const endSession = async (req, res) => {
     console.log('adminConfig', adminConfig);
     const percentageCutoff = saveObj.cost - (saveObj.cost * (adminConfig.commissionPercentage / 100));
     console.log('percentageCutoff', percentageCutoff);
-    await updateQuery(therapistModel, { _id: therapistsId }, { $inc: { wallet:  percentageCutoff} });
+    await updateQuery(therapistModel, { _id: therapistsId }, { $inc: { wallet: percentageCutoff }, isInChat: false });
     const updateChatDetails = await updateQuery(
       chatDetailsModel,
       { receiverId: therapistsId, chatType: 'message' },
