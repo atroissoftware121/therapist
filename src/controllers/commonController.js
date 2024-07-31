@@ -76,13 +76,9 @@ const Logout = async (req, res) => {
     });
   }
 };
-
 const sentPushNotifications = catchAsync(async (req, res) => {
-  try {
     const data = req.body;
-    let [receiverDetail] = await findQuery(userExtraDetailsModel, {
-      userId: data.receiverId,
-    });
+    const [receiverDetail] = await findQuery(userExtraDetailsModel, { userId: data.receiverId });
     const individualId = data.userType === 'individual' ? data.senderId : data.receiverId;
     const therapistsId = data.userType === 'therapists' ? data.senderId : data.receiverId;
     const individualData = await findQuery(individualModel, { _id: individualId });
@@ -95,6 +91,7 @@ const sentPushNotifications = catchAsync(async (req, res) => {
         data: { error: 'User not found!' },
       });
     };
+
     if (receiverDetail && receiverDetail.fcmToken) {
       const message = {
         notification: {
@@ -111,14 +108,9 @@ const sentPushNotifications = catchAsync(async (req, res) => {
         },
         token: receiverDetail.fcmToken,
       };
-      let response;
-      if (data.userType === 'therapists') {
-        response = await admin.messaging().send(message);
-        console.log(response)
-        return SendSuccessResponse({ res, data: response });
-      }
-      response = await admin.messaging().send(message);
-      console.log(response)
+
+      let response = await admin.messaging().send(message);
+      console.log(response);
       const individualObj = {
         senderId: data.senderId,
         senderName: `${individualData.fname} ${individualData.lname}`,
@@ -126,8 +118,10 @@ const sentPushNotifications = catchAsync(async (req, res) => {
         mobileNumber: individualData.mobileNumber,
         gender: individualData.gender,
       };
+
       const [isChatExisted] = await findQuery(chatDetailsModel, { receiverId: data.receiverId, chatType: data.chatType });
       let messageData;
+
       if (isChatExisted) {
         const isSenderPresent = isChatExisted.individualDetails.some(detail => detail.senderId === data.senderId);
         if (!isSenderPresent) {
@@ -145,9 +139,11 @@ const sentPushNotifications = catchAsync(async (req, res) => {
                 individualDetails: individualObj,
               },
             },
-          )
+          );
+          console.log('Chat updated with new individual detail');
         } else {
           messageData = isChatExisted;
+          console.log('Chat already exists');
         }
       } else {
         messageData = await createQuery(chatDetailsModel, {
@@ -156,8 +152,8 @@ const sentPushNotifications = catchAsync(async (req, res) => {
           chatType: data.chatType,
           individualDetails: [individualObj],
         });
+        console.log('New chat created');
       }
-
 
       messageData.individualDetails.forEach((item) => {
         if (item.senderId === data.senderId) {
@@ -165,23 +161,17 @@ const sentPushNotifications = catchAsync(async (req, res) => {
           item.timing = data.chatDuration;
         }
       });
-      await chatDetailsEvent(data, messageData, individualData);
 
-      return SendSuccessResponse({ res, data: response })
+      await chatDetailsEvent(data, messageData, individualData);
+      return SendSuccessResponse({ res, data: response });
     }
+
     return SendBadResponse({
       res,
       status: 403,
       data: { message: 'Receiver Not found' },
     });
-  } catch (err) {
-    return SendBadResponse({
-      res,
-      status: 403,
-      data: { message: err.message },
-    });
-  }
-})
+});
 
 const chatHistory = async (req, res) => {
   try {
@@ -221,8 +211,7 @@ const getProfile = async (req, res) => {
         status: 404,
         data: { error: 'User not found!' },
       });
-    }
-
+    };
     const getProfileData = await findQuery(
       isUserExists.userType === 'therapist' ? therapistModel : individualModel,
       { _id: userId }
@@ -242,54 +231,72 @@ const getProfile = async (req, res) => {
       status: 403,
       data: { message: err.message },
     });
-  }
-}
+  };
+};
 
 const startSession = async (req, res) => {
-  const { individualId, therapistsId } = req.query;
-  console.log('therapistId', therapistsId);
-  const [userChatDetails] = await findQuery(chatDetailsModel,
-    {
-      receiverId: therapistsId,
+  try {
+    const { individualId, therapistsId } = req.query;
+    console.log('therapistId', therapistsId);
+    const [userChatDetails, adminConfig] = await ([
+      findQuery(chatDetailsModel, {
+        receiverId: therapistsId,
+        chatType: 'message',
+        'individualDetails.senderId': { $eq: individualId }
+      }),
+      adminSettingModel.findOne({})
+    ]);
+    if (!userChatDetails.length) {
+      return SendBadResponse({
+        res,
+        status: 404,
+        data: { error: 'User details not found!' }
+      });
+    };
+    const sessionStartTime = new Date();
+    const createSession = await createQuery(sessionModel, {
+      sessionStartTime,
+      individualId,
+      therapistsId,
+      isSessionStart: true
+    });
+    const data = {
+      individualId,
+      therapistsId,
       chatType: 'message',
-      'individualDetails.senderId': { $eq: individualId }
+      isSessionStart: createSession.isSessionStart,
+      sessionId: createSession._id,
+      startSession: sessionStartTime
+    };
+    await Promise.all([
+      startTimerEvent(data),
+      updateQuery(chatDetailsModel, {
+        receiverId: therapistsId,
+        chatType: 'message',
+        'individualDetails.senderId': { $eq: individualId }
+      }, {
+        $set: {
+          'individualDetails.$.sessionId': createSession._id
+        }
+      })
+    ]);
+
+    return SendSuccessResponse({
+      res,
+      data: {
+        createSession,
+        adminCharge: adminConfig.commissionPercentage
+      }
     });
 
-  if (!userChatDetails) {
+  } catch (error) {
+    console.error('Error starting session:', error);
     return SendBadResponse({
       res,
-      status: 404,
-      data: { error: 'User details not found!' },
+      status: 500,
+      data: { error: 'Internal Server Error' }
     });
   }
-
-  const sessionStartTime = new Date();
-  const createSession = await createQuery(sessionModel, { sessionStartTime, individualId, therapistsId, isSessionStart: true });
-  const data = {
-    individualId,
-    therapistsId,
-    chatType: 'message',
-    isSessionStart: createSession.isSessionStart,
-    sessionId: createSession._id,
-    startSession: sessionStartTime,
-  };
-
-  await startTimerEvent(data);
-  const adminConfig = await adminSettingModel.findOne({});
-  await updateQuery(chatDetailsModel,
-    {
-      receiverId: therapistsId,
-      chatType: 'message',
-      'individualDetails.senderId': { $eq: individualId }
-    },
-    {
-      $set: {
-        'individualDetails.$.sessionId': createSession._id,
-      },
-    },
-  );
-
-  return SendSuccessResponse({ res, data: { createSession, adminCharge: adminConfig.commissionPercentage } });
 };
 
 const endSession = async (req, res) => {
@@ -303,7 +310,6 @@ const endSession = async (req, res) => {
     };
     await endTimerEvent(data);
     const sessionData = await findQuery(sessionModel, { _id: sessionId });
-
     if (!sessionData) {
       return SendBadResponse({
         res,
@@ -311,54 +317,63 @@ const endSession = async (req, res) => {
         data: { error: 'session not found!' },
       });
     }
+                
+    const sessionDurationInMinutes = sessionDuration / 60;
+    const cost = sessionDurationInMinutes * charges;
+    const startTime = new Date(sessionData.sessionStartTime);
+    const endTime = new Date(startTime.getTime() + sessionDuration * 1000);
+    
     const saveObj = {
       sessionId: sessionId,
       userId: individualId,
-      sessionDuration: sessionDuration/60,
-      cost: (sessionDuration/60) * charges,
-    }
-    const startTime = new Date(sessionData.sessionStartTime);
-    const endTime = new Date(startTime.getTime() + sessionDuration* 1000);;
-    console.log('saveObj', saveObj);
-    await updateQuery(
-      sessionModel,
-      { _id: sessionId },
-      { sessionEndTime: endTime, isSessionStart: false, sessionCost: saveObj.cost }
-    );
-
-    await createQuery(individualTransactionModel, saveObj);
-    await individualModel.updateOne(
-      { _id: individualId },
-      [
-        {
-          $set: {
-            wallet: {
-              $cond: [
-                { $gte: ["$wallet", saveObj.cost] },
-                { $subtract: ["$wallet", saveObj.cost] },
-                0 // Set wallet to 0 if saveObj.cost is greater than the wallet balance
-              ]
-            }
-          }
-        }
-      ]
-    );
+      sessionDuration: sessionDurationInMinutes,
+      cost: cost,
+    };
 
     const adminConfig = await adminSettingModel.findOne({});
-    console.log('adminConfig', adminConfig);
-    const percentageCutoff = saveObj.cost - (saveObj.cost * (adminConfig.commissionPercentage / 100));
-    console.log('percentageCutoff', percentageCutoff);
-    await updateQuery(therapistModel, { _id: therapistsId }, { $inc: { wallet:  percentageCutoff} });
-    const updateChatDetails = await updateQuery(
+    const percentageCutoff = cost - (cost * (adminConfig.commissionPercentage / 100));
+    const walletUpdate = {
+      wallet: {
+        $cond: [
+          { $gte: ["$wallet", cost] },
+          { $subtract: ["$wallet", cost]},
+          0 
+        ]
+      }
+    };
+    const sessionUpdate = updateQuery(
+      sessionModel,
+      { _id: sessionId },
+      { sessionEndTime: endTime, isSessionStart: false, sessionCost: cost }
+    );
+    const transactionCreate = createQuery(individualTransactionModel, saveObj);
+    const individualWalletUpdate = individualModel.updateOne(
+      { _id: individualId },
+      [{ $set: walletUpdate }]
+    );
+    const therapistWalletUpdate = updateQuery(
+      therapistModel,
+      { _id: therapistsId },
+      { $inc: { wallet: percentageCutoff } }
+    );
+    const chatDetailsUpdate = updateQuery(
       chatDetailsModel,
       { receiverId: therapistsId, chatType: 'message' },
       { $pull: { "individualDetails": { senderId: individualId, sessionId: sessionId } } },
     );
 
+    await Promise.all([
+      sessionUpdate,
+      transactionCreate,
+      individualWalletUpdate,
+      therapistWalletUpdate,
+      chatDetailsUpdate
+    ]);
+
     return SendSuccessResponse({
-      res, data: {
-        updateChatDetails,
-        costOfSession: saveObj.cost,
+      res,
+      data: {
+        costOfSession: cost,
         therapistCostCutOff: percentageCutoff,
         commission: adminConfig.commissionPercentage
       }
@@ -393,7 +408,6 @@ const createReport = async (req, res) => {
 
   return SendSuccessResponse({ res, data: { data: 'Sent Successfully' } });
 };
-
 const report = async (req, res) => {
   const { message, email } = req.body;
   const user = await individualModel.findOne({ email })
@@ -401,13 +415,13 @@ const report = async (req, res) => {
     return SendBadResponse({
       res,
       status: 404,
-      data: { error: 'User not found! ' },
+      data: { error: 'User not found!' },
     });
   }
   await reportModel.create({
     ...req.body,
     description: message
-  })
+  });
   return SendSuccessResponse({ res, data: { data: 'Sent Successfully' } });
 }
 
@@ -416,6 +430,7 @@ const createNotificationData = async (req, res) => {
   let [receiverDetail] = await findQuery(userExtraDetailsModel, {
     userId: individualId,
   });
+   
   if (!receiverDetail) {
     return SendBadResponse({
       res,
@@ -464,29 +479,30 @@ const getlistOfTherapistNotified = async (req, res) => {
       status: 404,
       data: { error: 'no therapist notified' },
     });
-  }
+  };
 
   return SendSuccessResponse({ res, data: { data: therapistData } });
-}
+};
 
 const getCalldata = async (req, res) => {
   const { therapistsId, individualId } = req.query;
   const dataMapper = chatMapper(req.body);
   console.log('12233333===>', therapistsId, individualId);
+  console.log("data is coming",dataMapper);
   await updateQuery(
     chatDetailsModel,
     { receiverId: therapistsId, chatType: "call" },
     { $pull: { "individualDetails": { senderId: individualId } } },
   );
-  const [data] = await findQuery(chatDetailsModel, { receiverId: therapistsId, chatType: 'call' })
+  const [data] = await findQuery(chatDetailsModel, { receiverId: therapistsId, chatType: 'call' });
+  console.log("data is coming ",data);
   await createQuery(callDetailsModel, { ...dataMapper, therapistsId, individualId });
   const therapisData = await findQuery(therapistModel, { _id: therapistsId });
   const costPerCall = therapisData.charges * (dataMapper.conversationDuration / 60);
   await updateQuery(individualModel, { _id: individualId }, { $inc: { wallet: -costPerCall } })
   await refreshCallListsEvent(data, therapistsId);
-
   return SendSuccessResponse({ res, data: { data: 'Received request successfully' } });
-}
+};
 
 const chatMapper = (data) => {
   return {
@@ -511,103 +527,83 @@ const chatMapper = (data) => {
       status: data.Legs[1].Status
     }
     ]
-  }
-}
+  };
+};
 
 const chatUserlist = async (req, res) => {
   let { individualId, therapistsId, chatType, page } = req.query;
-
   let offset = 0;
-  let limit = 20;
+  const limit = 20;
   const pushUserData = [];
-
   if (page) {
     offset = (page - 1) * limit;
   }
-
-  const options = {
-    limit,
-    offset
-  };
+  const options = { limit, offset};
   const userId = individualId ? { individualId } : { therapistsId };
-
   const userModel = individualId ? therapistModel : individualModel;
-  if (chatType === 'message') {
-    const userMsgData = await findQueryWithPagining(sessionModel, { ...userId, isDeleted: false }, options);
-    for (const data of userMsgData.docs) {
-      console.log('data122', data);
-      const timeDifference = new Date(data.sessionEndTime) - new Date(data.sessionStartTime);
-      const chatTiming = timeDifference / 1000;
+  const queryModel = chatType === 'message' ? sessionModel : callDetailsModel;
+  try {
+    const userData = await findQueryWithPagining(queryModel, { ...userId, isDeleted: false }, options);
+
+    const userPromises = userData.docs.map(async (data) => {
+      const timeDifference = chatType === 'message' ? (new Date(data.sessionEndTime) - new Date(data.sessionStartTime)) / 1000 : data.conversationDuration;
       const id = individualId ? { _id: data.therapistsId } : { _id: data.individualId };
-      const userMsgData = await findQuery(userModel, id);
-      const obj = {
-        chatTiming,
-        sessionCost: data.sessionCost || 0,
+      const user = await findQuery(userModel, id);
+
+      return {
+        chatTiming: chatType === 'message' ? timeDifference : undefined,
+        callTiming: chatType !== 'message' ? timeDifference : undefined,
+        sessionCost: chatType === 'message' ? (data.sessionCost || 0) : ((data.conversationDuration / 60) * user?.charges || 0),
         consultationId: data._id,
         isReview: data?.isReview,
-        ...userMsgData?._doc,
+        ...user?._doc,
       };
-      pushUserData.push(obj);
-    }
+    });
+
+    const results = await Promise.all(userPromises);
+    pushUserData.push(...results);
+
+    return SendSuccessResponse({ res, status:200,data: { data: pushUserData, length: pushUserData.length } });
+  } catch (error) {
+    return SendBadResponse({ res,status:403, error });
   }
-  else {
-    const individualCallData = await findQueryWithPagining(callDetailsModel, userId, options);
-    for (const data of individualCallData.docs) {
-      const id = individualId ? { _id: data.therapistsId } : { _id: data.individualId };
-      const userCallData = await findQuery(userModel, id);
-      const obj = {
-        callTiming: data.conversationDuration,
-        sessionCost: ((data.conversationDuration) / 60) * userCallData?.charges || 0,
-        consultationId: data._id,
-        isReview: data?.isReview,
-        sessionCost: 0,
-        ...userCallData?._doc,
-      };
-
-      pushUserData.push(obj)
-    }
-  }
-
-  return SendSuccessResponse({ res, data: { data: pushUserData, length: pushUserData.length } });
-}
-
+};
 const therapistChatList = async (req, res) => {
   const { individualId, page } = req.query;
-
   let offset = 0;
   let limit = 20;
   if (page) {
     offset = (page - 1) * limit;
   }
+  const options = { limit, offset };
+  const [userMsgData, individualCallData] = await Promise.all([
+    findQueryWithPagining(sessionModel, { individualId, isDeleted: false }, options),
+    findQueryWithPagining(callDetailsModel, { individualId }, options),
+  ]);
+  const therapistIds = new Set([
+    ...userMsgData.docs.map(data => data.therapistsId),
+    ...individualCallData.docs.map(data => data.therapistsId),
+  ]);
+  const therapistDataPromises = Array.from(therapistIds).map(therapistsId => 
+    findQuery(therapistModel, { _id: therapistsId })
+  );
+  const therapistData = await Promise.all(therapistDataPromises);
+  const uniqueTherapistData = Array.from(new Set(therapistData.filter(Boolean).map(data => data._id)))
+    .map(id => therapistData.find(data => data._id.equals(id)));
 
-  const options = {
-    limit,
-    offset
-  };
-  const pushUserData = [];
-
-  const userMsgData = await findQueryWithPagining(sessionModel, { individualId, isDeleted: false }, options);
-  const individualCallData = await findQueryWithPagining(callDetailsModel, { individualId }, options);
-  const userData = [...userMsgData.docs, ...individualCallData.docs];
-  for (const data of userData) {
-    const therapistMsgData = await findQuery(therapistModel, { _id: data.therapistsId });
-    pushUserData.push(therapistMsgData);
-  }
-
-  const uniquePushUserData = Array.from(new Set(pushUserData.map(data => String(data._id))))
-    .map(id => pushUserData.find(data => String(data._id) === id));
-
-  return SendSuccessResponse({ res, data: { data: uniquePushUserData, length: uniquePushUserData.length } });
-}
+  return SendSuccessResponse({
+    res,
+    data: { data: uniqueTherapistData, length: uniqueTherapistData.length },
+  });
+};
 
 const deleteChat = async (req, res) => {
   const { sessionId, chatType } = req.query;
   if (chatType === 'message') {
     await updateQuery(sessionModel, { _id: sessionId }, { isDeleted: true })
   }
-  return SendSuccessResponse({ res, data: { data: "chat deleted successfully " } })
-
-}
+  return SendSuccessResponse({ res, data: { data: "chat deleted successfully" } })
+};
 
 module.exports = {
   GetImage,
