@@ -247,7 +247,6 @@ const getProfile = async (req, res) => {
 
 const startSession = async (req, res) => {
   const { individualId, therapistsId } = req.query;
-  console.log('therapistId', therapistsId);
   const [userChatDetails] = await findQuery(chatDetailsModel,
     {
       receiverId: therapistsId,
@@ -319,7 +318,7 @@ const endSession = async (req, res) => {
       cost: (sessionDuration / 60) * charges,
     }
     const startTime = new Date(sessionData.sessionStartTime);
-    const endTime = new Date(startTime.getTime() + sessionDuration * 1000);;
+    const endTime = new Date(startTime.getTime() + sessionDuration * 1000);
     console.log('saveObj', saveObj);
     await updateQuery(
       sessionModel,
@@ -344,7 +343,7 @@ const endSession = async (req, res) => {
         }
       ]
     );
-
+    
     const adminConfig = await adminSettingModel.findOne({});
     console.log('adminConfig', adminConfig);
     const percentageCutoff = saveObj.cost - (saveObj.cost * (adminConfig.commissionPercentage / 100));
@@ -579,26 +578,52 @@ const therapistChatList = async (req, res) => {
   let limit = 20;
   if (page) {
     offset = (page - 1) * limit;
-  }
-
-  const options = {
-    limit,
-    offset
   };
-  const pushUserData = [];
 
-  const userMsgData = await findQueryWithPagining(sessionModel, { individualId, isDeleted: false }, options);
-  const individualCallData = await findQueryWithPagining(callDetailsModel, { individualId }, options);
-  const userData = [...userMsgData.docs, ...individualCallData.docs];
-  for (const data of userData) {
-    const therapistMsgData = await findQuery(therapistModel, { _id: data.therapistsId });
-    pushUserData.push(therapistMsgData);
-  }
+  const pipeline = [
+    {
+      $match: {
+        individualId,
+        isDeleted: false
+      }
+    },
+    {
+      $unionWith: {
+        coll: "calldetails",
+        pipeline: [
+          {
+            $match: {
+              individualId,
+            }
+          }
+        ]
+      }
+    },
+    {
+      $group: {
+        _id: "$therapistsId",
+        doc: { $first: "$$ROOT" }
+      }
+    },
+    {
+      $replaceRoot: { newRoot: "$doc" }
+    },
+    {
+      $skip: offset
+    },
+    {
+      $limit: limit
+    }
+  ];
+  const userData = await sessionModel.aggregate(pipeline);
+  const therapistIds = userData.map(data => data.therapistsId);
+  const therapistMsgData = await therapistModel.find({ _id: { $in: therapistIds } });
+  const pushUserData = userData.map(data => {
+    const therapist = therapistMsgData.find(therapist => therapist._id.equals(data.therapistsId));
+    return therapist || data;
+  });
 
-  const uniquePushUserData = Array.from(new Set(pushUserData.map(data => String(data._id))))
-    .map(id => pushUserData.find(data => String(data._id) === id));
-
-  return SendSuccessResponse({ res, data: { data: uniquePushUserData, length: uniquePushUserData.length } });
+  return SendSuccessResponse({ res, data: { data: pushUserData, length: pushUserData.length } });
 }
 
 const deleteChat = async (req, res) => {
