@@ -618,12 +618,8 @@ const therapistChatList = async (req, res) => {
   const userData = await sessionModel.aggregate(pipeline);
   const therapistIds = userData.map(data => data.therapistsId);
   const therapistMsgData = await therapistModel.find({ _id: { $in: therapistIds } });
-  const pushUserData = userData.map(data => {
-    const therapist = therapistMsgData.find(therapist => therapist._id.equals(data.therapistsId));
-    return therapist || data;
-  });
 
-  return SendSuccessResponse({ res, data: { data: pushUserData, length: pushUserData.length } });
+  return SendSuccessResponse({ res, data: { data: therapistMsgData, length: therapistMsgData.length } });
 }
 
 const deleteChat = async (req, res) => {
