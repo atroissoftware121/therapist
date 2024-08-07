@@ -16,7 +16,6 @@ const {
   chatUserlist,
   therapistChatList,
   deleteChat,
-  
 } = require('../controllers/commonController');
 const { upload } = require('../helpers/s3Helper');
 
@@ -44,12 +43,17 @@ module.exports = (app) => {
         chatDuration: Joi.number().optional(),
       }),
     }),
-    isAuthorized,
+    // isAuthorized,
     sentPushNotifications,
   );
   route.get('/chatHistory', isAuthorized, injectUserDetails, chatHistory);
   route.get('/image/:key', GetImage);
-  route.post('/image', upload.single('image'), UploadImages);
+  route.post('/image', upload.single('image'), celebrate({
+    [Segments.BODY]: Joi.object().keys({
+      senderId: Joi.string().required(),
+      receiverId: Joi.string().required(),
+    }),
+  }), UploadImages);
   route.get('/getProfile', isAuthorized, injectUserDetails, getProfile);
   route.get('/session-start', startSession);
   route.get('/end-session', endSession);
@@ -60,20 +64,40 @@ module.exports = (app) => {
       description: Joi.string().required(),
     }),
   }),
-  createReport
+    createReport
   );
-  route.post('/report',celebrate({
-    [Segments.BODY]:Joi.object().keys({
-      message:Joi.string().required(),
-      email:Joi.string().required(),
+  route.post('/report', celebrate({
+    [Segments.BODY]: Joi.object().keys({
+      message: Joi.string().required(),
+      email: Joi.string().required(),
     }),
   }),
-report
-)
+    report
+  )
   route.post('/addIndividualNotification', createNotificationData);
   route.get('/getlistOfTherapistNotified', getlistOfTherapistNotified);
   route.post('/get-call-details', getCalldata);
-  route.get('/fetchingChatUserlist', chatUserlist);
-  route.get('/therapistChatList', therapistChatList);
-  route.delete('/deleteChat',deleteChat);
+
+  route.get('/fetchingChatUserlist',
+    celebrate({
+      [Segments.QUERY]: Joi.object().keys({
+        individualId: Joi.string().optional(),
+        therapistsId: Joi.string().optional(),
+        page: Joi.string().required(),
+        chatType: Joi.string().required()
+      }),
+    }),
+    chatUserlist
+  );
+
+  route.get('/therapistChatList',
+    celebrate({
+      [Segments.QUERY]: Joi.object().keys({
+        individualId: Joi.string().required(),
+        page: Joi.string().required(),
+      }),
+    }),
+    therapistChatList
+  );
+  route.delete('/deleteChat', deleteChat);
 };

@@ -343,7 +343,7 @@ const endSession = async (req, res) => {
         }
       ]
     );
-    
+
     const adminConfig = await adminSettingModel.findOne({});
     console.log('adminConfig', adminConfig);
     const percentageCutoff = saveObj.cost - (saveObj.cost * (adminConfig.commissionPercentage / 100));
@@ -519,7 +519,7 @@ const chatUserlist = async (req, res) => {
 
   let offset = 0;
   let limit = 20;
-  const pushUserData = [];
+  let pushUserData;
 
   if (page) {
     offset = (page - 1) * limit;
@@ -534,8 +534,7 @@ const chatUserlist = async (req, res) => {
   const userModel = individualId ? therapistModel : individualModel;
   if (chatType === 'message') {
     const userMsgData = await findQueryWithPagining(sessionModel, { ...userId, isDeleted: false }, options);
-    for (const data of userMsgData.docs) {
-      console.log('data122', data);
+    pushUserData = await Promise.all(userMsgData.docs.map(async (data) => {
       const timeDifference = new Date(data.sessionEndTime) - new Date(data.sessionStartTime);
       const chatTiming = timeDifference / 1000;
       const id = individualId ? { _id: data.therapistsId } : { _id: data.individualId };
@@ -545,14 +544,15 @@ const chatUserlist = async (req, res) => {
         sessionCost: data.sessionCost || 0,
         consultationId: data._id,
         isReview: data?.isReview,
-        ...userMsgData?._doc,
+        ...userMsgData.toObject(),
       };
-      pushUserData.push(obj);
-    }
+
+      return obj;
+    }));
   }
   else {
     const individualCallData = await findQueryWithPagining(callDetailsModel, userId, options);
-    for (const data of individualCallData.docs) {
+    pushUserData = await Promise.all(individualCallData.docs.map(async(data) => {
       const id = individualId ? { _id: data.therapistsId } : { _id: data.individualId };
       const userCallData = await findQuery(userModel, id);
       const obj = {
@@ -561,11 +561,11 @@ const chatUserlist = async (req, res) => {
         consultationId: data._id,
         isReview: data?.isReview,
         sessionCost: 0,
-        ...userCallData?._doc,
+        ...userCallData.toObject(),
       };
 
-      pushUserData.push(obj)
-    }
+      return obj;
+    }))
   }
 
   return SendSuccessResponse({ res, data: { data: pushUserData, length: pushUserData.length } });
