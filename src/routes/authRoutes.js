@@ -36,7 +36,6 @@ module.exports = (app) => {
       [Segments.BODY]: Joi.object().keys({
         email: Joi.string().required(),
         password: Joi.string().required(),
-        userType: Joi.string().required(),
         fcmToken: Joi.string().invalid('undefined').required(),
         deviceInfo: Joi.string().required(),
       }),

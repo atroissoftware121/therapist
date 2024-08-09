@@ -230,13 +230,12 @@ const VerifyOtp = async (req, res) => {
 };
 
 const Login = async (req, res) => {
-  let { email, password, userType, fcmToken, deviceInfo } = req.body; 
-  const otherUserType = userType === 'therapist' ? 'individual' : 'therapist';
+  let { email, password, fcmToken, deviceInfo } = req.body;
 
   let [credential] = await findQuery(authCredtionalsModel, {
     $and: [{ email }],
   });
-  
+
   if (!credential)
     return SendBadResponse({
       res,
@@ -244,11 +243,12 @@ const Login = async (req, res) => {
       data: { error: 'User not found!' },
     });
 
+  const otherUserType = credential.userType === 'therapist' ? 'individual' : 'therapist';
   const [isEmailExisted] = await findQuery(
-    userType === 'therapist' ? individualModel : therapistModel
-    ,{
-    email: email
-  });
+    credential.userType === 'therapist' ? individualModel : therapistModel
+    , {
+      email: email
+    });
 
   if (isEmailExisted) {
     return SendBadResponse({
@@ -270,7 +270,7 @@ const Login = async (req, res) => {
     });
 
   let isUserExist = await findQuery(
-    userType === 'therapist' ? therapistModel : individualModel,
+    credential.userType === 'therapist' ? therapistModel : individualModel,
     { _id: credential.userId }
   );
   if (!isUserExist)
@@ -280,7 +280,7 @@ const Login = async (req, res) => {
       data: { error: 'Invaild email/password!' },
     });
 
-  let { notification, userExtraDetails, ...userData } = isUserExist?._doc || {};
+  let { notification, userExtraDetails, ...userData } = isUserExist.toObject() || {};
   let token = genrateToken({ data: { _id: userData._id } });
   await updateQuery(
     userExtraDetailsModel,
