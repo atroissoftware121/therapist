@@ -588,7 +588,7 @@ const chatUserlist = async (req, res) => {
         };
       }
       // console.log()
-      const data =  {
+      const upData =  {
         chatTiming,
         sessionCost: data.sessionCost || 0,
         consultationId: data._id,
@@ -596,9 +596,9 @@ const chatUserlist = async (req, res) => {
         ...messageData
       };
 
-      console.log('datatatat12', data);
+      console.log('datatatat12', upData);
 
-      return data;
+      return upData;
     });
   }
   // else {
