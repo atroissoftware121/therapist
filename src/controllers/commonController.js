@@ -520,7 +520,7 @@ const chatUserlist = async (req, res) => {
   let { individualId, therapistsId, chatType, page } = req.query;
 
   let offset = 0;
-  let limit = 10;
+  let limit = 20;
   let pushUserData;
 
   if (page) {
@@ -534,52 +534,125 @@ const chatUserlist = async (req, res) => {
   const userId = individualId ? { individualId } : { therapistsId };
 
   const userModel = individualId ? therapistModel : individualModel;
+  // if (chatType === 'message') {
+  //   const userMsgData = await findQueryWithPagining(sessionModel, { ...userId, isDeleted: false }, options);
+  //   pushUserData = await Promise.all(userMsgData.docs.map(async (data) => {
+  //     const timeDifference = new Date(data.sessionEndTime) - new Date(data.sessionStartTime);
+  //     const chatTiming = timeDifference / 1000;
+  //     const id = individualId ? { _id: data.therapistsId } : { _id: data.individualId };
+  //     let messageData = await userModel.findOne({_id: id}).lean();
+  //     console.log('messageData', messageData);
+  //     if (individualId) {
+  //       const review = await reviewModel.findOne({ consultationId: data._id });
+  //       messageData = {
+  //         ...messageData,
+  //         review: {
+  //           rating: review?.rating,
+  //           comments: review?.comments
+  //         },
+  //       }
+  //     }
+  //     const obj = {
+  //       chatTiming,
+  //       sessionCost: data.sessionCost || 0,
+  //       consultationId: data._id,
+  //       isReview: data?.isReview,
+  //       ...messageData
+  //     };
+
+  //     return obj;
+  //   }));
+  // }
   if (chatType === 'message') {
     const userMsgData = await findQueryWithPagining(sessionModel, { ...userId, isDeleted: false }, options);
-    pushUserData = await Promise.all(userMsgData.docs.map(async (data) => {
+    console.log('userMsgData', userMsgData);
+    const userIds = userMsgData.docs.map(data => individualId ? data.therapistsId : data.individualId);
+    const users = await userModel.find({ _id: { $in: userIds } }).lean();
+    const reviews = await reviewModel.find({ consultationId: { $in: userMsgData.docs.map(data => data._id) } }).lean();
+
+    const userMap = new Map(users.map(user => [user._id.toString(), user]));
+    const reviewMap = new Map(reviews.map(review => [review.consultationId.toString(), review]));
+
+    pushUserData = userMsgData.docs.map(data => {
       const timeDifference = new Date(data.sessionEndTime) - new Date(data.sessionStartTime);
       const chatTiming = timeDifference / 1000;
-      const id = individualId ? { _id: data.therapistsId } : { _id: data.individualId };
-      const review = await reviewModel.findOne({ consultationId: data._id });
-      console.log(review);
-      const userMsgData = await findQuery(userModel, id);
-      const obj = {
+
+      const userIdKey = individualId ? data.therapistsId : data.individualId;
+      let messageData = userMap.get(userIdKey.toString()) || {};
+
+      if (individualId) {
+        const review = reviewMap.get(data._id.toString());
+        messageData.review = {
+          rating: review?.rating,
+          comments: review?.comments
+        };
+      }
+
+      return {
         chatTiming,
         sessionCost: data.sessionCost || 0,
         consultationId: data._id,
         isReview: data?.isReview,
-        review: {
-          rating: review?.rating,
-          comments: review?.comments
-        },
-        ...userMsgData.toObject(),
+        ...messageData
       };
-
-      return obj;
-    }));
+    });
   }
+  // else {
+  //   const individualCallData = await findQueryWithPagining(callDetailsModel, userId, options);
+  //   pushUserData = await Promise.all(individualCallData.docs.map(async (data) => {
+  //     const id = individualId ? { _id: data.therapistsId } : { _id: data.individualId };
+  //     const userCallData = await findQuery(userModel, id);
+  //     const review = await reviewModel.findOne({ consultationId: data._id });
+  //     const obj = {
+  //       callTiming: data.conversationDuration,
+  //       sessionCost: ((data.conversationDuration) / 60) * userCallData?.charges || 0,
+  //       consultationId: data._id,
+  //       review: {
+  //         rating: review?.rating,
+  //         comments: review?.comments
+  //       },
+  //       isReview: data?.isReview,
+  //       sessionCost: 0,
+  //       ...userCallData.toObject(),
+  //     };
+
+  //     return obj;
+  //   }))
+  // }
   else {
     const individualCallData = await findQueryWithPagining(callDetailsModel, userId, options);
-    pushUserData = await Promise.all(individualCallData.docs.map(async (data) => {
-      const id = individualId ? { _id: data.therapistsId } : { _id: data.individualId };
-      const userCallData = await findQuery(userModel, id);
-      const review = await reviewModel.findOne({ consultationId: data._id });
-      const obj = {
-        callTiming: data.conversationDuration,
-        sessionCost: ((data.conversationDuration) / 60) * userCallData?.charges || 0,
+  
+    const userIds = individualCallData.docs.map(data => individualId ? data.therapistsId : data.individualId);
+    const consultationIds = individualCallData.docs.map(data => data._id);
+  
+    const users = await userModel.find({ _id: { $in: userIds } }).lean();
+    const reviews = await reviewModel.find({ consultationId: { $in: consultationIds } }).lean();
+  
+    const userMap = new Map(users.map(user => [user._id.toString(), user]));
+    const reviewMap = new Map(reviews.map(review => [review.consultationId.toString(), review]));
+  
+    pushUserData = individualCallData.docs.map(data => {
+      const userIdKey = individualId ? data.therapistsId : data.individualId;
+      const userCallData = userMap.get(userIdKey.toString()) || {};
+  
+      const review = reviewMap.get(data._id.toString());
+      const callTiming = data.conversationDuration;
+      const sessionCost = (callTiming / 60) * (userCallData.charges || 0);
+  
+      return {
+        callTiming,
+        sessionCost,
         consultationId: data._id,
         review: {
           rating: review?.rating,
           comments: review?.comments
         },
         isReview: data?.isReview,
-        sessionCost: 0,
-        ...userCallData.toObject(),
+        ...userCallData
       };
-
-      return obj;
-    }))
+    });
   }
+  
 
   return SendSuccessResponse({ res, data: { data: pushUserData, length: pushUserData.length } });
 }
