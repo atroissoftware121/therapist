@@ -520,7 +520,7 @@ const chatUserlist = async (req, res) => {
   let { individualId, therapistsId, chatType, page } = req.query;
 
   let offset = 0;
-  let limit = 20;
+  let limit = 10;
   let pushUserData;
 
   if (page) {
