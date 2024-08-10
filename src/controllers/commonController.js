@@ -26,6 +26,7 @@ const individualTransactionModel = require('../mongooseModels/individual-transac
 const individualNotificationModel = require('../mongooseModels/individual-notification.model');
 const callDetailsModel = require('../mongooseModels/callChat-details.model');
 const { refreshCallListsEvent, chatDetailsEvent, startTimerEvent, endTimerEvent } = require('../loaders/socket');
+const reviewModel = require('../mongooseModels/review.model');
 
 
 const GetImage = async (req, res) => {
@@ -96,6 +97,7 @@ const sentPushNotifications = catchAsync(async (req, res) => {
       });
     };
     if (receiverDetail && receiverDetail.fcmToken) {
+      console.log(receiverDetail.fcmToken);
       const message = {
         notification: {
           title: data.title,
@@ -538,12 +540,18 @@ const chatUserlist = async (req, res) => {
       const timeDifference = new Date(data.sessionEndTime) - new Date(data.sessionStartTime);
       const chatTiming = timeDifference / 1000;
       const id = individualId ? { _id: data.therapistsId } : { _id: data.individualId };
+      const review = await reviewModel.findOne({ consultationId: data._id });
+      console.log(review);
       const userMsgData = await findQuery(userModel, id);
       const obj = {
         chatTiming,
         sessionCost: data.sessionCost || 0,
         consultationId: data._id,
         isReview: data?.isReview,
+        review: {
+          rating: review?.rating,
+          comments: review?.comments
+        },
         ...userMsgData.toObject(),
       };
 
@@ -552,13 +560,18 @@ const chatUserlist = async (req, res) => {
   }
   else {
     const individualCallData = await findQueryWithPagining(callDetailsModel, userId, options);
-    pushUserData = await Promise.all(individualCallData.docs.map(async(data) => {
+    pushUserData = await Promise.all(individualCallData.docs.map(async (data) => {
       const id = individualId ? { _id: data.therapistsId } : { _id: data.individualId };
       const userCallData = await findQuery(userModel, id);
+      const review = await reviewModel.findOne({ consultationId: data._id });
       const obj = {
         callTiming: data.conversationDuration,
         sessionCost: ((data.conversationDuration) / 60) * userCallData?.charges || 0,
         consultationId: data._id,
+        review: {
+          rating: review?.rating,
+          comments: review?.comments
+        },
         isReview: data?.isReview,
         sessionCost: 0,
         ...userCallData.toObject(),
