@@ -25,7 +25,7 @@ const userExtraDetailsModel = require('../mongooseModels/userExtraDetails.model'
 
 const GetOtp = async (req, res) => {
   let { n: mobileNumber, t: userType, m: method } = req.query;
-  if (!mobileNumber || !userType || !method)
+  if (!mobileNumber || !method)
     return SendBadResponse({
       res,
       status: 400,
@@ -37,23 +37,23 @@ const GetOtp = async (req, res) => {
       status: 400,
       data: { error: 'Please send correct method!' },
     });
-  if (userType !== 'therapist' && userType !== 'individual')
-    return SendBadResponse({
-      res,
-      status: 400,
-      data: { error: 'Please send correct usertype!' },
-    });
+  // if (userType !== 'therapist' && userType !== 'individual')
+  //   return SendBadResponse({
+  //     res,
+  //     status: 400,
+  //     data: { error: 'Please send correct usertype!' },
+  //   });
   mobileNumber = '+' + mobileNumber.trim();
   let [isMobileNumberExist] = await findQuery(authCredtionalsModel, {
     mobileNumber,
   });
-  let [isNumberExistWithUsertype] = await findQuery(authCredtionalsModel, {
-    $and: [{ mobileNumber }, { userType }],
-  });
+  // let [isNumberExistWithUsertype] = await findQuery(authCredtionalsModel, {
+  //   $and: [{ mobileNumber }, { userType }],
+  // });
 
   if (
     (method === 'login' || method === 'forgetPassword') &&
-    !isNumberExistWithUsertype
+    !isMobileNumberExist
   )
     return SendBadResponse({
       res,
@@ -122,7 +122,7 @@ const VerifyOtp = async (req, res) => {
     deviceInfo,
   } = req.query;
   console.log('fcmtoken122', fcmToken);
-  if (!mobileNumber || !userType || !method || !otp || !fcmToken || !deviceInfo)
+  if (!mobileNumber || !method || !otp || !fcmToken || !deviceInfo)
     return SendBadResponse({
       res,
       status: 400,
@@ -134,12 +134,12 @@ const VerifyOtp = async (req, res) => {
       status: 400,
       data: { error: 'Please send correct method!' },
     });
-  if (userType !== 'therapist' && userType !== 'individual')
-    return SendBadResponse({
-      res,
-      status: 400,
-      data: { error: 'Please send correct usertype!' },
-    });
+  // if (userType !== 'therapist' && userType !== 'individual')
+  //   return SendBadResponse({
+  //     res,
+  //     status: 400,
+  //     data: { error: 'Please send correct usertype!' },
+  //   });
   mobileNumber = '+' + mobileNumber.trim();
   console.log(mobileNumber);
   console.log(method);
@@ -164,9 +164,15 @@ const VerifyOtp = async (req, res) => {
       data: { error: 'Otp Expired!' },
     });
   deleteQuery(otpSentModel, { mobileNumber });
+  console.log('mobileNumber122', mobileNumber);
+  console.log('mobileNumber', mobileNumber);
+  const [userAuthDetails] = await findQuery(authCredtionalsModel, {
+    mobileNumber,
+  });
+  console.log('userAuthDetails', userAuthDetails);
   if (method === 'login') {
     let [isUserExist] = await findQuery(
-      userType === 'therapist' ? therapistModel : individualModel,
+      userAuthDetails?.userType === 'therapist' ? therapistModel : individualModel,
       { mobileNumber }
     );
     if (!isUserExist)

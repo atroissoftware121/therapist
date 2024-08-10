@@ -20,7 +20,7 @@ module.exports = (app) => {
     celebrate({
       [Segments.QUERY]: Joi.object().keys({
         n: Joi.string().required(),
-        t: Joi.string().required(),
+        t: Joi.string().optional(),
         m: Joi.string().required(),
         o: Joi.string().required(),
         fcmToken: Joi.string().invalid('undefined').required(),
