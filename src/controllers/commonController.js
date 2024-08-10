@@ -518,7 +518,7 @@ const chatMapper = (data) => {
 
 const chatUserlist = async (req, res) => {
   let { individualId, therapistsId, chatType, page } = req.query;
-
+  console.log('req.query', req.query);
   let offset = 0;
   let limit = 20;
   let pushUserData;
@@ -587,14 +587,18 @@ const chatUserlist = async (req, res) => {
           comments: review?.comments
         };
       }
-
-      return {
+      // console.log()
+      const data =  {
         chatTiming,
         sessionCost: data.sessionCost || 0,
         consultationId: data._id,
         isReview: data?.isReview,
         ...messageData
       };
+
+      console.log('datatatat12', data);
+
+      return data;
     });
   }
   // else {
@@ -653,7 +657,7 @@ const chatUserlist = async (req, res) => {
     });
   }
   
-
+  console.log('pushUserData12', pushUserData);
   return SendSuccessResponse({ res, data: { data: pushUserData, length: pushUserData.length } });
 }
 
