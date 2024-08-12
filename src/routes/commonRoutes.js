@@ -14,6 +14,7 @@ const {
   getlistOfTherapistNotified,
   getCalldata,
   chatUserlist,
+  callUserlist,
   therapistChatList,
   deleteChat,
 } = require('../controllers/commonController');
@@ -79,15 +80,19 @@ module.exports = (app) => {
   route.post('/get-call-details', getCalldata);
 
   route.get('/fetchingChatUserlist',
-    celebrate({
-      [Segments.QUERY]: Joi.object().keys({
-        individualId: Joi.string().optional(),
-        therapistsId: Joi.string().optional(),
-        page: Joi.string().required(),
-        chatType: Joi.string().required()
-      }),
-    }),
+    // celebrate({
+    //   [Segments.QUERY]: Joi.object().keys({
+    //     individualId: Joi.string().optional(),
+    //     therapistsId: Joi.string().optional(),
+    //     page: Joi.string().required(),
+    //     chatType: Joi.string().required()
+    //   }),
+    // }),
     chatUserlist
+  );
+
+  route.get('/fetchingCallUserlist',
+    callUserlist
   );
 
   route.get('/therapistChatList',

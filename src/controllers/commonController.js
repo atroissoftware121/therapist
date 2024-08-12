@@ -720,6 +720,46 @@ const chatUserlist = async (req, res) => {
   return SendSuccessResponse({ res, data: { data: pushUserData, length: pushUserData.length } });
 }
 
+const callUserlist = async (req, res) => {
+  let { individualId, therapistsId, chatType, page } = req.query;
+
+  let offset = 0;
+  let limit = 20;
+  const pushUserData = [];
+
+  if (page) {
+    offset = (page - 1) * limit;
+  }
+
+  const options = {
+    limit,
+    offset
+  };
+  const userId = individualId ? { individualId } : { therapistsId };
+
+  const userModel = individualId ? therapistModel : individualModel;
+ 
+    const individualCallData = await findQueryWithPagining(callDetailsModel, userId, options);
+    for (const data of individualCallData.docs) {
+      const id = individualId ? { _id: data.therapistsId } : { _id: data.individualId };
+      console.log('oid122222', id);
+      const userCallData = await findQuery(userModel, id);
+      console.log('userCallData', userCallData);
+      const obj = {
+        callTiming: data.conversationDuration,
+        sessionCost: ((data.conversationDuration) / 60) * userCallData?.charges || 0,
+        consultationId: data._id,
+        isReview: data?.isReview,
+        sessionCost: 0,
+        ...userCallData?._doc,
+      };
+
+      pushUserData.push(obj)
+    
+  }
+
+  return SendSuccessResponse({ res, data: { data: pushUserData, length: pushUserData.length } });
+}
 const therapistChatList = async (req, res) => {
   const { individualId, page } = req.query;
 
@@ -797,4 +837,5 @@ module.exports = {
   chatUserlist,
   therapistChatList,
   deleteChat,
+  callUserlist
 };
