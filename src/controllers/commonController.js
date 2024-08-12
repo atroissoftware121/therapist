@@ -623,7 +623,7 @@ const chatUserlist = async (req, res) => {
   //     return obj;
   //   }))
   // }
-  else {
+  else if (chatType === 'message12'){
     const individualCallData = await findQueryWithPagining(callDetailsModel, userId, options);
   
     const userIds = individualCallData.docs.map(data => individualId ? data.therapistsId : data.individualId);
