@@ -685,7 +685,7 @@ const chatUserlist = async (req, res) => {
       console.log('data122', data);
       const timeDifference = new Date(data.sessionEndTime) - new Date(data.sessionStartTime);
       const chatTiming = timeDifference / 1000;
-      const id = individualId ? { id: data.therapistsId } : { id: data.individualId };
+      const id = individualId ? { _id: data.therapistsId } : { _id: data.individualId };
       const userMsgData = await findQuery(userModel, id);
       const obj = {
         chatTiming,
@@ -700,8 +700,10 @@ const chatUserlist = async (req, res) => {
   else {
     const individualCallData = await findQueryWithPagining(callDetailsModel, userId, options);
     for (const data of individualCallData.docs) {
-      const id = individualId ? { id: data.therapistsId } : { id: data.individualId };
+      const id = individualId ? { _id: data.therapistsId } : { _id: data.individualId };
+      console.log('oid122222', id);
       const userCallData = await findQuery(userModel, id);
+      console.log('userCallData', userCallData);
       const obj = {
         callTiming: data.conversationDuration,
         sessionCost: ((data.conversationDuration) / 60) * userCallData?.charges || 0,
