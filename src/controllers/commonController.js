@@ -31,9 +31,20 @@ const reviewModel = require('../mongooseModels/review.model');
 
 const GetImage = async (req, res) => {
   const key = req.params.key;
-  const readStream = getFileStream(key);
-  readStream.pipe(res);
+  try {
+    const readStream = getFileStream(key);
+
+    readStream.on('error', (error) => {
+      res.status(500).json({ error: error.message });
+    });
+
+    readStream.pipe(res);
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({ error: 'An unexpected error occurred.' });
+  }
 };
+
 
 const UploadImages = async (req, res) => {
   const file = req.file;
@@ -760,6 +771,7 @@ const callUserlist = async (req, res) => {
 
   return SendSuccessResponse({ res, data: { data: pushUserData, length: pushUserData.length } });
 }
+
 const therapistChatList = async (req, res) => {
   const { individualId, page } = req.query;
 
