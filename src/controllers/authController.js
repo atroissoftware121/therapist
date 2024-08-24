@@ -241,7 +241,7 @@ const Login = async (req, res) => {
   let [credential] = await findQuery(authCredtionalsModel, {
     $and: [{ email }],
   });
-
+  console.log('credential', credential);
   if (!credential)
     return SendBadResponse({
       res,
@@ -285,7 +285,7 @@ const Login = async (req, res) => {
       status: 403,
       data: { error: 'Invaild email/password!' },
     });
-
+  console.log('isUserExist', isUserExist.toObject());
   let { notification, userExtraDetails, ...userData } = isUserExist.toObject() || {};
   let token = genrateToken({ data: { _id: userData._id } });
   await updateQuery(
@@ -299,6 +299,7 @@ const Login = async (req, res) => {
       isUserLogout: false,
     }
   );
+  console.log('userData122', userData);
   return SendSuccessResponse({ res, data: { userData, token } });
 };
 
