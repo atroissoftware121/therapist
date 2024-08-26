@@ -197,7 +197,7 @@ const VerifyOtp = async (req, res) => {
     );
     return SendSuccessResponse({
       res,
-      data: { isUserCreated: userData, token },
+      data: { isUserCreated: userData, token, userType },
     });
   }
   let { notification, userExtraDetails, ...isUserCreated } = await createQuery(
@@ -232,7 +232,7 @@ const VerifyOtp = async (req, res) => {
       notification: isUserNotificationDataCreated._id,
     }
   );
-  return SendSuccessResponse({ res, data: { isUserCreated, token } });
+  return SendSuccessResponse({ res, data: { isUserCreated, token, userType } });
 };
 
 const Login = async (req, res) => {
@@ -300,7 +300,7 @@ const Login = async (req, res) => {
     }
   );
   console.log('userData122', userData);
-  return SendSuccessResponse({ res, data: { userData, token } });
+  return SendSuccessResponse({ res, data: { userData, token, userType: credential.userType } });
 };
 
 const ForgetPassword = async (req, res) => {
