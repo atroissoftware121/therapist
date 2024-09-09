@@ -38,6 +38,7 @@ module.exports = (app) => {
         password: Joi.string().required(),
         fcmToken: Joi.string().invalid('undefined').required(),
         deviceInfo: Joi.string().required(),
+        userType: Joi.string().optional()
       }),
     }),
     Login
