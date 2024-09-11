@@ -363,6 +363,5 @@ module.exports = {
   TherapistDetailGet,
   TherapistListForApproval,
   ApproveTherapist,
-  adminCreated,
   fetchUserList
 };
