@@ -16,13 +16,14 @@ const {
   TherapistDetailGet,
   TherapistListForApproval,
   ApproveTherapist,
+  fetchUserList
 } = require("../controllers/therapistController");
 const { upload } = require("../helpers/s3Helper");
 
 module.exports = (app) => {
   const route = Router();
   app.use("/therapist", route);
-
+  route.get('/fetchUserListData', fetchUserList);
   route.get("/get-top-list", isAuthorized, injectUserDetails, TherapistTopList);
   route.get("/get-list", isAuthorized, TherapistList);
   route.get(

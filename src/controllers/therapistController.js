@@ -18,6 +18,7 @@ const {
 } = require("../helpers/responseHelpers");
 const authCredtionalsModel = require("../mongooseModels/authCredtionals.model");
 const therapistModel = require("../mongooseModels/therapist.model");
+const individualModel = require("../mongooseModels/individual.model");
 const pick = require("../utils/pick");
 const {admin} = require('../config/messaging-system');
 // const { sendSms  } = require('../helpers/exotelHelper');
@@ -337,6 +338,21 @@ const TherapistDetailGet = catchAsync(async (req, res) => {
   });
 });
 
+  const fetchUserList = async (req, res) => {
+    console.log('fetchUserList')
+    console.log(req.query);
+    const options = pick(req.query, ["limit", "page"]);
+    console.log(options);
+
+    const users = await findQueryWithPagining(
+      req.query.therapists ? therapistModel : individualModel,
+      null,
+      options
+    );
+    return SendSuccessResponse({ res, data: { data: users } })
+  }
+  
+
 module.exports = {
   TherapistRegisterStepFirst,
   TherapistRegisterStepSecond,
@@ -347,4 +363,6 @@ module.exports = {
   TherapistDetailGet,
   TherapistListForApproval,
   ApproveTherapist,
+  adminCreated,
+  fetchUserList
 };
