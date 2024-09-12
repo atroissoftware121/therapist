@@ -107,30 +107,32 @@ const sentPushNotifications = catchAsync(async (req, res) => {
         data: { error: 'User not found!' },
       });
     };
-    if (receiverDetail && receiverDetail.fcmToken) {
+    if (receiverDetail) {
       console.log(receiverDetail.fcmToken);
-      const message = {
-        notification: {
-          title: data.title,
-          body: data.message,
-        },
-        data: {
-          senderId: data.senderId,
-          senderName: data.userType === 'individual' ? `${individualData.fname} ${individualData.lname}` : therapistsData.name,
-          receiverId: data.receiverId,
-          receiverName: data.userType === 'individual' ? therapistsData.name : `${individualData.fname} ${individualData.lname}`,
-          title: data.title,
-          body: data.message,
-        },
-        token: receiverDetail.fcmToken,
-      };
-      let response;
-      if (data.userType === 'therapists') {
+      let response = 'individual added in queue';
+      if (receiverDetail.fcmToken !== 'ios' || !receiverDetail.fcmToken ) {
+        const message = {
+          notification: {
+            title: data.title,
+            body: data.message,
+          },
+          data: {
+            senderId: data.senderId,
+            senderName: data.userType === 'individual' ? `${individualData.fname} ${individualData.lname}` : therapistsData.name,
+            receiverId: data.receiverId,
+            receiverName: data.userType === 'individual' ? therapistsData.name : `${individualData.fname} ${individualData.lname}`,
+            title: data.title,
+            body: data.message,
+          },
+          token: receiverDetail.fcmToken,
+        };
+        if (data.userType === 'therapists') {
+          response = await admin.messaging().send(message);
+          console.log(response)
+          return SendSuccessResponse({ res, data: response });
+        }
         response = await admin.messaging().send(message);
-        console.log(response)
-        return SendSuccessResponse({ res, data: response });
       }
-      response = await admin.messaging().send(message);
       console.log(response)
       const individualObj = {
         senderId: data.senderId,
@@ -636,24 +638,24 @@ const chatMapper = (data) => {
 //   }
 //   // else if (chatType === 'message12'){
 //   //   const individualCallData = await findQueryWithPagining(callDetailsModel, userId, options);
-  
+
 //   //   const userIds = individualCallData.docs.map(data => individualId ? data.therapistsId : data.individualId);
 //   //   const consultationIds = individualCallData.docs.map(data => data._id);
-  
+
 //   //   const users = await userModel.find({ _id: { $in: userIds } }).lean();
 //   //   const reviews = await reviewModel.find({ consultationId: { $in: consultationIds } }).lean();
-  
+
 //   //   const userMap = new Map(users.map(user => [user._id.toString(), user]));
 //   //   const reviewMap = new Map(reviews.map(review => [review.consultationId.toString(), review]));
-  
+
 //   //   pushUserData = individualCallData.docs.map(data => {
 //   //     const userIdKey = individualId ? data.therapistsId : data.individualId;
 //   //     const userCallData = userMap.get(userIdKey.toString()) || {};
-  
+
 //   //     const review = reviewMap.get(data._id.toString());
 //   //     const callTiming = data.conversationDuration;
 //   //     const sessionCost = (callTiming / 60) * (userCallData.charges || 0);
-  
+
 //   //     return {
 //   //       callTiming,
 //   //       sessionCost,
@@ -667,7 +669,7 @@ const chatMapper = (data) => {
 //   //     };
 //   //   });
 //   // }
-  
+
 //   console.log('pushUserData12', pushUserData);
 //   return SendSuccessResponse({ res, data: { data: pushUserData, length: pushUserData.length } });
 // }
@@ -749,24 +751,24 @@ const callUserlist = async (req, res) => {
   const userId = individualId ? { individualId } : { therapistsId };
 
   const userModel = individualId ? therapistModel : individualModel;
- 
-    const individualCallData = await findQueryWithPagining(callDetailsModel, userId, options);
-    for (const data of individualCallData.docs) {
-      const id = individualId ? { _id: data.therapistsId } : { _id: data.individualId };
-      console.log('oid122222', id);
-      const userCallData = await findQuery(userModel, id);
-      console.log('userCallData', userCallData);
-      const obj = {
-        callTiming: data.conversationDuration,
-        sessionCost: ((data.conversationDuration) / 60) * userCallData?.charges || 0,
-        consultationId: data._id,
-        isReview: data?.isReview,
-        sessionCost: 0,
-        ...userCallData?._doc,
-      };
 
-      pushUserData.push(obj)
-    
+  const individualCallData = await findQueryWithPagining(callDetailsModel, userId, options);
+  for (const data of individualCallData.docs) {
+    const id = individualId ? { _id: data.therapistsId } : { _id: data.individualId };
+    console.log('oid122222', id);
+    const userCallData = await findQuery(userModel, id);
+    console.log('userCallData', userCallData);
+    const obj = {
+      callTiming: data.conversationDuration,
+      sessionCost: ((data.conversationDuration) / 60) * userCallData?.charges || 0,
+      consultationId: data._id,
+      isReview: data?.isReview,
+      sessionCost: 0,
+      ...userCallData?._doc,
+    };
+
+    pushUserData.push(obj)
+
   }
 
   return SendSuccessResponse({ res, data: { data: pushUserData, length: pushUserData.length } });
