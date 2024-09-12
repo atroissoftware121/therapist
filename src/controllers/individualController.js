@@ -53,7 +53,7 @@ const IndividualRegister = async (req, res) => {
     email,
   });
 
-  if(isEmailExist && isEmailExist.userType === 'therapist') {
+  if (isEmailExist && isEmailExist.userType === 'therapist') {
     return SendBadResponse({
       res,
       status: 505,
@@ -74,7 +74,7 @@ const IndividualRegister = async (req, res) => {
   let isUserUpdated = await updateQuery(
     individualModel,
     { _id },
-    { 
+    {
       fname,
       lname,
       email,
@@ -92,7 +92,7 @@ const IndividualRegister = async (req, res) => {
     }
   );
   const message = 'Individual Registration on Sahhaya'
-    
+
   const text = "Congratulations! Your Individual account on Sahhaya is registered now and ready to use.  Please login on ….. app link……\nTeam Sahhaya";
 
   sendEmail(email, message, text);
@@ -101,4 +101,21 @@ const IndividualRegister = async (req, res) => {
     data: { message: "Register successfully!", data: isUserUpdated },
   });
 };
-module.exports = { IndividualProfileUpdate, IndividualRegister };
+
+const fetchUserList = async (req, res) => {
+  const options = pick(req.query, ["limit", "page"]);
+  console.log(options);
+
+  const userList = await findQueryWithPagining(
+    req.query.therapists ? therapistModel : individualModel,
+    null,
+    options
+  );
+
+  return SendSuccessResponse({
+    res,
+    data: { message: "Profile update successfully!", data: userList },
+  });
+};
+
+module.exports = { IndividualProfileUpdate, IndividualRegister, fetchUserList };

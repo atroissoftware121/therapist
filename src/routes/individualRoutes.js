@@ -45,4 +45,9 @@ module.exports = (app) => {
     }),
     IndividualRegister
   );
+
+  route.get(
+    "/fetch-userList",
+    fetchUserList
+  )
 };
