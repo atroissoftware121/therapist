@@ -116,7 +116,7 @@ const fetchUserList = async (req, res) => {
 
   return SendSuccessResponse({
     res,
-    data: { message: "Profile update successfully!", data: userList },
+    data: { message: "Profile fetch successfully!", data: userList },
   });
 };
 
