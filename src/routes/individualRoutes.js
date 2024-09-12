@@ -7,6 +7,7 @@ const {
 const {
   IndividualProfileUpdate,
   IndividualRegister,
+  fetchUserList,
 } = require("../controllers/individualController");
 
 module.exports = (app) => {
