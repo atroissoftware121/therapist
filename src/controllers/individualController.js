@@ -1,5 +1,5 @@
 const { genratePasswordHash } = require("../helpers/bcryptHelper");
-const { findQuery, updateQuery } = require("../helpers/mongooseHelpers");
+const { findQuery, updateQuery, findQueryWithPagining } = require("../helpers/mongooseHelpers");
 const {
   SendBadResponse,
   SendSuccessResponse,
@@ -7,6 +7,8 @@ const {
 const authCredtionalsModel = require("../mongooseModels/authCredtionals.model");
 const individualModel = require("../mongooseModels/individual.model");
 const sendEmail = require("../utils/emailer");
+const pick = require("../utils/pick");
+const therapistModel = require("../mongooseModels/therapist.model");
 
 const IndividualProfileUpdate = async (req, res) => {
   const { fname, lname, email, gender, image } = req.body;
