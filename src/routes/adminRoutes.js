@@ -1,6 +1,7 @@
 const { Router } = require('express');
 const { celebrate, Joi, Segments } = require('celebrate');
-const { createAdminSetting, updateAdminSetting }  = require('../controllers/adminController');
+const { createAdminSetting, updateAdminSetting, updateIndividualData }  = require('../controllers/adminController');
+const { upload } = require('../helpers/s3Helper');
 
 module.exports = (app) => {
   const route = Router();
@@ -22,5 +23,11 @@ module.exports = (app) => {
       }),
     }),
     updateAdminSetting
+  );
+
+  route.put(
+    '/updateIndividual',
+    upload.single('individualImage'),
+    updateIndividualData
   );
 };
