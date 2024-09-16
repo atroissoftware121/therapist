@@ -21,11 +21,11 @@ const upload = multer({ dest: "uploads/" });
 
 // uploads a file to s3
 function uploadFile(file) {
-  const fileStream = fs.createReadStream(file.path);
+  const fileStream = fs.createReadStream(file?.path);
   const uploadParams = {
     Bucket: BUCKET_NAME,
     Body: fileStream,
-    Key: file.filename,
+    Key: 'test',
   };
   return s3.upload(uploadParams).promise();
 }
@@ -51,7 +51,7 @@ function getFileStream(fileKey) {
     Bucket: BUCKET_NAME,
   };
   return s3.getObject(downloadParams).createReadStream();
-}
+};
 
 module.exports = {
   upload,
