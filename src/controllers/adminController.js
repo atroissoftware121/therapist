@@ -28,7 +28,7 @@ const updateIndividualData = catchAsync(async (req, res) => {
   let file = req.file;
   console.log('file122', typeof(file));
   let imageURI;
-  if(!file || file !== 'undefined') {
+  if(file !== undefined) {
     console.log('abccccbcbbc');
     imageURI = await uploadFileS3(file);
   }
