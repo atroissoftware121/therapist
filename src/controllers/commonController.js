@@ -832,7 +832,15 @@ const deleteChat = async (req, res) => {
   }
   return SendSuccessResponse({ res, data: { data: "chat deleted successfully " } })
 
-}
+};
+
+const fetchIndividual = async (req, res) => {
+  const { individualId } = req.query;
+  const individualData = await  findQuery(individualModel, { _id: individualId })
+
+  return SendSuccessResponse({ res, data: { data: individualData } })
+
+};
 
 module.exports = {
   GetImage,
@@ -851,5 +859,6 @@ module.exports = {
   chatUserlist,
   therapistChatList,
   deleteChat,
-  callUserlist
+  callUserlist,
+  fetchIndividual
 };
