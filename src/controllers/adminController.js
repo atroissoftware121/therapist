@@ -25,15 +25,15 @@ const updateAdminSetting = catchAsync(async (req, res) => {
 });
 
 const updateIndividualData = catchAsync(async (req, res) => {
-  const file = req.file;
+  let file = req.file;
   console.log('file122', file);
   let imageURI;
-  if(!file || file !== undefined) {
+  if(!file || file !== 'undefined') {
     console.log('abccccbcbbc');
     imageURI = await uploadFileS3(file);
   }
   const { individualId } = req.body;
-  const updatedIndividualData = await individualModel.findOneAndUpdate({ _id: individualId }, { ...req.body, image: imageURI.Location || '' }, { new: true });
+  const updatedIndividualData = await individualModel.findOneAndUpdate({ _id: individualId }, { ...req.body, image: imageURI?.Location || 'e64ce55739293cc4f4835f6f762e444a' }, { new: true });
   return SendSuccessResponse({
     res,
     data: { updatedIndividualData },
