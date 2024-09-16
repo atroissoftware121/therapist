@@ -26,7 +26,7 @@ const updateAdminSetting = catchAsync(async (req, res) => {
 
 const updateIndividualData = catchAsync(async (req, res) => {
   let file = req.file;
-  console.log('file122', file);
+  console.log('file122', typeof(file));
   let imageURI;
   if(!file || file !== 'undefined') {
     console.log('abccccbcbbc');
