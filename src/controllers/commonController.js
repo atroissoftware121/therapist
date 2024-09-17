@@ -834,10 +834,10 @@ const deleteChat = async (req, res) => {
 
 };
 
-const fetchIndividual = async (req, res) => {
-  const { individualId } = req.query;
-  const individualData = await  findQuery(individualModel, { _id: individualId })
-
+const fetchUserData = async (req, res) => {
+  const { individualId, therapistId } = req.query;
+  const individualData = await  findQuery(individualId ? individualModel : therapistModel, { _id: individualId || therapistId })
+  console.log('individualData', individualData);
   return SendSuccessResponse({ res, data: { data: individualData } })
 
 };
@@ -860,5 +860,5 @@ module.exports = {
   therapistChatList,
   deleteChat,
   callUserlist,
-  fetchIndividual
+  fetchUserData
 };
