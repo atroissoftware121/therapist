@@ -32,8 +32,9 @@ const updateIndividualData = catchAsync(async (req, res) => {
     console.log('abccccbcbbc');
     imageURI = await uploadFileS3(file);
   }
+  console.log('imageURI', imageURI);
   const { individualId } = req.body;
-  const updatedIndividualData = await individualModel.findOneAndUpdate({ _id: individualId }, { ...req.body, image: imageURI?.Location || 'e64ce55739293cc4f4835f6f762e444a' }, { new: true });
+  const updatedIndividualData = await individualModel.findOneAndUpdate({ _id: individualId }, { ...req.body, image: imageURI?.imageURI || 'e64ce55739293cc4f4835f6f762e444a' }, { new: true });
   return SendSuccessResponse({
     res,
     data: { updatedIndividualData },
