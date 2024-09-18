@@ -295,32 +295,32 @@ const ApproveTherapist = catchAsync(async (req, res) => {
     { _id },
     { isProfileVerified: true }
   );
-  const message = 'Profile Verified'
+  // const message = 'Profile Verified'
     
-  const text = "Congratulations! Your Therapist account on Sahhaya is active and ready to use.  Please login on ….. app link……\nTeam Sahhaya";
+  // const text = "Congratulations! Your Therapist account on Sahhaya is active and ready to use.  Please login on ….. app link……\nTeam Sahhaya";
 
-  sendEmail(therapist.email, message, text);
+  // sendEmail(therapist.email, message, text);
   // sendSms({
   //   to: therapist.mobileNumber,
   //   body: message,
   // });
-  if (therapistData && therapistData.fcmToken) {
-    const message = {
-      notification: {
-        title: `${response.name}`,
-        body: `Profile Verified`,
-      },
-      data: {
-        // senderId: therapistId,
-        receiverId: _id,
-        title: `${response.name}`,
-        body: `Profile Verified`,
-      },
-      token: therapistData.fcmToken,
-    };
-    console.log('data122222', message);
-    await admin.messaging().send(message);
-  }
+  // if (therapistData && therapistData.fcmToken) {
+  //   const message = {
+  //     notification: {
+  //       title: `${response.name}`,
+  //       body: `Profile Verified`,
+  //     },
+  //     data: {
+  //       // senderId: therapistId,
+  //       receiverId: _id,
+  //       title: `${response.name}`,
+  //       body: `Profile Verified`,
+  //     },
+  //     token: therapistData.fcmToken,
+  //   };
+  //   console.log('data122222', message);
+  //   await admin.messaging().send(message);
+  // }
   return SendSuccessResponse({
     res,
     data: { message: "Therapist sucessfully approved!", data: response },
