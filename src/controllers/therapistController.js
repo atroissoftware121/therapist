@@ -348,7 +348,7 @@ const fetchUserList = async (req, res) => {
 
   const users = await findQueryWithPagining(
     req.query.therapists ? therapistModel : individualModel,
-    { isAdmin: false },
+    req.query.therapists ? { isAdmin: false } : null,
     options
   );
   return SendSuccessResponse({ res, data: { data: users } })
