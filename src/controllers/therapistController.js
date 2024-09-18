@@ -20,7 +20,7 @@ const authCredtionalsModel = require("../mongooseModels/authCredtionals.model");
 const therapistModel = require("../mongooseModels/therapist.model");
 const individualModel = require("../mongooseModels/individual.model");
 const pick = require("../utils/pick");
-const {admin} = require('../config/messaging-system');
+const { admin } = require('../config/messaging-system');
 // const { sendSms  } = require('../helpers/exotelHelper');
 
 const TherapistRegisterStepFirst = catchAsync(async (req, res) => {
@@ -113,7 +113,7 @@ const TherapistUpdateProfile = catchAsync(async (req, res) => {
     experience,
   } = req.body;
   const { _id, mobileNumber, ...user } = req.user;
-  
+
   let [isEmailExist] = await findQuery(authCredtionalsModel, {
     $and: [{ email }, { userId: { $nin: [_id] } }],
   });
@@ -186,15 +186,15 @@ const TherapistTopList = catchAsync(async (req, res) => {
 });
 
 const TherapistList = catchAsync(async (req, res) => {
-  let { page, priceS, priceE, ageS, ageE, lang, specialization,sKeyword, gender, isActive  } = req.query;
-  if(!Object.keys(req.query).length) {
-    const therapistList  = await findQuery(therapistModel, {});
+  let { page, priceS, priceE, ageS, ageE, lang, specialization, sKeyword, gender, isActive } = req.query;
+  if (!Object.keys(req.query).length) {
+    const therapistList = await findQuery(therapistModel, {});
     return SendSuccessResponse({
       res,
       data: { message: "Therapist list get successfully!", data: therapistList, length: therapistList.length },
     });
   }
-  let findQueryArr=[]
+  let findQueryArr = []
   findQueryArr.push({ isProfileVerified: true });
   let skip = 0;
   let limit = 20;
@@ -212,7 +212,7 @@ const TherapistList = catchAsync(async (req, res) => {
     const genderArr = gender.split(',');
     findQueryArr.push({ gender: { $in: genderArr } });
   }
-  
+
   if (priceS) findQueryArr.push({ charges: { $gte: parseInt(priceS) } });
   if (priceE) findQueryArr.push({ charges: { $lte: parseInt(priceE) } });
   if (ageS) findQueryArr.push({ age: { $gte: parseInt(ageS) } });
@@ -220,13 +220,15 @@ const TherapistList = catchAsync(async (req, res) => {
   if (specialization) findQueryArr.push({ specialization });
   if (sKeyword) {
     findQueryArr.push(
-      {$or: [
-      { name: { $regex: sKeyword, $options: 'i' } }, // 'i' makes the search case-insensitive
-      { specialization: { $in: [new RegExp(sKeyword, 'i')] } } // 'i' for case-insensitive
-    ],});
+      {
+        $or: [
+          { name: { $regex: sKeyword, $options: 'i' } }, // 'i' makes the search case-insensitive
+          { specialization: { $in: [new RegExp(sKeyword, 'i')] } } // 'i' for case-insensitive
+        ],
+      });
   };
-  if(isActive === 'true') {
-    findQueryArr.push({isOnline: true});
+  if (isActive === 'true') {
+    findQueryArr.push({ isOnline: true });
   }
 
   let findQueryObj = {};
@@ -244,7 +246,7 @@ const TherapistList = catchAsync(async (req, res) => {
     res,
     data: { message: "Therapist list get successfully!", data: list },
   });
-});                     
+});
 
 const TherapistListForApproval = catchAsync(async (req, res) => {
   const { isAdmin } = req.user;
@@ -296,7 +298,7 @@ const ApproveTherapist = catchAsync(async (req, res) => {
     { isProfileVerified: true }
   );
   // const message = 'Profile Verified'
-    
+
   // const text = "Congratulations! Your Therapist account on Sahhaya is active and ready to use.  Please login on ….. app link……\nTeam Sahhaya";
 
   // sendEmail(therapist.email, message, text);
@@ -329,8 +331,8 @@ const ApproveTherapist = catchAsync(async (req, res) => {
 
 const TherapistDetailGet = catchAsync(async (req, res) => {
   let { _id } = req.params;
-  let  selection =
-      "name image specialization qualification charges discountedCharges location language summary isOnline onCall wallet isInChat";
+  let selection =
+    "name image specialization qualification charges discountedCharges location language summary isOnline onCall wallet isInChat";
   let therapist = await findQuery(therapistModel, { _id }, selection);
   return SendSuccessResponse({
     res,
@@ -338,20 +340,20 @@ const TherapistDetailGet = catchAsync(async (req, res) => {
   });
 });
 
-  const fetchUserList = async (req, res) => {
-    console.log('fetchUserList')
-    console.log(req.query);
-    const options = pick(req.query, ["limit", "page"]);
-    console.log(options);
+const fetchUserList = async (req, res) => {
+  console.log('fetchUserList')
+  console.log(req.query);
+  const options = pick(req.query, ["limit", "page"]);
+  console.log(options);
 
-    const users = await findQueryWithPagining(
-      req.query.therapists ? therapistModel : individualModel,
-      null,
-      options
-    );
-    return SendSuccessResponse({ res, data: { data: users } })
-  }
-  
+  const users = await findQueryWithPagining(
+    req.query.therapists ? therapistModel : individualModel,
+    { isAdmin: false },
+    options
+  );
+  return SendSuccessResponse({ res, data: { data: users } })
+}
+
 
 module.exports = {
   TherapistRegisterStepFirst,

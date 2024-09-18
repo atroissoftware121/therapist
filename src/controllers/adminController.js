@@ -6,6 +6,7 @@ const {
 } = require('../helpers/responseHelpers');
 const individualModel = require('../mongooseModels/individual.model');
 const { uploadFileS3 } = require('../helpers/s3Helper');
+const therapistModel = require('../mongooseModels/therapist.model');
 
 
 const createAdminSetting = catchAsync(async (req, res) => {
@@ -41,8 +42,26 @@ const updateIndividualData = catchAsync(async (req, res) => {
   });
 });
 
+const updateTherapistData = catchAsync(async (req, res) => {
+  let file = req.file;
+  console.log('file122', file);
+  let imageURI;
+  if(file !== undefined) {
+    console.log('abccccbcbbc');
+    imageURI = await uploadFileS3(file);
+  }
+  console.log('imageURI', imageURI);
+  const { therapistId } = req.body;
+  const updatedIndividualData = await therapistModel.findOneAndUpdate({ _id: therapistId }, { ...req.body, image: imageURI?.imageURI || 'e64ce55739293cc4f4835f6f762e444a' }, { new: true });
+  return SendSuccessResponse({
+    res,
+    data: { updatedIndividualData },
+  });
+});
+
 module.exports = {
   createAdminSetting,
   updateAdminSetting,
-  updateIndividualData
+  updateIndividualData,
+  updateTherapistData
 }

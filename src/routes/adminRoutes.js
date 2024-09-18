@@ -30,4 +30,9 @@ module.exports = (app) => {
     upload.single('individualImage'),
     updateIndividualData
   );
+  route.put(
+    '/updateTherapist',
+    upload.single('therapistImage'),
+    updateTherapistData
+  );
 };
