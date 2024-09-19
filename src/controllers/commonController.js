@@ -7,6 +7,7 @@ const {
   updateQuery,
   findQueryWithPagining,
   createQuery,
+  deleteQuery
 } = require('../helpers/mongooseHelpers');
 
 const { admin } = require('../config/messaging-system');
@@ -842,6 +843,15 @@ const fetchUserData = async (req, res) => {
 
 };
 
+const removeUser = async (req, res) => {
+  console.log('req', req.query)
+  const { individualId, therapistId } = req.query;
+  const userData = await  deleteQuery(individualId ? individualModel : therapistModel, { _id: individualId || therapistId })
+  console.log('userData', userData);
+  return SendSuccessResponse({ res, data: { data: userData } })
+
+};
+
 module.exports = {
   GetImage,
   UploadImages,
@@ -860,5 +870,6 @@ module.exports = {
   therapistChatList,
   deleteChat,
   callUserlist,
-  fetchUserData
+  fetchUserData,
+  removeUser
 };

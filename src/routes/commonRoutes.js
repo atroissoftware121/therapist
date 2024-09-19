@@ -17,7 +17,8 @@ const {
   callUserlist,
   therapistChatList,
   deleteChat,
-  fetchUserData
+  fetchUserData,
+  removeUser
 } = require('../controllers/commonController');
 const { upload } = require('../helpers/s3Helper');
 
@@ -107,5 +108,5 @@ module.exports = (app) => {
   );
   route.delete('/deleteChat', deleteChat);
   route.get('/fetchUserData', fetchUserData);
-
+  route.delete('/removeUser', removeUser)
 };
