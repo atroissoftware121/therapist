@@ -12,11 +12,6 @@ const {handleSocket, server, app} = require("./src/loaders/socket");
 mongodb();
 // Allow all incoming traffic (not recommended for production)
 
-app.use(cors({
-  origin: 'https://shahya-admin-panel-xy88.vercel.app', // Allow your frontend's origin
-  methods: ['GET', 'POST'], // Adjust methods as needed
-}));
-
 app.get("/status", (req, res) => {
   res.status(200).end();
 });
@@ -27,7 +22,7 @@ app.head("/status", (req, res) => {
 
 app.enable("trust proxy");
 
-// app.use(cors());
+app.use(cors());
 
 app.use(bodyParser.urlencoded({ extended: false }));
 
