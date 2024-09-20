@@ -24,6 +24,13 @@ app.head("/status", (req, res) => {
   res.status(200).end();
 });
 
+app.use('/image', cors({
+  origin: 'https://shahya-admin-panel-xy88.vercel.app', 
+  methods: ['GET'],
+  credentials: true
+}));
+
+
 app.enable("trust proxy");
 
 // app.use(cors());
