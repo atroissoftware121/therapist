@@ -10,7 +10,7 @@ const server = http.createServer(app);
 
 const io = socketIo(server, {
   cors: {
-      origin: '*',
+      origin: 'https://shahya-admin-panel-xy88.vercel.app/',
       methods: ['GET', 'POST']
   }
 });
@@ -144,8 +144,6 @@ const chatDetailsEvent = async(data, messageData, individualData) => {
 };
 
 const startTimerEvent = async(data) => {
-  console.log('datat12', data.individualId);
-  console.log('dat5655', data);
   io.to(data.individualId).emit('startTimer', data);
 };
 
