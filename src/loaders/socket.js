@@ -10,7 +10,7 @@ const server = http.createServer(app);
 
 const io = socketIo(server, {
   cors: {
-      origin: 'https://shahya-admin-panel-xy88.vercel.app/',
+      origin: '*',
       methods: ['GET', 'POST']
   }
 });
