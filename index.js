@@ -9,11 +9,12 @@ const bodyParser = require("body-parser");
 const mongodb = require("./src/loaders/mongodb");
 const {handleSocket, server, app} = require("./src/loaders/socket");
 
-handleSocket();
 mongodb();
 // Allow all incoming traffic (not recommended for production)
 app.use(cors({
-  origin: '*'
+  origin: 'https://shahya-admin-panel-xy88.vercel.app', // or specify your frontend domain for better security
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Whitelist the methods you are using
+  credentials: true // If you are using cookies or other credentials
 }));
 app.get("/status", (req, res) => {
   res.status(200).end();
@@ -25,7 +26,7 @@ app.head("/status", (req, res) => {
 
 app.enable("trust proxy");
 
-app.use(cors());
+// app.use(cors());
 
 app.use(bodyParser.urlencoded({ extended: false }));
 
@@ -57,3 +58,4 @@ app.use((err, req, res, next) => {
   });
 });
 server.listen(PORT, () => console.log("App listen on PORT:" + PORT));
+handleSocket();
