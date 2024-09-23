@@ -3,12 +3,11 @@ const http = require("http");
 const express = require("express");
 const Routes = require("./src/routes");
 const { errors } = require("celebrate");
+const { Server } = require("socket.io");
 const { PORT } = require("./src/config");
 const bodyParser = require("body-parser");
 const mongodb = require("./src/loaders/mongodb");
-const app = express();
-const server = http.createServer(app);
-
+const {handleSocket, server, app} = require("./src/loaders/socket");
 
 mongodb();
 // Allow all incoming traffic (not recommended for production)
@@ -21,7 +20,7 @@ app.head("/status", (req, res) => {
   res.status(200).end();
 });
 
-app.enable("trust proxy");
+app.enable("trust proxy");  
 
 app.use(cors());
 
@@ -55,3 +54,4 @@ app.use((err, req, res, next) => {
   });
 });
 server.listen(PORT, () => console.log("App listen on PORT:" + PORT));
+handleSocket();

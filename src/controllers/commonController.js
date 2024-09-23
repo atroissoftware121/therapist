@@ -26,6 +26,7 @@ const reportModel = require('../mongooseModels/report.model');
 const individualTransactionModel = require('../mongooseModels/individual-transaction.model');
 const individualNotificationModel = require('../mongooseModels/individual-notification.model');
 const callDetailsModel = require('../mongooseModels/callChat-details.model');
+const { refreshCallListsEvent, chatDetailsEvent, startTimerEvent, endTimerEvent } = require('../loaders/socket');
 const reviewModel = require('../mongooseModels/review.model');
 
 
