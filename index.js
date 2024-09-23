@@ -3,11 +3,12 @@ const http = require("http");
 const express = require("express");
 const Routes = require("./src/routes");
 const { errors } = require("celebrate");
-const { Server } = require("socket.io");
 const { PORT } = require("./src/config");
 const bodyParser = require("body-parser");
 const mongodb = require("./src/loaders/mongodb");
-const {handleSocket, server, app} = require("./src/loaders/socket");
+const app = express();
+const server = http.createServer(app);
+
 
 mongodb();
 // Allow all incoming traffic (not recommended for production)
@@ -54,4 +55,3 @@ app.use((err, req, res, next) => {
   });
 });
 server.listen(PORT, () => console.log("App listen on PORT:" + PORT));
-handleSocket();

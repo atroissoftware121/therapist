@@ -8,6 +8,7 @@ const {
 const { findQuery, updateQuery } = require('../helpers/mongooseHelpers');
 const sessionModel = require('../mongooseModels/session.model');
 const callDetailsModel = require('../mongooseModels/callChat-details.model');
+
 const postReview = async (req, res) => {
   const { individualId, therapistId, consultationId, chatType, rating } = req.body;
   const review = await findQuery(reviewModel, { therapistId });
@@ -94,7 +95,7 @@ const getReview = async (req, res) => {
         _id: review.individualId,
       });
       const data = {
-        ...user._doc,
+        ...user.toObject(),
         postCreated: review.createdAt,
         comments: review.comments,
         rating: review.rating,
@@ -109,7 +110,7 @@ const getReview = async (req, res) => {
         _id: review.therapistId,
       });
       const data = {
-        ...user._doc,
+        ...user.toObject(),
         postCreated: review.createdAt,
         comments: review.comments,
         rating: review.rating,

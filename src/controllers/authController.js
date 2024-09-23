@@ -268,12 +268,14 @@ const Login = async (req, res) => {
     password,
     credential.password
   );
-  if (!isPasswordCorrect)
-    return SendBadResponse({
-      res,
-      status: 403,
-      data: { error: 'Wrong Password!' },
-    });
+  console.log('isPasswordCorrect', isPasswordCorrect);
+    if (!isPasswordCorrect)
+      return SendBadResponse({
+        res,
+        status: 403,
+        data: { error: 'Wrong Password!' },
+      });
+
 
   let isUserExist = await findQuery(
     credential.userType === 'therapist' ? therapistModel : individualModel,

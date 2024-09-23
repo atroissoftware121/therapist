@@ -27,6 +27,7 @@ const findQueryWithLimit = (collection, query, select,limit,skip) => {
  * @returns {Promise<QueryResult>}
  */
 const findQueryWithPagining = async (collection, filter, options) => {
+  console.log('options', options);
   options.sort = { updatedAt: -1 };
   return collection["paginate"](filter, options);
 };
@@ -47,7 +48,7 @@ const createQuery = (collection, saveObj) => {
   return new Promise(async (resolve, reject) => {
     try {
       let collectionObj = await collection.create(saveObj);
-      resolve(collectionObj._doc);
+      resolve(collectionObj.toObject());
     } catch (error) {
       console.log("createQuery error==>", error);
       reject(false);

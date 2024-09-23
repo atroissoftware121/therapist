@@ -16,6 +16,9 @@ const SMTP_PASSWORD = process.env.SMTP_PASSWORD;
 const FIREBASE_API_KEY = process.env.FIREBASE_API_KEY;
 const RAZOR_API_KEY = process.env.RAZOR_API_KEY;
 const RAZOR_API_SECRET = process.env.RAZOR_API_SECRET;
+const EXOTEL_SID = process.env.EXOTEL_SID;
+const EXOTEL_TOKEN  = process.env.EXOTEL_TOKEN;
+const EXOTEL_SENDER_ID =  process.env.EXOTEL_SENDER_ID;
 module.exports = {
   PORT,
   TWILIO_ACCOUNT_SID,
@@ -33,4 +36,7 @@ module.exports = {
   FIREBASE_API_KEY,
   RAZOR_API_KEY,
   RAZOR_API_SECRET,
+  EXOTEL_SID,
+  EXOTEL_TOKEN,
+  EXOTEL_SENDER_ID,
 };

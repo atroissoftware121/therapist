@@ -352,7 +352,7 @@ const fetchUserList = async (req, res) => {
     options
   );
   return SendSuccessResponse({ res, data: { data: users } })
-}
+};
 
 
 module.exports = {
