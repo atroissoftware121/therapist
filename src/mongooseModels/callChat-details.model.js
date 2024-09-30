@@ -4,8 +4,8 @@ const mongoosePaginate = require('mongoose-paginate-v2');
 const callDetailsSchema = new mongoose.Schema(
   {
     callerId: { type: String, require: true },
-    therapistsId: { type: String, require: true },
-    individualId: { type: String, require: true },
+    therapistsId: { type: mongoose.Schema.Types.ObjectId, ref: 'therapist' },
+    individualId: { type: mongoose.Schema.Types.ObjectId, ref: 'individual' },
     eventType: { type: String, require: true },
     startTime: { type: Date, require: true },
     endTime: { type: Date, require: true },

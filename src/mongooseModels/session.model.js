@@ -7,8 +7,8 @@ const sessionDataSchema = new mongoose.Schema(
     chatType: { type: String, enum: ['message', 'call'], require: true },
     sessionEndTime: { type: Date, require: true },
     isSessionStart: { type: Boolean, default: false },
-    individualId: { type: String, require: true },
-    therapistsId: { type: String, require: true },
+    therapistsId: { type: mongoose.Schema.Types.ObjectId, ref: 'therapist' },
+    individualId: { type: mongoose.Schema.Types.ObjectId, ref: 'individual' },
     isReview: { type: Boolean, default: false },
     isDeleted: { type: Boolean, default: false },
     sessionCost: { type: Number, default: 0 }
