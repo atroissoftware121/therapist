@@ -170,6 +170,7 @@ const VerifyOtp = async (req, res) => {
     mobileNumber,
   });
   console.log('userAuthDetails', userAuthDetails);
+  console.log('userAuthDetails', userAuthDetails);
   if (method === 'login') {
     let [isUserExist] = await findQuery(
       userAuthDetails?.userType === 'therapist' ? therapistModel : individualModel,
@@ -197,7 +198,7 @@ const VerifyOtp = async (req, res) => {
     );
     return SendSuccessResponse({
       res,
-      data: { isUserCreated: userData, token, userType },
+      data: { isUserCreated: userData, token, userType: userType || userAuthDetails?.userType},
     });
   }
   let { notification, userExtraDetails, ...isUserCreated } = await createQuery(
@@ -233,6 +234,7 @@ const VerifyOtp = async (req, res) => {
       notification: isUserNotificationDataCreated._id,
     }
   );
+  console.log('userType12', userType, userAuthDetails?.userType);
   return SendSuccessResponse({ res, data: { isUserCreated, token, userType: userType || userAuthDetails?.userType } });
 };
 
