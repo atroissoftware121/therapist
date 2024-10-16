@@ -219,6 +219,7 @@ const VerifyOtp = async (req, res) => {
     userId: isUserCreated._id,
     deviceInfo,
     fcmToken,
+    // userType
   });
   let isUserNotificationDataCreated = await createQuery(notificationsModel, {
     userId: isUserCreated._id,
@@ -232,7 +233,7 @@ const VerifyOtp = async (req, res) => {
       notification: isUserNotificationDataCreated._id,
     }
   );
-  return SendSuccessResponse({ res, data: { isUserCreated, token, userType } });
+  return SendSuccessResponse({ res, data: { isUserCreated, token, userType: userType || userAuthDetails?.userType } });
 };
 
 const Login = async (req, res) => {
@@ -299,6 +300,7 @@ const Login = async (req, res) => {
       fcmToken: fcmToken,
       deviceInfo: deviceInfo,
       isUserLogout: false,
+      // lastLogout: null,
     }
   );
   console.log('userData122', userData);
