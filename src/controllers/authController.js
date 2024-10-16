@@ -182,6 +182,7 @@ const VerifyOtp = async (req, res) => {
         status: 404,
         data: { error: 'No user data found!' },
       });
+    console.log('isUserExist', isUserExist);
     let { notification, userExtraDetails, ...userData } =
       isUserExist?._doc || {};
     let token = genrateToken({ data: { _id: userData._id } });
@@ -198,7 +199,7 @@ const VerifyOtp = async (req, res) => {
     );
     return SendSuccessResponse({
       res,
-      data: { isUserCreated: userData, token, userType: userType || userAuthDetails?.userType},
+      data: { isUserCreated: userData, token, userType: userAuthDetails?.userType},
     });
   }
   let { notification, userExtraDetails, ...isUserCreated } = await createQuery(
