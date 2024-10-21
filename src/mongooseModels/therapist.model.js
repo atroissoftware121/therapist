@@ -36,6 +36,8 @@ const therapistSchema = new mongoose.Schema(
       ref: "userExtraDetails",
       default: null,
     },
+    isAccountRestricted: { type: Boolean, default: false },
+    accountRestictionMessage: { type: String, default: null },
   },
   {
     timestamps: true,

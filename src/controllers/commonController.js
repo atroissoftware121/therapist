@@ -78,6 +78,7 @@ const Logout = async (req, res) => {
         fcmToken: null,
         deviceInfo: null,
         isUserLogout: true,
+        lastLogout: new Date()
       }
     );
     return SendSuccessResponse({ res, data: { userId } });
@@ -852,6 +853,89 @@ const removeUser = async (req, res) => {
 
 };
 
+
+const fetchUserDataByEmail = async (req, res) => {
+  const { email, individual } = req.query;
+  const userData = await  findQuery(individual ? individualModel : therapistModel, { email })
+  console.log('individualData', userData);
+  return SendSuccessResponse({ res, data: { data: userData } })
+};
+
+const fetchChatDetails = async (req, res) => {
+  const { chatType, page, limit } = req.query;
+  const options = {
+    page,
+    limit,
+  };
+  const populateOptions = ['individualId', 'therapistsId'];
+  const userChatData = await findQueryWithPopulate(chatType === 'message' ? sessionModel : callDetailsModel, null,  options, populateOptions);
+
+  return SendSuccessResponse({ res, data: { data: userChatData } })
+};
+
+const therapistAccountRestricted = catchAsync(async (req, res) => {
+  let { _id, message } = req.body;
+  const { isAdmin } = req.user;
+  if (!isAdmin) {
+    throw new ApiError(httpStatus.UNAUTHORIZED, "Permission Denied");
+  }
+  let therapist = await findQuery(therapistModel, { _id });
+  console.log('therapist', therapist);
+  if (!therapist) {
+    return SendBadResponse({
+      res,
+      status: 404,
+      data: { error: "Therapist Not Found!" },
+    });
+  }
+  const [therapistData] = await findQuery(userExtraDetailsModel, {
+    userId: _id,
+  });
+  console.log('therapistData', therapistData);
+  if (!therapist.email || !therapist.documents.length) {
+    return SendBadResponse({
+      res,
+      status: 400,
+      data: { error: "Therapist registration not complete!" },
+    });
+  }
+  const response = await updateQuery(
+    therapistModel,
+    { _id },
+    { isAccountRestricted: true, accountRestictionMessage: message }
+  );
+  // const message = 'Profile Verified'
+
+  // const text = "Congratulations! Your Therapist account on Sahhaya is active and ready to use.  Please login on ….. app link……\nTeam Sahhaya";
+
+  // sendEmail(therapist.email, message, text);
+  // sendSms({
+  //   to: therapist.mobileNumber,
+  //   body: message,
+  // });
+  // if (therapistData && therapistData.fcmToken) {
+  //   const message = {
+  //     notification: {
+  //       title: `${response.name}`,
+  //       body: `Profile Verified`,
+  //     },
+  //     data: {
+  //       // senderId: therapistId,
+  //       receiverId: _id,
+  //       title: `${response.name}`,
+  //       body: `Profile Verified`,
+  //     },
+  //     token: therapistData.fcmToken,
+  //   };
+  //   console.log('data122222', message);
+  //   await admin.messaging().send(message);
+  // }
+  return SendSuccessResponse({
+    res,
+    data: { message: "Therapist account restricted successFully!", data: response },
+  });
+});
+
 module.exports = {
   GetImage,
   UploadImages,
@@ -871,5 +955,8 @@ module.exports = {
   deleteChat,
   callUserlist,
   fetchUserData,
-  removeUser
+  removeUser,
+  fetchUserDataByEmail,
+  fetchChatDetails,
+  therapistAccountRestricted
 };
