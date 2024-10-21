@@ -291,6 +291,13 @@ const Login = async (req, res) => {
       status: 403,
       data: { error: 'Invaild email/password!' },
     });
+  if(isUserExist.isAccountRestricted) {
+    return SendBadResponse({
+      res,
+      status: 400,
+      data: { error: isUserExist.message },
+    });
+  }
   console.log('isUserExist', isUserExist.toObject());
   let { notification, userExtraDetails, ...userData } = isUserExist.toObject() || {};
   let token = genrateToken({ data: { _id: userData._id } });
