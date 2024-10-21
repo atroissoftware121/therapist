@@ -16,6 +16,8 @@ const individualSchema = new mongoose.Schema(
       type: mongoose.Types.ObjectId,
       ref: "userExtraDetails",
     },
+    isAccountRestricted: { type: Boolean, default: false },
+    accountRestictionMessage: { type: String, default: null },
   },
   {
     timestamps: true,

@@ -879,60 +879,29 @@ const therapistAccountRestricted = catchAsync(async (req, res) => {
   if (!isAdmin) {
     throw new ApiError(httpStatus.UNAUTHORIZED, "Permission Denied");
   }
-  let therapist = await findQuery(therapistModel, { _id });
+
+  const [userData] = await findQuery(userExtraDetailsModel, {
+    userId: _id,
+  });
+  const userModel = userData.userType === 'therapists' ? therapistModel : individualModel;
+  let user = await findQuery(userModel, { _id });
   console.log('therapist', therapist);
-  if (!therapist) {
+  if (!user) {
     return SendBadResponse({
       res,
       status: 404,
-      data: { error: "Therapist Not Found!" },
-    });
-  }
-  const [therapistData] = await findQuery(userExtraDetailsModel, {
-    userId: _id,
-  });
-  console.log('therapistData', therapistData);
-  if (!therapist.email || !therapist.documents.length) {
-    return SendBadResponse({
-      res,
-      status: 400,
-      data: { error: "Therapist registration not complete!" },
+      data: { error: "user Not Found!" },
     });
   }
   const response = await updateQuery(
-    therapistModel,
+    userModel,
     { _id },
     { isAccountRestricted: true, accountRestictionMessage: message }
   );
-  // const message = 'Profile Verified'
 
-  // const text = "Congratulations! Your Therapist account on Sahhaya is active and ready to use.  Please login on ….. app link……\nTeam Sahhaya";
-
-  // sendEmail(therapist.email, message, text);
-  // sendSms({
-  //   to: therapist.mobileNumber,
-  //   body: message,
-  // });
-  // if (therapistData && therapistData.fcmToken) {
-  //   const message = {
-  //     notification: {
-  //       title: `${response.name}`,
-  //       body: `Profile Verified`,
-  //     },
-  //     data: {
-  //       // senderId: therapistId,
-  //       receiverId: _id,
-  //       title: `${response.name}`,
-  //       body: `Profile Verified`,
-  //     },
-  //     token: therapistData.fcmToken,
-  //   };
-  //   console.log('data122222', message);
-  //   await admin.messaging().send(message);
-  // }
   return SendSuccessResponse({
     res,
-    data: { message: "Therapist account restricted successFully!", data: response },
+    data: { message: `${userData.userType} account restricted successFully!`, data: response },
   });
 });
 

@@ -8,6 +8,12 @@ const userExtraDetailsSchema = new mongoose.Schema(
     deviceInfo: { type: String, default: null },
     isUserLogout: { type: Boolean, default: true },
     userId: { type: mongoose.Types.ObjectId, default: null },
+    lastLogout: {
+      type: Date,
+      default: null
+    },
+    userType: { type: String, enum: ['individual', 'therapists'] },
+    email: { type: String, required: false }
   },
   {
     timestamps: true,

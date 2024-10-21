@@ -28,6 +28,7 @@ const { upload } = require('../helpers/s3Helper');
 const {
   injectUserDetails,
   isAuthorized,
+  injectTherapistDetails
 } = require('../middlewares/authMiddlewares');
 const { Logout } = require('../controllers/commonController');
 
