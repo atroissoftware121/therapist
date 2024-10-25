@@ -57,8 +57,8 @@ module.exports = (app) => {
   route.get('/image/:key', GetImage);
   route.post('/image', upload.single('image'), celebrate({
     [Segments.BODY]: Joi.object().keys({
-      senderId: Joi.string().required(),
-      receiverId: Joi.string().required(),
+      senderId: Joi.string().optional(),
+      receiverId: Joi.string().optional(),
     }),
   }), UploadImages);
   route.get('/getProfile', isAuthorized, injectUserDetails, getProfile);
