@@ -38,6 +38,7 @@ const therapistSchema = new mongoose.Schema(
     },
     isAccountRestricted: { type: Boolean, default: false },
     accountRestictionMessage: { type: String, default: null },
+    isWalletRestricted: { type: Boolean, default: false },
   },
   {
     timestamps: true,

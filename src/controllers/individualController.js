@@ -9,6 +9,7 @@ const individualModel = require("../mongooseModels/individual.model");
 const sendEmail = require("../utils/emailer");
 const pick = require("../utils/pick");
 const therapistModel = require("../mongooseModels/therapist.model");
+const userExtraDetailsModel = require('../mongooseModels/userExtraDetails.model');
 
 const IndividualProfileUpdate = async (req, res) => {
   const { fname, lname, email, gender, image } = req.body;
@@ -91,6 +92,13 @@ const IndividualRegister = async (req, res) => {
     {
       email,
       password: hashedPassword,
+    }
+  );
+  await updateQuery(
+    userExtraDetailsModel,
+    { userId: _id },
+    {
+      email,
     }
   );
   const message = 'Individual Registration on Sahhaya'

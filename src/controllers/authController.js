@@ -170,12 +170,13 @@ const VerifyOtp = async (req, res) => {
     mobileNumber,
   });
   console.log('userAuthDetails', userAuthDetails);
-  console.log('userAuthDetails', userAuthDetails);
+  console.log('userAuthDetails', mobileNumber);
   if (method === 'login') {
     let [isUserExist] = await findQuery(
       userAuthDetails?.userType === 'therapist' ? therapistModel : individualModel,
       { mobileNumber }
     );
+    console.log('isUserExist', isUserExist);
     if (!isUserExist)
       return SendBadResponse({
         res,

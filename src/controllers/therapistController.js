@@ -53,7 +53,13 @@ const TherapistRegisterStepFirst = catchAsync(async (req, res) => {
       email,
     }
   );
-
+  await updateQuery(
+    userExtraDetailsModel,
+    { userId: _id },
+    {
+      email,
+    }
+  );
   return SendSuccessResponse({
     res,
     data: { message: "Step first complete successfully!", data: isUserUpdated },
