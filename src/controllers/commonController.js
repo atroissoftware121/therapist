@@ -337,10 +337,19 @@ const endSession = async (req, res) => {
     const startTime = new Date(sessionData.sessionStartTime);
     const endTime = new Date(startTime.getTime() + sessionDuration * 1000);
     console.log('saveObj', saveObj);
+    const adminConfig = await adminSettingModel.findOne({});
+    console.log('adminConfig', adminConfig);
+    const percentageCutoff = saveObj.cost - (saveObj.cost * (adminConfig.commissionPercentage / 100));
     await updateQuery(
       sessionModel,
       { _id: sessionId },
-      { sessionEndTime: endTime, isSessionStart: false, sessionCost: saveObj.cost }
+      {
+        sessionEndTime: endTime, 
+        isSessionStart: false, 
+        sessionCost: saveObj.cost, 
+        therapistIncome: percentageCutoff, 
+        adminPercentage: adminConfig.commissionPercentage,
+      }
     );
 
     await createQuery(individualTransactionModel, saveObj);
@@ -361,9 +370,6 @@ const endSession = async (req, res) => {
       ]
     );
 
-    const adminConfig = await adminSettingModel.findOne({});
-    console.log('adminConfig', adminConfig);
-    const percentageCutoff = saveObj.cost - (saveObj.cost * (adminConfig.commissionPercentage / 100));
     console.log('percentageCutoff', percentageCutoff);
     await updateQuery(therapistModel, { _id: therapistsId }, { $inc: { wallet: percentageCutoff }, isInChat: false });
     const updateChatDetails = await updateQuery(
@@ -496,9 +502,20 @@ const getCalldata = async (req, res) => {
     { $pull: { "individualDetails": { senderId: individualId } } },
   );
   const [data] = await findQuery(chatDetailsModel, { receiverId: therapistsId, chatType: 'call' })
-  await createQuery(callDetailsModel, { ...dataMapper, therapistsId, individualId });
   const therapisData = await findQuery(therapistModel, { _id: therapistsId });
   const costPerCall = therapisData.charges * (dataMapper.conversationDuration / 60);
+  const adminConfig = await adminSettingModel.findOne({});
+  console.log('adminConfig', adminConfig);
+  const percentageCutoff = costPerCall - (costPerCall * (adminConfig.commissionPercentage / 100));
+  await createQuery(callDetailsModel, {
+    ...dataMapper,
+    therapistsId,
+    individualId,
+    sessionCost: costPerCall,
+    therapistIcome: percentageCutoff,
+    adminPercentage: adminConfig.commissionPercentage,
+    conversationDuration: dataMapper.conversationDuration / 60
+  });
   await updateQuery(individualModel, { _id: individualId }, { $inc: { wallet: -costPerCall } })
   await refreshCallListsEvent(data, therapistsId);
 

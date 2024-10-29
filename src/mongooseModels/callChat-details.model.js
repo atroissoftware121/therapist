@@ -17,6 +17,9 @@ const callDetailsSchema = new mongoose.Schema(
     recordingUrl: { type: String, require: true, default: null },
     conversationDuration: { type: Number, require: true },
     isReview: { type: Boolean, default: false },
+    sessionCost: { type: Number, default: 0 },
+    therapistIncome: { type: Number, default: 0 },
+    adminPercentage: { type: Number, default: 0 },
     legs: [
       {
         userType: { type: String, require: true },

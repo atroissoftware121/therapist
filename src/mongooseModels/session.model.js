@@ -11,7 +11,10 @@ const sessionDataSchema = new mongoose.Schema(
     individualId: { type: mongoose.Schema.Types.ObjectId, ref: 'individual' },
     isReview: { type: Boolean, default: false },
     isDeleted: { type: Boolean, default: false },
-    sessionCost: { type: Number, default: 0 }
+    sessionCost: { type: Number, default: 0 },
+    therapistIncome: { type: Number, default: 0 },
+    adminPercentage: { type: Number, default: 0 }
+
   },
   {
     timestamps: true,
