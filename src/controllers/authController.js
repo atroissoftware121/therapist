@@ -314,7 +314,6 @@ const Login = async (req, res) => {
       // lastLogout: null,
     }
   );
-  console.log('userData122', userData);
   const topics = credential.userType === 'therapists' ? ['all-users', 'therapist-subscribed'] : ['all-users', 'individual-subscribed'];
   const subscriptions = topics.map((topic) => {
     const token = fcmToken;
