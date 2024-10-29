@@ -16,6 +16,7 @@ const therapistModel = require('../mongooseModels/therapist.model');
 const individualModel = require('../mongooseModels/individual.model');
 const notificationsModel = require('../mongooseModels/notifications.model');
 const { getSignupOtpString } = require('../stringTemplates');
+const { admin } = require('../config/messaging-system');
 const { genrateToken } = require('../helpers/jwtHelpers');
 const {
   genratePasswordHash,
