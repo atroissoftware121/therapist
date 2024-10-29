@@ -315,7 +315,7 @@ const Login = async (req, res) => {
       // lastLogout: null,
     }
   );
-  const topics = credential.userType === 'therapists' ? ['all-users', 'therapist-subscribed'] : ['all-users', 'individual-subscribed'];
+  const topics = credential.userType === 'therapist' ? ['all-users', 'therapist-subscribed'] : ['all-users', 'individual-subscribed'];
   const subscriptions = topics.map((topic) => {
     const token = fcmToken;
     if (!/^[a-zA-Z0-9-_.~%]+$/.test(topic)) {
