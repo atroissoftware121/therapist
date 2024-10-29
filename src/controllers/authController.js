@@ -286,25 +286,25 @@ const Login = async (req, res) => {
     credential.userType === 'therapist' ? therapistModel : individualModel,
     { _id: credential.userId }
   );
+  console.log('isUserExist', isUserExist);
   if (!isUserExist)
     return SendBadResponse({
       res,
       status: 403,
       data: { error: 'Invaild email/password!' },
     });
-  if(isUserExist.isAccountRestricted) {
+  if(isUserExist?.isAccountRestricted) {
     return SendBadResponse({
       res,
       status: 400,
       data: { error: isUserExist.message },
     });
   }
-  console.log('isUserExist', isUserExist.toObject());
-  let { notification, userExtraDetails, ...userData } = isUserExist.toObject() || {};
-  let token = genrateToken({ data: { _id: userData._id } });
+  let token = genrateToken({ data: { _id: isUserExist._id } });
+  console.log('token12', token);
   await updateQuery(
     userExtraDetailsModel,
-    { userId: userData._id },
+    { userId: isUserExist._id },
     {
       lastLogin: Date.now(),
       lastJWTToken: token,
@@ -315,7 +315,17 @@ const Login = async (req, res) => {
     }
   );
   console.log('userData122', userData);
-  return SendSuccessResponse({ res, data: { userData, token, userType: credential.userType } });
+  const topics = credential.userType === 'therapists' ? ['all-users', 'therapist-subscribed'] : ['all-users', 'individual-subscribed'];
+  const subscriptions = topics.map((topic) => {
+    const token = fcmToken;
+    if (!/^[a-zA-Z0-9-_.~%]+$/.test(topic)) {
+      throw new Error(`Invalid topic name: ${topic}`);
+    }
+    admin.messaging().subscribeToTopic(token, topic);
+  });
+  await Promise.all(subscriptions);
+  console.log(`Successfully subscribed to topics: ${topics.join(", ")}`);
+  return SendSuccessResponse({ res, data: { isUserExist, token, userType: credential.userType } });
 };
 
 const ForgetPassword = async (req, res) => {
