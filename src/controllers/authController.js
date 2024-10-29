@@ -325,7 +325,7 @@ const Login = async (req, res) => {
   });
   await Promise.all(subscriptions);
   console.log(`Successfully subscribed to topics: ${topics.join(", ")}`);
-  return SendSuccessResponse({ res, data: { isUserExist, token, userType: credential.userType } });
+  return SendSuccessResponse({ res, data: { userData: isUserExist, token, userType: credential.userType } });
 };
 
 const ForgetPassword = async (req, res) => {
