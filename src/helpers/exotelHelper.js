@@ -19,7 +19,6 @@
       },
       data: data,
     };
-
     try {
       const response = await axios(config);
       console.log('SMS sent successfully:', response.data);
