@@ -243,7 +243,7 @@ const VerifyOtp = async (req, res) => {
 
 const Login = async (req, res) => {
   let { email, password, fcmToken, deviceInfo, userType } = req.body;
-
+  console.log('userType122222', req.body);
   let [credential] = await findQuery(authCredtionalsModel, {
     $and: [{ email }],
   });
