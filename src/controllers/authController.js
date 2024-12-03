@@ -76,7 +76,7 @@ const GetOtp = async (req, res) => {
   if (
     alreadyOtpSent === 3 &&
     new Date().getTime() <
-      new Date(isOtpDataExist?.lastOtpSentTime).getTime() + 24 * 60 * 60 * 1000
+    new Date(isOtpDataExist?.lastOtpSentTime).getTime() + 24 * 60 * 60 * 1000
   )
     return SendBadResponse({
       res,
@@ -201,7 +201,7 @@ const VerifyOtp = async (req, res) => {
     );
     return SendSuccessResponse({
       res,
-      data: { isUserCreated: userData, token, userType: userAuthDetails?.userType},
+      data: { isUserCreated: userData, token, userType: userAuthDetails?.userType },
     });
   }
   let { notification, userExtraDetails, ...isUserCreated } = await createQuery(
@@ -254,6 +254,15 @@ const Login = async (req, res) => {
       status: 403,
       data: { error: 'User not found!' },
     });
+  if (userType && credential.userType !== userType) {
+    return SendBadResponse({
+      res,
+      status: 403,
+      data: {
+        error: `You are trying to log in as a ${userType}, but this email is registered as a ${credential.userType}.`,
+      },
+    });
+  }
 
   const otherUserType = credential.userType === 'therapist' ? 'individual' : 'therapist';
   const [isEmailExisted] = await findQuery(
@@ -275,12 +284,12 @@ const Login = async (req, res) => {
     credential.password
   );
   console.log('isPasswordCorrect', isPasswordCorrect);
-    if (!isPasswordCorrect)
-      return SendBadResponse({
-        res,
-        status: 403,
-        data: { error: 'Wrong Password!' },
-      });
+  if (!isPasswordCorrect)
+    return SendBadResponse({
+      res,
+      status: 403,
+      data: { error: 'Wrong Password!' },
+    });
 
 
   let isUserExist = await findQuery(
@@ -294,7 +303,7 @@ const Login = async (req, res) => {
       status: 403,
       data: { error: 'Invaild email/password!' },
     });
-  if(isUserExist?.isAccountRestricted) {
+  if (isUserExist?.isAccountRestricted) {
     return SendBadResponse({
       res,
       status: 400,
@@ -332,7 +341,7 @@ const ForgetPassword = async (req, res) => {
   let { otp, password, mobileNumber } = req.body;
   console.log('req,,', req.body);
   otp = '121'
-  console.log('otp',otp);
+  console.log('otp', otp);
   let [isOtpValid] = await findQuery(otpSentModel, {
     $and: [{ mobileNumber }, { otp }, { method: 'forgetPassword' }],
   });
