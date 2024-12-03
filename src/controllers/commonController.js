@@ -142,6 +142,7 @@ const sentPushNotifications = catchAsync(async (req, res) => {
         email: individualData.email,
         mobileNumber: individualData.mobileNumber,
         gender: individualData.gender,
+        timing: data.chatDuration
       };
       const [isChatExisted] = await findQuery(chatDetailsModel, { receiverId: data.receiverId, chatType: data.chatType });
       let messageData;
@@ -272,8 +273,7 @@ const startSession = async (req, res) => {
     });
 
   if (!userChatDetails) {
-    return SendBadResponse({
-      res,
+    return SendBadResponse({      res,
       status: 404,
       data: { error: 'User details not found!' },
     });
@@ -922,6 +922,28 @@ const therapistAccountRestricted = catchAsync(async (req, res) => {
   });
 });
 
+// const notificationBroadCast = async (req, res) => {
+//   // const token = 'dA-_SeovSaGD5Nch-eH7rW:APA91bGsvNVtEhm2EPSZUhKxD4MTxlKsGNZ4dkY0OGSjDkt6sHffCEzguMnWvUH2sQagrBDHL3lr3wELncI00W0kQJc_8aOR2dspQBghSq8oZ_4_Hxe237E';
+//   // const topic = 'all-users'; // Specify the topic here
+//   // try {
+//   //     await admin.messaging().subscribeToTopic(token, topic);
+//   //     console.log(`Successfully subscribed to topic: ${topic}`);
+//   //   } catch (error) {
+//   //     console.error(`Error subscribing to topic: ${topic}`, error);
+//   //   }
+//   const message = {
+//     notification: {
+//       title: req.body.title,
+//       body: req.body.message,
+//     },
+//     topic: 'all-users', // Specify the topic here
+//   };
+//   const response = await admin.messaging().send(message);
+//   console.log('response12', response);
+//   // const notification = await adminNotificationModel.create(req.body);
+//   return SendSuccessResponse({ res, data: response });
+// };
+
 module.exports = {
   GetImage,
   UploadImages,
@@ -944,5 +966,6 @@ module.exports = {
   removeUser,
   fetchUserDataByEmail,
   fetchChatDetails,
-  therapistAccountRestricted
+  therapistAccountRestricted,
+  // notificationBroadCast
 };
