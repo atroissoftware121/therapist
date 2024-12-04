@@ -74,7 +74,7 @@ const GetOtp = async (req, res) => {
   });
   const alreadyOtpSent = isOtpDataExist?.sendTimes || 0;
   if (
-    alreadyOtpSent === 3 &&
+    alreadyOtpSent === 10 &&
     new Date().getTime() <
     new Date(isOtpDataExist?.lastOtpSentTime).getTime() + 24 * 60 * 60 * 1000
   )
