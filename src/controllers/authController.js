@@ -26,76 +26,93 @@ const userExtraDetailsModel = require('../mongooseModels/userExtraDetails.model'
 
 const GetOtp = async (req, res) => {
   let { n: mobileNumber, t: userType, m: method } = req.query;
-  if (!mobileNumber || !method)
+
+  if (!mobileNumber || !method) {
     return SendBadResponse({
       res,
       status: 400,
       data: { error: 'Please send all required fields!' },
     });
-  if (method !== 'login' && method !== 'signup' && method !== 'forgetPassword')
+  }
+
+  if (method !== 'login' && method !== 'signup' && method !== 'forgetPassword') {
     return SendBadResponse({
       res,
       status: 400,
       data: { error: 'Please send correct method!' },
     });
-  // if (userType !== 'therapist' && userType !== 'individual')
-  //   return SendBadResponse({
-  //     res,
-  //     status: 400,
-  //     data: { error: 'Please send correct usertype!' },
-  //   });
+  }
+
   mobileNumber = '+' + mobileNumber.trim();
-  let [isMobileNumberExist] = await findQuery(authCredtionalsModel, {
-    mobileNumber,
-  });
-  // let [isNumberExistWithUsertype] = await findQuery(authCredtionalsModel, {
-  //   $and: [{ mobileNumber }, { userType }],
-  // });
+
+  let [isMobileNumberExist] = await findQuery(authCredtionalsModel, { mobileNumber });
 
   if (
     (method === 'login' || method === 'forgetPassword') &&
     !isMobileNumberExist
-  )
+  ) {
     return SendBadResponse({
       res,
       status: 404,
       data: { error: 'User not found!' },
     });
+  }
 
-  if (method === 'signup' && isMobileNumberExist)
+  if (method === 'signup' && isMobileNumberExist) {
     return SendBadResponse({
       res,
       status: 404,
-      data: { error: 'User number already in use, please proceed by loging in.' },
+      data: { error: 'User number already in use, please proceed by logging in.' },
+    });
+  }
+
+  if (method === 'login' && userType) {
+    const [isNumberExistWithUsertype] = await findQuery(authCredtionalsModel, {
+      mobileNumber,
+      userType,
     });
 
-  const [isOtpDataExist] = await findQuery(otpSentModel, {
-    mobileNumber,
-  });
+    if (!isNumberExistWithUsertype) {
+      return SendBadResponse({
+        res,
+        status: 403,
+        data: {
+          error: `Try different number`,
+        },
+      });
+    }
+  }
+
+  const [isOtpDataExist] = await findQuery(otpSentModel, { mobileNumber });
   const alreadyOtpSent = isOtpDataExist?.sendTimes || 0;
+
   if (
     alreadyOtpSent === 10 &&
     new Date().getTime() <
     new Date(isOtpDataExist?.lastOtpSentTime).getTime() + 24 * 60 * 60 * 1000
-  )
+  ) {
     return SendBadResponse({
       res,
       status: 502,
-      data: { error: 'limit exceeded! Please try after one day.' },
+      data: { error: 'Limit exceeded! Please try after one day.' },
     });
+  }
 
-  //let otp = genrateOtp();
-  let otp = '121';
-  // let messageResponse = await sendSMS({
+  // Generate or use a static OTP
+  let otp = '121'; // Replace with genrateOtp() in production
+
+  // Send SMS logic can be enabled in production
+  // const messageResponse = await sendSMS({
   //   to: mobileNumber,
   //   body: getSignupOtpString(otp),
   // });
-  // if (!messageResponse)
+  // if (!messageResponse) {
   //   return SendBadResponse({
   //     res,
   //     status: 503,
-  //     data: { error: 'somethings went wrong!' },
+  //     data: { error: 'Something went wrong!' },
   //   });
+  // }
 
   const otpModelObj = {
     otp,
@@ -104,14 +121,19 @@ const GetOtp = async (req, res) => {
     lastOtpSentTime: new Date(),
     method,
   };
-  if (isOtpDataExist)
+
+  if (isOtpDataExist) {
     await updateQuery(otpSentModel, { _id: isOtpDataExist._id }, otpModelObj);
-  else await createQuery(otpSentModel, otpModelObj);
+  } else {
+    await createQuery(otpSentModel, otpModelObj);
+  }
+
   return SendSuccessResponse({
     res,
-    data: { message: 'Otp sent successfully!' },
+    data: { message: 'OTP sent successfully!' },
   });
 };
+
 
 const VerifyOtp = async (req, res) => {
   let {
@@ -135,6 +157,7 @@ const VerifyOtp = async (req, res) => {
       status: 400,
       data: { error: 'Please send correct method!' },
     });
+    
   // if (userType !== 'therapist' && userType !== 'individual')
   //   return SendBadResponse({
   //     res,
