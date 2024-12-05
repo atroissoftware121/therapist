@@ -21,7 +21,9 @@ const {
   removeUser,
   fetchUserDataByEmail,
   fetchChatDetails,
-  therapistAccountRestricted
+  therapistAccountRestricted,
+  notificationBroadCast,
+  fetchNotificationList
 } = require('../controllers/commonController');
 const { upload } = require('../helpers/s3Helper');
 
@@ -115,12 +117,14 @@ module.exports = (app) => {
   route.delete('/removeUser', removeUser);
   route.get('/fetchUserByEmail', fetchUserDataByEmail);
   route.get('/fetchChatData', fetchChatDetails);
-  route.get('/therapistAccountRestricted',   isAuthorized,
+  route.get('/therapistAccountRestricted', isAuthorized,
     injectTherapistDetails,
     celebrate({
       [Segments.BODY]: Joi.object().keys({
         _id: Joi.string().required(),
         message: Joi.string().required()
       }),
-    }),therapistAccountRestricted);
+    }), therapistAccountRestricted);
+  route.post('/notifications/broadcast', notificationBroadCast);
+  route.get('/fetchNotificationList', fetchNotificationList);
 };

@@ -251,6 +251,7 @@ const VerifyOtp = async (req, res) => {
   });
   let isUserNotificationDataCreated = await createQuery(notificationsModel, {
     userId: isUserCreated._id,
+    userType,
     notifications: [],
   });
   updateQuery(

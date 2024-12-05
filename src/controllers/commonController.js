@@ -25,9 +25,11 @@ const sessionModel = require('../mongooseModels/session.model');
 const reportModel = require('../mongooseModels/report.model');
 const individualTransactionModel = require('../mongooseModels/individual-transaction.model');
 const individualNotificationModel = require('../mongooseModels/individual-notification.model');
+const adminNotificationModel = require('../mongooseModels/admin-notification.model');
 const callDetailsModel = require('../mongooseModels/callChat-details.model');
 const { refreshCallListsEvent, chatDetailsEvent, startTimerEvent, endTimerEvent } = require('../loaders/socket');
 const reviewModel = require('../mongooseModels/review.model');
+const notificationsModel = require('../mongooseModels/notifications.model');
 
 
 const GetImage = async (req, res) => {
@@ -112,7 +114,7 @@ const sentPushNotifications = catchAsync(async (req, res) => {
     if (receiverDetail) {
       console.log(receiverDetail.fcmToken);
       let response = 'individual added in queue';
-      if (receiverDetail.fcmToken !== 'ios' || !receiverDetail.fcmToken ) {
+      if (receiverDetail.fcmToken !== 'ios' || !receiverDetail.fcmToken) {
         const message = {
           notification: {
             title: data.title,
@@ -273,7 +275,8 @@ const startSession = async (req, res) => {
     });
 
   if (!userChatDetails) {
-    return SendBadResponse({      res,
+    return SendBadResponse({
+      res,
       status: 404,
       data: { error: 'User details not found!' },
     });
@@ -344,10 +347,10 @@ const endSession = async (req, res) => {
       sessionModel,
       { _id: sessionId },
       {
-        sessionEndTime: endTime, 
-        isSessionStart: false, 
-        sessionCost: saveObj.cost, 
-        therapistIncome: percentageCutoff, 
+        sessionEndTime: endTime,
+        isSessionStart: false,
+        sessionCost: saveObj.cost,
+        therapistIncome: percentageCutoff,
         adminPercentage: adminConfig.commissionPercentage,
       }
     );
@@ -855,7 +858,7 @@ const deleteChat = async (req, res) => {
 
 const fetchUserData = async (req, res) => {
   const { individualId, therapistId } = req.query;
-  const individualData = await  findQuery(individualId ? individualModel : therapistModel, { _id: individualId || therapistId })
+  const individualData = await findQuery(individualId ? individualModel : therapistModel, { _id: individualId || therapistId })
   console.log('individualData', individualData);
   return SendSuccessResponse({ res, data: { data: individualData } })
 
@@ -864,7 +867,7 @@ const fetchUserData = async (req, res) => {
 const removeUser = async (req, res) => {
   console.log('req', req.query)
   const { individualId, therapistId } = req.query;
-  const userData = await  deleteQuery(individualId ? individualModel : therapistModel, { _id: individualId || therapistId })
+  const userData = await deleteQuery(individualId ? individualModel : therapistModel, { _id: individualId || therapistId })
   console.log('userData', userData);
   return SendSuccessResponse({ res, data: { data: userData } })
 
@@ -873,7 +876,7 @@ const removeUser = async (req, res) => {
 
 const fetchUserDataByEmail = async (req, res) => {
   const { email, individual } = req.query;
-  const userData = await  findQuery(individual ? individualModel : therapistModel, { email })
+  const userData = await findQuery(individual ? individualModel : therapistModel, { email })
   console.log('individualData', userData);
   return SendSuccessResponse({ res, data: { data: userData } })
 };
@@ -885,7 +888,7 @@ const fetchChatDetails = async (req, res) => {
     limit,
   };
   const populateOptions = ['individualId', 'therapistsId'];
-  const userChatData = await findQueryWithPopulate(chatType === 'message' ? sessionModel : callDetailsModel, null,  options, populateOptions);
+  const userChatData = await findQueryWithPopulate(chatType === 'message' ? sessionModel : callDetailsModel, null, options, populateOptions);
 
   return SendSuccessResponse({ res, data: { data: userChatData } })
 };
@@ -944,6 +947,39 @@ const therapistAccountRestricted = catchAsync(async (req, res) => {
 //   return SendSuccessResponse({ res, data: response });
 // };
 
+const notificationBroadCast = async (req, res) => {
+  const { users } = req.body;
+  const topics = users === 'both' ? 'all-users' : users === 'therapist' ? 'therapist-subscribed' : 'individual-subscribed';
+  const message = {
+    notification: {
+      title: req.body.title,
+      body: req.body.message,
+    },
+    topic: topics,
+  };
+  const response = await admin.messaging().send(message);
+  const notification = await adminNotificationModel.create(req.body);
+
+  switch (users) {
+    case 'both':
+      await notificationsModel.updateMany({ $push: {notifications: { title: req.body.title, message: req.body.message } } })
+      break;
+    case 'therapist':
+      await notificationsModel.findOneAndUpdate({userType: users}, { $push: {notifications: { title: req.body.title, message: req.body.message } } })
+      break;
+    case 'individual':
+      await notificationsModel.findOneAndUpdate({userType: users}, { $push: {notifications: { title: req.body.title, message: req.body.message } } })
+      break;
+  };
+  return SendSuccessResponse({ res, data: { data: notification } });
+};
+
+const fetchNotificationList = async (req, res) => {
+  const notificationListDetails = await notificationsModel.findOne({userId: req.query.userId}).populate('userId');
+  return SendSuccessResponse({ res, data: { data: notificationListDetails } });
+};
+
+
 module.exports = {
   GetImage,
   UploadImages,
@@ -967,5 +1003,6 @@ module.exports = {
   fetchUserDataByEmail,
   fetchChatDetails,
   therapistAccountRestricted,
-  // notificationBroadCast
+  notificationBroadCast,
+  fetchNotificationList
 };
