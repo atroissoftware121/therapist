@@ -73,11 +73,12 @@ const GetOtp = async (req, res) => {
     });
 
     if (!isNumberExistWithUsertype) {
+      const oppositeUserType = userType === 'individual' ? 'therapist' : 'individual';
       return SendBadResponse({
         res,
         status: 403,
         data: {
-          error: `Try different number`,
+          error: `This number is registered with a ${oppositeUserType}. Please use a number associated with an ${userType}.`,
         },
       });
     }
