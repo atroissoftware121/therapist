@@ -722,12 +722,14 @@ const chatUserlist = async (req, res) => {
       const chatTiming = timeDifference / 1000;
       const id = individualId ? { _id: data.therapistsId } : { _id: data.individualId };
       const userMsgData = await findQuery(userModel, id);
+      const reviewData = await reviewModel.findOne({ consultationId: data._id });
       const obj = {
+        ...userMsgData?._doc,
         chatTiming,
         sessionCost: data.sessionCost || 0,
         consultationId: data._id,
-        isReview: data?.isReview,
-        ...userMsgData?._doc,
+        isReview: reviewData?.rating,
+        comment: reviewData?.therapistComment
       };
       pushUserData.push(obj);
     }
@@ -739,13 +741,15 @@ const chatUserlist = async (req, res) => {
       console.log('oid122222', id);
       const userCallData = await findQuery(userModel, id);
       console.log('userCallData', userCallData);
+      const reviewData = await reviewModel.findOne({ consultationId: data._id });
       const obj = {
+        ...userCallData?._doc,
         callTiming: data.conversationDuration,
         sessionCost: ((data.conversationDuration) / 60) * userCallData?.charges || 0,
         consultationId: data._id,
-        isReview: data?.isReview,
+        isReview: reviewData?.rating,
+        comment: reviewData?.therapistComment,
         sessionCost: 0,
-        ...userCallData?._doc,
       };
 
       pushUserData.push(obj)
@@ -962,20 +966,20 @@ const notificationBroadCast = async (req, res) => {
 
   switch (users) {
     case 'both':
-      await notificationsModel.updateMany({ $push: {notifications: { title: req.body.title, message: req.body.message } } })
+      await notificationsModel.updateMany({ $push: { notifications: { title: req.body.title, message: req.body.message } } })
       break;
     case 'therapist':
-      await notificationsModel.findOneAndUpdate({userType: users}, { $push: {notifications: { title: req.body.title, message: req.body.message } } })
+      await notificationsModel.findOneAndUpdate({ userType: users }, { $push: { notifications: { title: req.body.title, message: req.body.message } } })
       break;
     case 'individual':
-      await notificationsModel.findOneAndUpdate({userType: users}, { $push: {notifications: { title: req.body.title, message: req.body.message } } })
+      await notificationsModel.findOneAndUpdate({ userType: users }, { $push: { notifications: { title: req.body.title, message: req.body.message } } })
       break;
   };
   return SendSuccessResponse({ res, data: { data: notification } });
 };
 
 const fetchNotificationList = async (req, res) => {
-  const notificationListDetails = await notificationsModel.findOne({userId: req.query.userId}).populate('userId');
+  const notificationListDetails = await notificationsModel.findOne({ userId: req.query.userId }).populate('userId');
   return SendSuccessResponse({ res, data: { data: notificationListDetails } });
 };
 
