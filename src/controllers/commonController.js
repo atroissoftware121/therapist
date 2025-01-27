@@ -732,8 +732,8 @@ const chatUserlist = async (req, res) => {
         consultationId: data._id,
         isReview: reviewData?.rating || false,
         comment: reviewData?.comments || '',
-        // createdAt: data.createdAt,
-        // updatedAt: data.updatedAt
+        createdAt: data.createdAt,
+        updatedAt: data.updatedAt
 
       };
       pushUserData.push(obj);
