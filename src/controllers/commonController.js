@@ -723,10 +723,10 @@ const chatUserlist = async (req, res) => {
       const timeDifference = new Date(data.sessionEndTime) - new Date(data.sessionStartTime);
       const chatTiming = timeDifference / 1000;
       const id = individualId ? { _id: data.therapistsId } : { _id: data.individualId };
-      const userMsg = await findQuery(userModel, id);
+      const userMsgData = await findQuery(userModel, id);
       const reviewData = await reviewModel.findOne({ consultationId: data._id ,comment: data.comments});
       const obj = {
-        ...userMsg?._doc,
+        ...userMsgData?._doc,
         chatTiming,
         sessionCost: data.sessionCost || 0,
         consultationId: data._id,
