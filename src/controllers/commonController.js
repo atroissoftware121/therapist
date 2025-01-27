@@ -338,7 +338,7 @@ const endSession = async (req, res) => {
       cost: (sessionDuration / 60) * charges,
     }
     const startTime = new Date(sessionData.sessionStartTime);
-    const endTime = new Date(startTime.getTime() + sessionDuration * 1000);
+    const sessionEnd = new Date(startTime.getTime() + sessionDuration * 1000);
     console.log('saveObj', saveObj);
     const adminConfig = await adminSettingModel.findOne({});
     console.log('adminConfig', adminConfig);
@@ -347,7 +347,7 @@ const endSession = async (req, res) => {
       sessionModel,
       { _id: sessionId },
       {
-        sessionEndTime: endTime,
+        sessionEnd: sessionEnd,
         isSessionStart: false,
         sessionCost: saveObj.cost,
         therapistIncome: percentageCutoff,
@@ -386,7 +386,9 @@ const endSession = async (req, res) => {
         updateChatDetails,
         costOfSession: saveObj.cost,
         therapistCostCutOff: percentageCutoff,
-        commission: adminConfig.commissionPercentage
+        commission: adminConfig.commissionPercentage,
+        sessionEndTime:sessionEnd,
+        sessionDuration:saveObj.sessionDuration
       }
     });
   } catch (err) {
@@ -721,15 +723,18 @@ const chatUserlist = async (req, res) => {
       const timeDifference = new Date(data.sessionEndTime) - new Date(data.sessionStartTime);
       const chatTiming = timeDifference / 1000;
       const id = individualId ? { _id: data.therapistsId } : { _id: data.individualId };
-      const userMsgData = await findQuery(userModel, id);
-      const reviewData = await reviewModel.findOne({ consultationId: data._id });
+      const userMsg = await findQuery(userModel, id);
+      const reviewData = await reviewModel.findOne({ consultationId: data._id ,comment: data.comments});
       const obj = {
-        ...userMsgData?._doc,
+        ...userMsg?._doc,
         chatTiming,
         sessionCost: data.sessionCost || 0,
         consultationId: data._id,
-        isReview: reviewData?.rating,
-        comment: reviewData?.therapistComment
+        isReview: reviewData?.rating || false,
+        comment: reviewData?.comments || '',
+        createdAt: data.createdAt,
+        updatedAt: data.updatedAt
+
       };
       pushUserData.push(obj);
     }
@@ -741,15 +746,16 @@ const chatUserlist = async (req, res) => {
       console.log('oid122222', id);
       const userCallData = await findQuery(userModel, id);
       console.log('userCallData', userCallData);
-      const reviewData = await reviewModel.findOne({ consultationId: data._id });
+      const reviewData = await reviewModel.findOne({ consultationId: data._id ,comment: data.comments});
       const obj = {
         ...userCallData?._doc,
         callTiming: data.conversationDuration,
         sessionCost: ((data.conversationDuration) / 60) * userCallData?.charges || 0,
         consultationId: data._id,
         isReview: reviewData?.rating,
-        comment: reviewData?.therapistComment,
-        sessionCost: 0,
+        comment: reviewData?.comments,
+        createdAt: data.createdAt,
+        updatedAt: data.updatedAt
       };
 
       pushUserData.push(obj)
