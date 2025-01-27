@@ -338,7 +338,7 @@ const endSession = async (req, res) => {
       cost: (sessionDuration / 60) * charges,
     }
     const startTime = new Date(sessionData.sessionStartTime);
-    const sessionEnd = new Date(startTime.getTime() + sessionDuration * 1000);
+    const sessionEndTime = new Date(startTime.getTime() + sessionDuration * 1000);
     console.log('saveObj', saveObj);
     const adminConfig = await adminSettingModel.findOne({});
     console.log('adminConfig', adminConfig);
@@ -347,7 +347,7 @@ const endSession = async (req, res) => {
       sessionModel,
       { _id: sessionId },
       {
-        sessionEnd: sessionEnd,
+        sessionEndTime: sessionEndTime,
         isSessionStart: false,
         sessionCost: saveObj.cost,
         therapistIncome: percentageCutoff,
@@ -387,7 +387,7 @@ const endSession = async (req, res) => {
         costOfSession: saveObj.cost,
         therapistCostCutOff: percentageCutoff,
         commission: adminConfig.commissionPercentage,
-        sessionEndTime:sessionEnd,
+        sessionEndTime:sessionEndTime,
         sessionDuration:saveObj.sessionDuration
       }
     });
