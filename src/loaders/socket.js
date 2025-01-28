@@ -15,7 +15,7 @@ const io = socketIo(server, {
   }
 });
 
-async function handleSocket() {
+async function handleSocket()  {
   io.on('connection', async(socket) => {
     // const userId = socket.handshake.auth.userId;
     console.log(`A user connected with :, ${socket.id}`);
@@ -148,6 +148,7 @@ const startTimerEvent = async(data) => {
 };
 
 const endTimerEvent = async(data) => {
+  console.log("this is socket end timer data",data);
   io.to(data.therapistsId).emit('endTimer', data);
 };
 
