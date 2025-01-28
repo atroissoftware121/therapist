@@ -334,7 +334,7 @@ const endSession = async (req, res) => {
     const saveObj = {
       sessionId: sessionId,
       userId: individualId,
-      sessionDuration: sessionDuration / 60,
+      sessionDuration: sessionDuration ,
       cost: (sessionDuration / 60) * charges,
     }
     const startTime = new Date(sessionData.sessionStartTime);
