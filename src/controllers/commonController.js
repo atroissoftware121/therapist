@@ -387,8 +387,8 @@ const endSession = async (req, res) => {
         costOfSession: saveObj.cost,
         therapistCostCutOff: percentageCutoff,
         commission: adminConfig.commissionPercentage,
-        sessionEndTime:sessionEndTime,
-        sessionDuration:saveObj.sessionDuration
+        // sessionEndTime:sessionEndTime,
+        // sessionDuration:saveObj.sessionDuration
       }
     });
   } catch (err) {
@@ -714,7 +714,6 @@ const chatUserlist = async (req, res) => {
     offset
   };
   const userId = individualId ? { individualId } : { therapistsId };
-
   const userModel = individualId ? therapistModel : individualModel;
   if (chatType === 'message') {
     const userMsgData = await findQueryWithPagining(sessionModel, { ...userId, isDeleted: false }, options);
