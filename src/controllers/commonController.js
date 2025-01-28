@@ -388,7 +388,7 @@ const endSession = async (req, res) => {
         therapistCostCutOff: percentageCutoff,
         commission: adminConfig.commissionPercentage,
         // sessionEndTime:sessionEndTime,
-        // sessionDuration:saveObj.sessionDuration
+        sessionDuration:saveObj.sessionDuration
       }
     });
   } catch (err) {
