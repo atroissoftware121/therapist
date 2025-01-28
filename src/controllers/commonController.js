@@ -320,6 +320,7 @@ const endSession = async (req, res) => {
       therapistsId,
       sessionId,
       isSessionStart: false,
+      sessionDuration
     };
     await endTimerEvent(data);
     const sessionData = await findQuery(sessionModel, { _id: sessionId });
