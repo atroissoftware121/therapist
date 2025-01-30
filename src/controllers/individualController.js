@@ -92,6 +92,7 @@ const IndividualRegister = async (req, res) => {
     {
       email,
       password: hashedPassword,
+      isUserRegistrationCompleted: true
     }
   );
   await updateQuery(

@@ -42,6 +42,7 @@ const TherapistRegisterStepFirst = catchAsync(async (req, res) => {
       name,
       email,
       image,
+      isTherapistRegistrationStepFirst: true
     }
   );
   let hashedPassword = await genratePasswordHash(password);
@@ -97,6 +98,7 @@ const TherapistRegisterStepSecond = catchAsync(async (req, res) => {
       experience,
     }
   );
+  await authCredtionalsModel.findOneAndUpdate({userId: _id}, {isUserRegistrationCompleted: true});
   return SendSuccessResponse({
     res,
     data: { message: "Register successfully!", data: isUserUpdated },
