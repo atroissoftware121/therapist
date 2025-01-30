@@ -58,7 +58,7 @@ const GetOtp = async (req, res) => {
     });
   }
 
-  if (method === 'signup' && isMobileNumberExist) {
+  if (method === 'signup' && isMobileNumberExist && isMobileNumberExist.isUserRegistrationCompleted) {
     return SendBadResponse({
       res,
       status: 404,

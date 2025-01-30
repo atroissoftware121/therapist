@@ -7,6 +7,7 @@ const authCredtionalsSchema = new mongoose.Schema(
     mobileNumber: { type: String, default: null },
     userType: { type: String, default: null },
     userId: { type: mongoose.Types.ObjectId, default: null },
+    isUserRegistrationCompleted: { type: Boolean, default: false }
   },
   {
     timestamps: true,
