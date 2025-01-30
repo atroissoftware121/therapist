@@ -159,7 +159,7 @@ const VerifyOtp = async (req, res) => {
       status: 400,
       data: { error: 'Please send correct method!' },
     });
-    
+
   // if (userType !== 'therapist' && userType !== 'individual')
   //   return SendBadResponse({
   //     res,
@@ -167,9 +167,6 @@ const VerifyOtp = async (req, res) => {
   //     data: { error: 'Please send correct usertype!' },
   //   });
   mobileNumber = '+' + mobileNumber.trim();
-  console.log(mobileNumber);
-  console.log(method);
-  console.log(otp);
   let isOtpValid = await findQuery(otpSentModel, {
     $and: [{ mobileNumber }, { otp }, { method }],
   });
@@ -195,13 +192,12 @@ const VerifyOtp = async (req, res) => {
   const [userAuthDetails] = await findQuery(authCredtionalsModel, {
     mobileNumber,
   });
-  console.log('userAuthDetails', userAuthDetails);
-  console.log('userAuthDetails', mobileNumber);
+
+  let [isUserExist] = await findQuery(
+    userAuthDetails?.userType === 'therapist' ? therapistModel : individualModel,
+    { mobileNumber }
+  );
   if (method === 'login') {
-    let [isUserExist] = await findQuery(
-      userAuthDetails?.userType === 'therapist' ? therapistModel : individualModel,
-      { mobileNumber }
-    );
     console.log('isUserExist', isUserExist);
     if (!isUserExist)
       return SendBadResponse({
@@ -229,44 +225,49 @@ const VerifyOtp = async (req, res) => {
       data: { isUserCreated: userData, token, userType: userAuthDetails?.userType },
     });
   }
-  let { notification, userExtraDetails, ...isUserCreated } = await createQuery(
-    userType === 'therapist' ? therapistModel : individualModel,
-    {
-      mobileNumber,
-    }
-  );
-  if(!userAuthDetails) {
+
+  console.log('userAuthDetails12', userAuthDetails);
+  if (!userAuthDetails) {
+    let { notification, userExtraDetails, ...isUserCreated } = await createQuery(
+      userType === 'therapist' ? therapistModel : individualModel,
+      {
+        mobileNumber,
+      }
+    );
     await createQuery(authCredtionalsModel, {
       mobileNumber,
       userType,
       userId: isUserCreated._id,
     });
-  }
-  let token = genrateToken({ data: { _id: isUserCreated._id } });
-  let isUserExtraDataCreated = await createQuery(userExtraDetailsModel, {
-    lastLogin: Date.now(),
-    lastJWTToken: token,
-    isUserLogout: false,
-    userId: isUserCreated._id,
-    deviceInfo,
-    fcmToken,
-    // userType
-  });
-  let isUserNotificationDataCreated = await createQuery(notificationsModel, {
-    userId: isUserCreated._id,
-    userType,
-    notifications: [],
-  });
-  updateQuery(
-    userType === 'therapist' ? therapistModel : individualModel,
-    { _id: isUserCreated._id },
-    {
-      userExtraDetails: isUserExtraDataCreated._id,
-      notification: isUserNotificationDataCreated._id,
-    }
-  );
-  console.log('userType12', userType, userAuthDetails?.userType);
-  return SendSuccessResponse({ res, data: { isUserCreated, token, userType: userType || userAuthDetails?.userType } });
+    let token = genrateToken({ data: { _id: isUserCreated._id } });
+    let isUserExtraDataCreated = await createQuery(userExtraDetailsModel, {
+      lastLogin: Date.now(),
+      lastJWTToken: token,
+      isUserLogout: false,
+      userId: isUserCreated._id,
+      deviceInfo,
+      fcmToken,
+      // userType
+    });
+    let isUserNotificationDataCreated = await createQuery(notificationsModel, {
+      userId: isUserCreated._id,
+      userType,
+      notifications: [],
+    });
+    updateQuery(
+      userType === 'therapist' ? therapistModel : individualModel,
+      { _id: isUserCreated._id },
+      {
+        userExtraDetails: isUserExtraDataCreated._id,
+        notification: isUserNotificationDataCreated._id,
+      }
+    );
+    return SendSuccessResponse({ res, data: { isUserCreated, token, userType: userType || userAuthDetails?.userType } });
+  };
+
+  let token = genrateToken({ data: { _id: isUserExist._id } });
+
+  return SendSuccessResponse({ res, data: { isUserCreated: isUserExist, token, userType: userType || userAuthDetails?.userType } });
 };
 
 const Login = async (req, res) => {
