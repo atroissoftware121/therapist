@@ -44,9 +44,10 @@ const GetOtp = async (req, res) => {
   }
 
   mobileNumber = '+' + mobileNumber.trim();
+  console.log('mobileNumber', mobileNumber);
 
   let [isMobileNumberExist] = await findQuery(authCredtionalsModel, { mobileNumber });
-
+  console.log('isMobileNumberExist12', isMobileNumberExist);
   if (
     (method === 'login' || method === 'forgetPassword') &&
     !isMobileNumberExist
@@ -234,11 +235,13 @@ const VerifyOtp = async (req, res) => {
       mobileNumber,
     }
   );
-  await createQuery(authCredtionalsModel, {
-    mobileNumber,
-    userType,
-    userId: isUserCreated._id,
-  });
+  if(!userAuthDetails) {
+    await createQuery(authCredtionalsModel, {
+      mobileNumber,
+      userType,
+      userId: isUserCreated._id,
+    });
+  }
   let token = genrateToken({ data: { _id: isUserCreated._id } });
   let isUserExtraDataCreated = await createQuery(userExtraDetailsModel, {
     lastLogin: Date.now(),
