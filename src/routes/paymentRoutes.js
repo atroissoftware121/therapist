@@ -10,6 +10,7 @@ const {
   updateStatus,
   fetchAccountDetails,
   fetchTherapistWallet,
+  payoutWebhook
 } = require("../controllers/paymentController");
 
 module.exports = (app) => {
@@ -80,6 +81,8 @@ module.exports = (app) => {
     celebrate({
       [Segments.BODY]: Joi.object().keys({
         amount: Joi.number().required(),
+        therapistId: Joi.string().required(),
+        fundAccountId: Joi.string().required()
       }),
     }),
     createPayout,
@@ -90,7 +93,7 @@ module.exports = (app) => {
       therapistId: Joi.string().required(),
     }),
   }),
-  fetchAccountDetails,
+    fetchAccountDetails,
   );
 
   route.get('/fetchTherapistWallet', celebrate({
@@ -98,6 +101,10 @@ module.exports = (app) => {
       therapistId: Joi.string().required(),
     }),
   }),
-  fetchTherapistWallet,
+    fetchTherapistWallet,
+  );
+
+  route.get('/payoutWebhook',
+    payoutWebhook,
   );
 };

@@ -1,7 +1,8 @@
 const razorpay = require('razorpay');
 const paymentModel = require('../mongooseModels/payment.model');
 const therapistModel = require('../mongooseModels/therapist.model');
-const { RAZOR_API_KEY, RAZOR_API_SECRET } = require('../config/index');
+const paymentPayoutModel = require('../mongooseModels/payment.payout.model');
+const { RAZOR_API_KEY, RAZOR_API_SECRET, RAZORPAY_MERCHANT_ACOUNT } = require('../config/index');
 const catchAsync = require('../utils/catchAsync');
 const axios = require('axios');
 const {
@@ -236,42 +237,73 @@ const addFundAccount = catchAsync(async (req, res) => {
 });
 
 const createPayout = catchAsync(async (req, res) => {
-  const { amount, therapistId } = req.body;
-  const transaction = await findQuery(transactionModel, { therapistId });
-  if (!transaction) {
+  try {
+    const { amount, therapistId, fundAccountId } = req.body;
+    const transaction = await findQuery(transactionModel, { therapistId });
+
+    if (!transaction) {
+      return SendBadResponse({
+        res,
+        status: 404,
+        data: {
+          error: 'Transaction not found',
+        },
+      });
+    };
+
+    const accountData = transaction.find(data => data.fund_id === fundAccountId);
+
+    const mode = accountData.account_type === 'bank_account' ? 'IMPS' : 'UPI';
+    const payoutData = {
+      amount: amount * 100, // Convert to smallest currency unit (e.g., paise for INR)
+      mode,
+      account_number: RAZORPAY_MERCHANT_ACOUNT, // Ensure this is correct
+      fund_account_id: accountData.fund_id, // Ensure this is correct
+      currency: 'INR',
+      queue_if_low_balance: true,
+      narration: 'Sahaya Corp Fund Transfer',
+      purpose: 'payout',
+    };
+    console.log('payload', payoutData);
+
+    const response = await axios.post(
+      'https://api.razorpay.com/v1/payouts',
+      payoutData,
+      {
+        auth: {
+          username: RAZOR_API_KEY,
+          password: RAZOR_API_SECRET,
+        },
+      }
+    );
+
+    await paymentPayoutModel.create({
+      payoutId: response.data.id,
+      entity: response.data.entity,
+      fundId: response.data.fundId,
+      amount: response.data.amount,
+      currency: response.data.amount,
+      mode: response.data.mode,
+      reference_id: response.data.reference_id,
+      purpose: response.data.purpose,
+      status: response.data.status,
+      fees: response.data.fees,
+      tax: response.data.tax,
+      narration: response.data.narration
+    });
+
+    return SendSuccessResponse({ res, data: { data: response.data } });
+  } catch (err) {
     return SendBadResponse({
       res,
-      status: 404,
+      status: err.response ? err.response.status : 500,
       data: {
-        error: 'transaction not found',
+        error: 'Failed to create payout',
+        details: err.response ? err.response.data : err.message,
       },
     });
   }
-  const mode = transaction.account_type === 'bank_account' ? 'IMPS' : 'UPI';
-  const payoutData = {
-    amount,
-    mode,
-    account_number: '7878780080316316',
-    fund_account_id: transaction.fund_id,
-    currency: 'INR',
-    queue_if_low_balance: true,
-    narration: 'Sahaya Corp Fund Transfer',
-    purpose: 'payout',
-  };
-  const response = await axios.post(
-    'https://api.razorpay.com/v1/payouts',
-    payoutData,
-    {
-      auth: {
-        username: RAZOR_API_KEY,
-        password: RAZOR_API_SECRET,
-      },
-    }
-  );
-
-  return SendSuccessResponse({ res, data: { data: response.data } });
 });
-
 const updateStatus = async (req, res) => {
   const { payment } = req.body.payload;
   if (payment.entity.status === 'captured') {
@@ -312,6 +344,11 @@ const fetchTherapistWallet = async(req, res) => {
   return SendSuccessResponse({ res, data: { data: therapistWallet } });
 };
 
+const payoutWebhook = async(req, res) => {
+  console.log('req.body12', req);
+  return SendSuccessResponse({ res, data: { data: 'webhook successfull' } });
+};
+
 module.exports = {
   fetchPayment,
   refundPayment,
@@ -322,4 +359,5 @@ module.exports = {
   updateStatus,
   fetchAccountDetails,
   fetchTherapistWallet,
+  payoutWebhook
 };
