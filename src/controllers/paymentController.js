@@ -26,6 +26,7 @@ const instance = new razorpay({
 
 const fetchPayment = catchAsync(async (req, res) => {
   const { paymentId, senderId } = req.query;
+  console.log('paymentId',paymentId);
   if (paymentId === 'undefined' || senderId === 'undefined') {
     return SendBadResponse({
       res,
@@ -64,15 +65,27 @@ const fetchPayment = catchAsync(async (req, res) => {
   return SendSuccessResponse({ res, data: { data: addWallet } });
 });
 
-const refundPayment = catchAsync(async (req, res) => {
-  const { paymentId, amount } = req.body;
-  const refundData = await refunds.create(paymentId, {
-    amount: amount,
-    speed: 'normal',
-  });
-
-  res.status(200).send(refundData);
-});
+const refundPayment = async (req, res) => {
+  try {
+    const { paymentId, amount } = req.body;
+    console.log('paymentId12', paymentId, amount);
+    const refundData = await instance.payments.refund(paymentId, {
+      amount: amount,
+      speed: 'normal',
+    });
+    console.log('refundData12', refundData);
+  
+    res.status(200).send({success: true, refundData});
+  }catch(err){
+    return SendBadResponse({
+      res,
+      status: 400,
+      data: {
+        error: err.error.description,
+      },
+    });
+  }
+};
 
 const paymentMapper = (paymentData, senderId) => {
   switch (true) {

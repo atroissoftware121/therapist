@@ -909,7 +909,7 @@ const fetchChatDetails = async (req, res) => {
 };
 
 const therapistAccountRestricted = catchAsync(async (req, res) => {
-  let { _id, message } = req.body;
+  let { _id, message, accountRestriction } = req.body;
   const { isAdmin } = req.user;
   if (!isAdmin) {
     throw new ApiError(httpStatus.UNAUTHORIZED, "Permission Denied");
@@ -918,9 +918,9 @@ const therapistAccountRestricted = catchAsync(async (req, res) => {
   const [userData] = await findQuery(userExtraDetailsModel, {
     userId: _id,
   });
+  console.log('userData', userData);
   const userModel = userData.userType === 'therapists' ? therapistModel : individualModel;
   let user = await findQuery(userModel, { _id });
-  console.log('therapist', therapist);
   if (!user) {
     return SendBadResponse({
       res,
@@ -931,12 +931,15 @@ const therapistAccountRestricted = catchAsync(async (req, res) => {
   const response = await updateQuery(
     userModel,
     { _id },
-    { isAccountRestricted: true, accountRestictionMessage: message }
+    { isAccountRestricted: accountRestriction, accountRestictionMessage: message }
   );
 
   return SendSuccessResponse({
     res,
-    data: { message: `${userData.userType} account restricted successFully!`, data: response },
+    data: {
+      message: accountRestriction ? `therapist account restricted successFully!` : `therapist account unrestricted successfully!`,
+      data: response
+    },
   });
 });
 
