@@ -7,7 +7,7 @@ const {
   updateQuery,
   findQueryWithPagining,
   createQuery,
-  deleteQuery
+  deleteQuery,
 } = require('../helpers/mongooseHelpers');
 
 const { admin } = require('../config/messaging-system');
@@ -61,6 +61,7 @@ const UploadImages = async (req, res) => {
         error: 'somethings went wrong!',
       },
     });
+
   return SendSuccessResponse({
     res,
     data: {
@@ -265,52 +266,52 @@ const getProfile = async (req, res) => {
   }
 }
 
-const startSession = async (req, res) => {
-  const { individualId, therapistsId } = req.query;
-  const [userChatDetails] = await findQuery(chatDetailsModel,
-    {
-      receiverId: therapistsId,
+  const startSession = async (req, res) => {
+    const { individualId, therapistsId } = req.query;
+    const [userChatDetails] = await findQuery(chatDetailsModel,
+      {
+        receiverId: therapistsId,
+        chatType: 'message',
+        'individualDetails.senderId': { $eq: individualId }
+      });
+
+    if (!userChatDetails) {
+      return SendBadResponse({
+        res,
+        status: 404,
+        data: { error: 'User details not found!' },
+      });
+    }
+
+    const sessionStartTime = new Date();
+    const createSession = await createQuery(sessionModel, { sessionStartTime, individualId, therapistsId, isSessionStart: true });
+    const data = {
+      individualId,
+      therapistsId,
       chatType: 'message',
-      'individualDetails.senderId': { $eq: individualId }
-    });
+      isSessionStart: createSession.isSessionStart,
+      sessionId: createSession._id,
+      startSession: sessionStartTime,
+    };
 
-  if (!userChatDetails) {
-    return SendBadResponse({
-      res,
-      status: 404,
-      data: { error: 'User details not found!' },
-    });
-  }
-
-  const sessionStartTime = new Date();
-  const createSession = await createQuery(sessionModel, { sessionStartTime, individualId, therapistsId, isSessionStart: true });
-  const data = {
-    individualId,
-    therapistsId,
-    chatType: 'message',
-    isSessionStart: createSession.isSessionStart,
-    sessionId: createSession._id,
-    startSession: sessionStartTime,
-  };
-
-  await startTimerEvent(data);
-  await updateQuery(therapistModel, { _id: therapistsId }, { isInChat: true })
-  const adminConfig = await adminSettingModel.findOne({});
-  await updateQuery(chatDetailsModel,
-    {
-      receiverId: therapistsId,
-      chatType: 'message',
-      'individualDetails.senderId': { $eq: individualId }
-    },
-    {
-      $set: {
-        'individualDetails.$.sessionId': createSession._id,
+    await startTimerEvent(data);
+    await updateQuery(therapistModel, { _id: therapistsId }, { isInChat: true })
+    const adminConfig = await adminSettingModel.findOne({});
+    await updateQuery(chatDetailsModel,
+      {
+        receiverId: therapistsId,
+        chatType: 'message',
+        'individualDetails.senderId': { $eq: individualId }
       },
-    },
-  );
+      {
+        $set: {
+          'individualDetails.$.sessionId': createSession._id,
+        },
+      },
+    );
 
-  return SendSuccessResponse({ res, data: { createSession, adminCharge: adminConfig.commissionPercentage } });
-};
+    return SendSuccessResponse({ res, data: { createSession, adminCharge: adminConfig.commissionPercentage } });
+  };
 
 const endSession = async (req, res) => {
   try {
@@ -500,7 +501,6 @@ const getlistOfTherapistNotified = async (req, res) => {
 
 const getCalldata = async (req, res) => {
   const { therapistsId, individualId } = req.query;
-  const dataMapper = chatMapper(req.body);
   console.log('12233333===>', therapistsId, individualId);
   await updateQuery(
     chatDetailsModel,
@@ -508,6 +508,8 @@ const getCalldata = async (req, res) => {
     { $pull: { "individualDetails": { senderId: individualId } } },
   );
   const [data] = await findQuery(chatDetailsModel, { receiverId: therapistsId, chatType: 'call' })
+  console.log('dat12', data);
+  const dataMapper = chatMapper(data);
   const therapisData = await findQuery(therapistModel, { _id: therapistsId });
   const costPerCall = therapisData.charges * (dataMapper.conversationDuration / 60);
   const adminConfig = await adminSettingModel.findOne({});
@@ -530,25 +532,25 @@ const getCalldata = async (req, res) => {
 
 const chatMapper = (data) => {
   return {
-    callerId: data.CallSid || null,
-    eventType: data.EventType || null,
-    startTime: data.StartTime || null,
-    endTime: data.EndTime || null,
-    status: data.Status || null,
-    from: data.From || null,
-    to: data.To || null,
-    phoneNumberSid: data.PhoneNumberSid || null,
-    direction: data.Direction || null,
-    recordingUrl: data.RecordingUrl || null,
-    conversationDuration: data.ConversationDuration || null,
+    callerId: data?.CallSid || null,
+    eventType: data?.EventType || null,
+    startTime: data?.StartTime || null,
+    endTime: data?.EndTime || null,
+    status: data?.Status || null,
+    from: data?.From || null,
+    to: data?.To || null,
+    phoneNumberSid: data?.PhoneNumberSid || null,
+    direction: data?.Direction || null,
+    recordingUrl: data?.RecordingUrl || null,
+    conversationDuration: data?.ConversationDuration || null,
     legs: [{
       userType: 'therapist',
-      onCallDuration: data?.Legs[0].OnCallDuration,
-      status: data.Legs[0].Status
+      onCallDuration: data?.Legs[0]?.OnCallDuration,
+      status: data?.Legs[0]?.Status
     }, {
       userType: 'individual',
-      onCallDuration: data?.Legs[1].OnCallDuration,
-      status: data.Legs[1].Status
+      onCallDuration: data?.Legs[1]?.OnCallDuration,
+      status: data?.Legs[1]?.Status
     }
     ]
   }
@@ -785,6 +787,7 @@ const callUserlist = async (req, res) => {
   const userModel = individualId ? therapistModel : individualModel;
 
   const individualCallData = await findQueryWithPagining(callDetailsModel, userId, options);
+  console.log('individualCallData12',individualCallData);
   for (const data of individualCallData.docs) {
     const id = individualId ? { _id: data.therapistsId } : { _id: data.individualId };
     console.log('oid122222', id);
@@ -851,6 +854,7 @@ const therapistChatList = async (req, res) => {
     }
   ];
   const userData = await sessionModel.aggregate(pipeline);
+  console.log('userDat12', userData);
   const therapistIds = userData.map(data => data.therapistsId);
   const therapistMsgData = await therapistModel.find({ _id: { $in: therapistIds } });
 
@@ -898,7 +902,8 @@ const fetchChatDetails = async (req, res) => {
     limit,
   };
   const populateOptions = ['individualId', 'therapistsId'];
-  const userChatData = await findQueryWithPopulate(chatType === 'message' ? sessionModel : callDetailsModel, null, options, populateOptions);
+  const queryModel =  chatType === 'message' ? sessionModel : callDetailsModel;
+  const userChatData  = await queryModel.find().skip((page-1)*limit).limit(limit).populate(populateOptions);
 
   return SendSuccessResponse({ res, data: { data: userChatData } })
 };
