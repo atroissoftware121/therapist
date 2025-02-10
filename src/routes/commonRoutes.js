@@ -85,7 +85,7 @@ module.exports = (app) => {
   )
   route.post('/addIndividualNotification', createNotificationData);
   route.get('/getlistOfTherapistNotified', getlistOfTherapistNotified);
-  route.post('/get-call-details', getCalldata);
+  route.get('/get-call-details', getCalldata);
 
   route.get('/fetchingChatUserlist',
     // celebrate({
@@ -117,12 +117,13 @@ module.exports = (app) => {
   route.delete('/removeUser', removeUser);
   route.get('/fetchUserByEmail', fetchUserDataByEmail);
   route.get('/fetchChatData', fetchChatDetails);
-  route.get('/therapistAccountRestricted', isAuthorized,
+  route.put('/therapistAccountRestricted', isAuthorized,
     injectTherapistDetails,
     celebrate({
       [Segments.BODY]: Joi.object().keys({
         _id: Joi.string().required(),
-        message: Joi.string().required()
+        message: Joi.string().required(),
+        accountRestriction: Joi.boolean().required()
       }),
     }), therapistAccountRestricted);
   route.post('/notifications/broadcast', notificationBroadCast);
