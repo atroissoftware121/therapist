@@ -23,7 +23,7 @@ module.exports = (app) => {
   route.get(
     '/getReview',
     celebrate({
-      [Segments.BODY]: Joi.object().keys({
+      [Segments.QUERY]: Joi.object().keys({
         individualId: Joi.string().optional(),
         therapistId: Joi.string().optional(),
         consultationId: Joi.string().optional(),
