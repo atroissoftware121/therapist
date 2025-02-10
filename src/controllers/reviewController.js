@@ -8,6 +8,7 @@ const {
 const { findQuery, updateQuery } = require('../helpers/mongooseHelpers');
 const sessionModel = require('../mongooseModels/session.model');
 const callDetailsModel = require('../mongooseModels/callChat-details.model');
+const { db } = require('../mongooseModels/userExtraDetails.model');
 
 const postReview = async (req, res) => {
   const { individualId, therapistId, consultationId, chatType, rating } = req.body;
@@ -91,11 +92,11 @@ const getReview = async (req, res) => {
   let pushUserData = [];
   if (therapistId) {
     for (let review of reviews) {
-      const user = await findQuery(individualModel, {
+      const [user] = await findQuery(individualModel, {
         _id: review.individualId,
       });
       const data = {
-        ...user.toObject(),
+        ...user._doc,
         postCreated: review.createdAt,
         comments: review.comments,
         rating: review.rating,
@@ -106,11 +107,12 @@ const getReview = async (req, res) => {
     }
   } else {
     for (let review of reviews) {
-      const user = await findQuery(therapistModel, {
+      const [user] = await findQuery(therapistModel, {
         _id: review.therapistId,
       });
+      console.log(user);
       const data = {
-        ...user.toObject(),
+        ...user._doc,
         postCreated: review.createdAt,
         comments: review.comments,
         rating: review.rating,
