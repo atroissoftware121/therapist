@@ -247,7 +247,7 @@ const VerifyOtp = async (req, res) => {
       userId: isUserCreated._id,
       deviceInfo,
       fcmToken,
-      // userType
+      userType
     });
     let isUserNotificationDataCreated = await createQuery(notificationsModel, {
       userId: isUserCreated._id,
