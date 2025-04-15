@@ -716,17 +716,26 @@ const chatUserlist = async (req, res) => {
     limit,
     offset
   };
+
   const userId = individualId ? { individualId } : { therapistsId };
   const userModel = individualId ? therapistModel : individualModel;
+
+  const fortyEightHoursAgo = new Date(Date.now() - 48 * 60 * 60 * 1000);
+
   if (chatType === 'message') {
-    const userMsgData = await findQueryWithPagining(sessionModel, { ...userId, isDeleted: false }, options);
+    const userMsgData = await findQueryWithPagining(sessionModel, {
+      ...userId,
+      isDeleted: false,
+      createdAt: { $gte: fortyEightHoursAgo }
+    }, options);
+
     for (const data of userMsgData.docs) {
       console.log('data122', data);
       const timeDifference = new Date(data.sessionEndTime) - new Date(data.sessionStartTime);
       const chatTiming = timeDifference / 1000;
       const id = individualId ? { _id: data.therapistsId } : { _id: data.individualId };
       const userMsg = await findQuery(userModel, id);
-      const reviewData = await reviewModel.findOne({ consultationId: data._id ,comment: data.comments});
+      const reviewData = await reviewModel.findOne({ consultationId: data._id, comment: data.comments });
       const obj = {
         ...userMsg?._doc,
         chatTiming,
@@ -736,19 +745,21 @@ const chatUserlist = async (req, res) => {
         comment: reviewData?.comments || '',
         createdAt: data.createdAt,
         updatedAt: data.updatedAt
-
       };
       pushUserData.push(obj);
     }
-  }
-  else {
-    const individualCallData = await findQueryWithPagining(callDetailsModel, userId, options);
+  } else {
+    const individualCallData = await findQueryWithPagining(callDetailsModel, {
+      ...userId,
+      createdAt: { $gte: fortyEightHoursAgo }
+    }, options);
+
     for (const data of individualCallData.docs) {
       const id = individualId ? { _id: data.therapistsId } : { _id: data.individualId };
       console.log('oid122222', id);
       const userCallData = await findQuery(userModel, id);
       console.log('userCallData', userCallData);
-      const reviewData = await reviewModel.findOne({ consultationId: data._id ,comment: data.comments});
+      const reviewData = await reviewModel.findOne({ consultationId: data._id, comment: data.comments });
       const obj = {
         ...userCallData?._doc,
         callTiming: data.conversationDuration,
@@ -759,13 +770,13 @@ const chatUserlist = async (req, res) => {
         createdAt: data.createdAt,
         updatedAt: data.updatedAt
       };
-
-      pushUserData.push(obj)
+      pushUserData.push(obj);
     }
   }
 
   return SendSuccessResponse({ res, data: { data: pushUserData, length: pushUserData.length } });
-}
+};
+
 
 const callUserlist = async (req, res) => {
   let { individualId, therapistsId, chatType, page } = req.query;
@@ -782,12 +793,19 @@ const callUserlist = async (req, res) => {
     limit,
     offset
   };
-  const userId = individualId ? { individualId } : { therapistsId };
 
+  const userId = individualId ? { individualId } : { therapistsId };
   const userModel = individualId ? therapistModel : individualModel;
 
-  const individualCallData = await findQueryWithPagining(callDetailsModel, userId, options);
-  console.log('individualCallData12',individualCallData);
+  const fortyEightHoursAgo = new Date(Date.now() - 48 * 60 * 60 * 1000);
+
+  const individualCallData = await findQueryWithPagining(callDetailsModel, {
+    ...userId,
+    createdAt: { $gte: fortyEightHoursAgo }
+  }, options);
+
+  console.log('individualCallData12', individualCallData);
+
   for (const data of individualCallData.docs) {
     const id = individualId ? { _id: data.therapistsId } : { _id: data.individualId };
     console.log('oid122222', id);
@@ -802,12 +820,12 @@ const callUserlist = async (req, res) => {
       ...userCallData?._doc,
     };
 
-    pushUserData.push(obj)
-
+    pushUserData.push(obj);
   }
 
   return SendSuccessResponse({ res, data: { data: pushUserData, length: pushUserData.length } });
-}
+};
+
 
 const therapistChatList = async (req, res) => {
   const { individualId, page } = req.query;
