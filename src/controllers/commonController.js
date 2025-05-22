@@ -1068,14 +1068,12 @@ const getTopRecentTherapists = async (req, res) => {
       {
         $project: {
           therapistId: '$_id',
-          name: '$therapist.name',
-          email: '$therapist.email',
-          specialty: '$therapist.specialty',
-          profileImage: '$therapist.profileImage',
+          therapist: 1, 
           lastContact: 1,
           lastSessionType: 1
         }
       },
+      
       {
         $sort: { lastContact: -1 }
       },
@@ -1084,10 +1082,9 @@ const getTopRecentTherapists = async (req, res) => {
       }
     ]);
  
-    // Add time ago calculation
     const therapistsWithTimeAgo = result.map(therapist => ({
       ...therapist,
-      timeAgo: getTimeAgo(therapist.lastContact)
+      timeAgo: getTimeAgo1(therapist.lastContact)
     }));
  
     res.status(200).json({
@@ -1110,7 +1107,7 @@ const getTopRecentTherapists = async (req, res) => {
   }
 };
  
-const getTimeAgo = (date) => {
+const getTimeAgo1 = (date) => {
   const now = new Date();
   const diffInSeconds = Math.floor((now - date) / 1000);
   
@@ -1119,6 +1116,344 @@ const getTimeAgo = (date) => {
   if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
   return `${Math.floor(diffInSeconds / 86400)} days ago`;
 };
+
+
+
+
+
+// const getCallStatus = async (req, res) => {
+//   try {
+//     const {
+//       page = 1,
+//       limit = 10,
+//      status,
+//      direction,
+//      days = 30,
+//      startDate,
+//      endDate,
+//      userId,
+//      userType
+//    } = req.query;
+//    // Validation
+//    if (!mongoose.Types.ObjectId.isValid(userId)) {
+//      return res.status(400).json({
+//        success: false,
+//        message: 'Invalid user ID'
+//      });
+//    }
+//    if (!['individual', 'therapist'].includes(userType)) {
+//      return res.status(400).json({
+//        success: false,
+//        message: 'User type must be either "individual" or "therapist"'
+//      });
+//    }
+//    // Build match conditions
+//    const matchConditions = {};
+//    // Set user filter based on type
+//    if (userType === 'individual') {
+//      matchConditions.individualId = new mongoose.Types.ObjectId(userId);
+//    } else {
+//      matchConditions.therapistsId = new mongoose.Types.ObjectId(userId);
+//    }
+//    // Date filtering
+//    if (startDate && endDate) {
+//      matchConditions.startTime = {
+//        $gte: new Date(startDate),
+//        $lte: new Date(endDate)
+//      };
+//    } else if (days) {
+//      const dateFilter = new Date();
+//      dateFilter.setDate(dateFilter.getDate() - parseInt(days));
+//      matchConditions.startTime = { $gte: dateFilter };
+//    }
+//    // Status filter
+//    if (status) {
+//      matchConditions.status = status;
+//    }
+//    // Direction filter
+//    if (direction) {
+//      matchConditions.direction = direction;
+//    }
+//    // Pagination options
+//    const options = {
+//      page: parseInt(page),
+//      limit: parseInt(limit),
+//      sort: { startTime: -1 }, // Most recent first
+//      populate: [
+//        {
+//          path: 'individualId',
+//          select: 'name email phone'
+//        },
+//        {
+//          path: 'therapistsId',
+//          select: 'name email phone specialty'
+//        }
+//      ],
+//      customLabels: {
+//        docs: 'calls',
+//        totalDocs: 'totalCount'
+//      }
+//    };
+//    const result = await callDetailsModel.paginate(matchConditions, options);
+//    // Format the response
+//    const formattedCalls = result.calls.map(call => ({
+//      callId: call._id,
+//      callerId: call.callerId,
+//      individual: call.individualId ? {
+//        id: call.individualId._id,
+//        name: call.individualId.name,
+//        email: call.individualId.email,
+//        phone: call.individualId.phone
+//      } : null,
+//      therapist: call.therapistsId ? {
+//        id: call.therapistsId._id,
+//        name: call.therapistsId.name,
+//        email: call.therapistsId.email,
+//        phone: call.therapistsId.phone,
+//        specialty: call.therapistsId.specialty
+//      } : null,
+//      callDetails: {
+//        status: call.status,
+//        eventType: call.eventType,
+//        direction: call.direction,
+//        from: call.from,
+//        to: call.to,
+//        startTime: call.startTime,
+//        endTime: call.endTime,
+//        durationMinutes: Math.round(call.conversationDuration / 60),
+//        durationSeconds: call.conversationDuration,
+//        recordingUrl: call.recordingUrl
+//      },
+//      billing: {
+//        sessionCost: call.sessionCost,
+//        therapistIncome: call.therapistIncome,
+//        adminPercentage: call.adminPercentage
+//      },
+//      legs: call.legs,
+//      timeAgo: getTimeAgo(call.startTime),
+//      createdAt: call.createdAt
+//    }));
+//    res.status(200).json({
+//      success: true,
+//      data: {
+//        calls: formattedCalls,
+//        pagination: {
+//          currentPage: result.page,
+//          totalPages: result.totalPages,
+//          totalCount: result.totalCount,
+//          hasNext: result.hasNextPage,
+//          hasPrev: result.hasPrevPage,
+//          limit: result.limit
+//        }
+//      },
+//      filters: {
+//        userId,
+//        userType,
+//        status,
+//        direction,
+//        days: days ? parseInt(days) : null,
+//        dateRange: startDate && endDate ? { startDate, endDate } : null
+//      }
+//    });
+//  } catch (error) {
+//    console.error('Error fetching call status:', error);
+//    res.status(500).json({
+//      success: false,
+//      message: 'Failed to fetch call status',
+//      error: error.message
+//    });
+//  }
+// };
+// /**
+// * Get call status summary/statistics
+// */
+// const getCallStatusSummary = async (req, res) => {
+//  try {
+//    const { userId, userType } = req.params;
+//    const { days = 30 } = req.query;
+//    // Validation
+//    if (!mongoose.Types.ObjectId.isValid(userId)) {
+//      return res.status(400).json({
+//        success: false,
+//        message: 'Invalid user ID'
+//      });
+//    }
+//    if (!['individual', 'therapist'].includes(userType)) {
+//      return res.status(400).json({
+//        success: false,
+//        message: 'User type must be either "individual" or "therapist"'
+//      });
+//    }
+//    // Build match conditions
+//    const matchConditions = {};
+//    if (userType === 'individual') {
+//      matchConditions.individualId = new mongoose.Types.ObjectId(userId);
+//    } else {
+//      matchConditions.therapistsId = new mongoose.Types.ObjectId(userId);
+//    }
+//    // Date filter
+//    const dateFilter = new Date();
+//    dateFilter.setDate(dateFilter.getDate() - parseInt(days));
+//    matchConditions.startTime = { $gte: dateFilter };
+//    const summary = await CallDetails.aggregate([
+//      { $match: matchConditions },
+//      {
+//        $group: {
+//          _id: null,
+//          totalCalls: { $sum: 1 },
+//          completedCalls: {
+//            $sum: { $cond: [{ $eq: ['$status', 'completed'] }, 1, 0] }
+//          },
+//          missedCalls: {
+//            $sum: { $cond: [{ $eq: ['$status', 'missed'] }, 1, 0] }
+//          },
+//          failedCalls: {
+//            $sum: { $cond: [{ $eq: ['$status', 'failed'] }, 1, 0] }
+//          },
+//          incomingCalls: {
+//            $sum: { $cond: [{ $eq: ['$direction', 'incoming'] }, 1, 0] }
+//          },
+//          outgoingCalls: {
+//            $sum: { $cond: [{ $eq: ['$direction', 'outgoing'] }, 1, 0] }
+//          },
+//          totalDurationMinutes: {
+//            $sum: { $divide: ['$conversationDuration', 60] }
+//          },
+//          totalCost: { $sum: '$sessionCost' },
+//          avgCallDuration: {
+//            $avg: { $divide: ['$conversationDuration', 60] }
+//          }
+//        }
+//      },
+//      {
+//        $project: {
+//          _id: 0,
+//          totalCalls: 1,
+//          completedCalls: 1,
+//          missedCalls: 1,
+//          failedCalls: 1,
+//          incomingCalls: 1,
+//          outgoingCalls: 1,
+//          totalDurationMinutes: { $round: ['$totalDurationMinutes', 1] },
+//          avgCallDurationMinutes: { $round: ['$avgCallDuration', 1] },
+//          totalCost: { $round: ['$totalCost', 2] },
+//          successRate: {
+//            $round: [
+//              { $multiply: [{ $divide: ['$completedCalls', '$totalCalls'] }, 100] },
+//              1
+//            ]
+//          }
+//        }
+//      }
+//    ]);
+//    const stats = summary[0] || {
+//      totalCalls: 0,
+//      completedCalls: 0,
+//      missedCalls: 0,
+//      failedCalls: 0,
+//      incomingCalls: 0,
+//      outgoingCalls: 0,
+//      totalDurationMinutes: 0,
+//      avgCallDurationMinutes: 0,
+//      totalCost: 0,
+//      successRate: 0
+//    };
+//    res.status(200).json({
+//      success: true,
+//      data: stats,
+//      meta: {
+//        userId,
+//        userType,
+//        period: `${days} days`,
+//        generatedAt: new Date().toISOString()
+//      }
+//    });
+//  } catch (error) {
+//    console.error('Error fetching call summary:', error);
+//    res.status(500).json({
+//      success: false,
+//      message: 'Failed to fetch call summary',
+//      error: error.message
+//    });
+//  }
+// };
+// /**
+// * Get live/recent call status (for real-time updates)
+// */
+// const getLiveCallStatus = async (req, res) => {
+//  try {
+//    const { userId, userType } = req.params;
+//    const { limit = 5 } = req.query;
+//    // Validation
+//    if (!mongoose.Types.ObjectId.isValid(userId)) {
+//      return res.status(400).json({
+//        success: false,
+//        message: 'Invalid user ID'
+//      });
+//    }
+//    // Get calls from last 24 hours
+//    const yesterday = new Date();
+//    yesterday.setDate(yesterday.getDate() - 1);
+//    const matchConditions = {
+//      startTime: { $gte: yesterday }
+//    };
+//    if (userType === 'individual') {
+//      matchConditions.individualId = new mongoose.Types.ObjectId(userId);
+//    } else {
+//      matchConditions.therapistsId = new mongoose.Types.ObjectId(userId);
+//    }
+//    const recentCalls = await CallDetails.find(matchConditions)
+//      .populate('individualId', 'name phone')
+//      .populate('therapistsId', 'name phone')
+//      .sort({ startTime: -1 })
+//      .limit(parseInt(limit))
+//      .select('status direction startTime endTime conversationDuration from to')
+//      .lean();
+//    const formattedCalls = recentCalls.map(call => ({
+//      callId: call._id,
+//      status: call.status,
+//      direction: call.direction,
+//      from: call.from,
+//      to: call.to,
+//      startTime: call.startTime,
+//      endTime: call.endTime,
+//      durationMinutes: Math.round(call.conversationDuration / 60),
+//      timeAgo: getTimeAgo(call.startTime),
+//      participant: userType === 'individual' ?
+//        (call.therapistsId ? call.therapistsId.name : 'Unknown') :
+//        (call.individualId ? call.individualId.name : 'Unknown')
+//    }));
+//    res.status(200).json({
+//      success: true,
+//      data: formattedCalls,
+//      meta: {
+//        count: formattedCalls.length,
+//        period: '24 hours',
+//        userType
+//      }
+//    });
+//  } catch (error) {
+//    console.error('Error fetching live call status:', error);
+//    res.status(500).json({
+//      success: false,
+//      message: 'Failed to fetch live call status',
+//      error: error.message
+//    });
+//  }
+// };
+// /**
+// * Helper function to calculate time ago
+// */
+// const getTimeAgo = (date) => {
+//  const now = new Date();
+//  const diffInSeconds = Math.floor((now - date) / 1000);
+ 
+//  if (diffInSeconds < 60) return 'Just now';
+//  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minutes ago`;
+//  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
+//  return `${Math.floor(diffInSeconds / 86400)} days ago`;
+// };
+
 
 module.exports = {
   GetImage,
@@ -1146,5 +1481,9 @@ module.exports = {
   notificationBroadCast,
   fetchNotificationList,
   getTopRecentTherapists,
-  getTimeAgo
+  getTimeAgo1,
+  // getCallStatus,
+  // getCallStatusSummary,
+  // getLiveCallStatus
+
 };
