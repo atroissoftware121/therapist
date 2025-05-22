@@ -9,7 +9,7 @@ const {
   createQuery,
   deleteQuery,
 } = require('../helpers/mongooseHelpers');
-
+const mongoose = require('mongoose');
 const { admin } = require('../config/messaging-system');
 const catchAsync = require('../utils/catchAsync');
 const pick = require('../utils/pick');
@@ -266,52 +266,52 @@ const getProfile = async (req, res) => {
   }
 }
 
-  const startSession = async (req, res) => {
-    const { individualId, therapistsId } = req.query;
-    const [userChatDetails] = await findQuery(chatDetailsModel,
-      {
-        receiverId: therapistsId,
-        chatType: 'message',
-        'individualDetails.senderId': { $eq: individualId }
-      });
-
-    if (!userChatDetails) {
-      return SendBadResponse({
-        res,
-        status: 404,
-        data: { error: 'User details not found!' },
-      });
-    }
-
-    const sessionStartTime = new Date();
-    const createSession = await createQuery(sessionModel, { sessionStartTime, individualId, therapistsId, isSessionStart: true });
-    const data = {
-      individualId,
-      therapistsId,
+const startSession = async (req, res) => {
+  const { individualId, therapistsId } = req.query;
+  const [userChatDetails] = await findQuery(chatDetailsModel,
+    {
+      receiverId: therapistsId,
       chatType: 'message',
-      isSessionStart: createSession.isSessionStart,
-      sessionId: createSession._id,
-      startSession: sessionStartTime,
-    };
+      'individualDetails.senderId': { $eq: individualId }
+    });
 
-    await startTimerEvent(data);
-    await updateQuery(therapistModel, { _id: therapistsId }, { isInChat: true })
-    const adminConfig = await adminSettingModel.findOne({});
-    await updateQuery(chatDetailsModel,
-      {
-        receiverId: therapistsId,
-        chatType: 'message',
-        'individualDetails.senderId': { $eq: individualId }
-      },
-      {
-        $set: {
-          'individualDetails.$.sessionId': createSession._id,
-        },
-      },
-    );
+  if (!userChatDetails) {
+    return SendBadResponse({
+      res,
+      status: 404,
+      data: { error: 'User details not found!' },
+    });
+  }
 
-    return SendSuccessResponse({ res, data: { createSession, adminCharge: adminConfig.commissionPercentage } });
+  const sessionStartTime = new Date();
+  const createSession = await createQuery(sessionModel, { sessionStartTime, individualId, therapistsId, isSessionStart: true });
+  const data = {
+    individualId,
+    therapistsId,
+    chatType: 'message',
+    isSessionStart: createSession.isSessionStart,
+    sessionId: createSession._id,
+    startSession: sessionStartTime,
   };
+
+  await startTimerEvent(data);
+  await updateQuery(therapistModel, { _id: therapistsId }, { isInChat: true })
+  const adminConfig = await adminSettingModel.findOne({});
+  await updateQuery(chatDetailsModel,
+    {
+      receiverId: therapistsId,
+      chatType: 'message',
+      'individualDetails.senderId': { $eq: individualId }
+    },
+    {
+      $set: {
+        'individualDetails.$.sessionId': createSession._id,
+      },
+    },
+  );
+
+  return SendSuccessResponse({ res, data: { createSession, adminCharge: adminConfig.commissionPercentage } });
+};
 
 const endSession = async (req, res) => {
   try {
@@ -336,7 +336,7 @@ const endSession = async (req, res) => {
     const saveObj = {
       sessionId: sessionId,
       userId: individualId,
-      sessionDuration: sessionDuration ,
+      sessionDuration: sessionDuration,
       cost: (sessionDuration / 60) * charges,
     }
     const startTime = new Date(sessionData.sessionStartTime);
@@ -390,7 +390,7 @@ const endSession = async (req, res) => {
         therapistCostCutOff: percentageCutoff,
         commission: adminConfig.commissionPercentage,
         // sessionEndTime:sessionEndTime,
-        sessionDuration:saveObj.sessionDuration
+        sessionDuration: saveObj.sessionDuration
       }
     });
   } catch (err) {
@@ -920,8 +920,8 @@ const fetchChatDetails = async (req, res) => {
     limit,
   };
   const populateOptions = ['individualId', 'therapistsId'];
-  const queryModel =  chatType === 'message' ? sessionModel : callDetailsModel;
-  const userChatData  = await queryModel.find().skip((page-1)*limit).limit(limit).populate(populateOptions);
+  const queryModel = chatType === 'message' ? sessionModel : callDetailsModel;
+  const userChatData = await queryModel.find().skip((page - 1) * limit).limit(limit).populate(populateOptions);
 
   return SendSuccessResponse({ res, data: { data: userChatData } })
 };
@@ -1016,6 +1016,110 @@ const fetchNotificationList = async (req, res) => {
 };
 
 
+const getTopRecentTherapists = async (req, res) => {
+  try {
+    const {individualId, limit = 5, days = 7, chatType = 'all' } = req.query;
+ 
+    if (!mongoose.Types.ObjectId.isValid(individualId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid individual ID'
+      });
+    }
+ 
+    const dateFilter = new Date();
+    dateFilter.setDate(dateFilter.getDate() - parseInt(days));
+ 
+    const matchConditions = {
+      individualId: new mongoose.Types.ObjectId(individualId),
+      isDeleted: false,
+      sessionStartTime: { $gte: dateFilter }
+    };
+ 
+    if (chatType !== 'all') {
+      matchConditions.chatType = chatType;
+    }
+ 
+    const result = await sessionModel.aggregate([
+      {
+        $match: matchConditions
+      },
+      {
+        $sort: { sessionStartTime: -1 }
+      },
+      {
+        $group: {
+          _id: '$therapistsId', // Fixed: was *id
+          lastContact: { $first: '$sessionStartTime' },
+          lastSessionType: { $first: '$chatType' }
+        }
+      },
+      {
+        $lookup: {
+          from: 'therapists',
+          localField: '_id', // Fixed: was *id
+          foreignField: '_id',
+          as: 'therapist'
+        }
+      },
+      {
+        $unwind: '$therapist'
+      },
+      {
+        $project: {
+          therapistId: '$_id',
+          name: '$therapist.name',
+          email: '$therapist.email',
+          specialty: '$therapist.specialty',
+          profileImage: '$therapist.profileImage',
+          lastContact: 1,
+          lastSessionType: 1
+        }
+      },
+      {
+        $sort: { lastContact: -1 }
+      },
+      {
+        $limit: parseInt(limit)
+      }
+    ]);
+ 
+    // Add time ago calculation
+    const therapistsWithTimeAgo = result.map(therapist => ({
+      ...therapist,
+      timeAgo: getTimeAgo(therapist.lastContact)
+    }));
+ 
+    res.status(200).json({
+      success: true,
+      data: therapistsWithTimeAgo,
+      meta: {
+        count: therapistsWithTimeAgo.length,
+        period: `${days} days`,
+        chatType
+      }
+    });
+ 
+  } catch (error) {
+    console.error('Error fetching top recent therapists:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch top recent therapists',
+      error: error.message
+    });
+  }
+};
+ 
+const getTimeAgo = (date) => {
+  const now = new Date();
+  const diffInSeconds = Math.floor((now - date) / 1000);
+  
+  if (diffInSeconds < 60) return 'Just now';
+  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minutes ago`;
+  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
+  return `${Math.floor(diffInSeconds / 86400)} days ago`;
+};
+
 module.exports = {
   GetImage,
   UploadImages,
@@ -1040,5 +1144,7 @@ module.exports = {
   fetchChatDetails,
   therapistAccountRestricted,
   notificationBroadCast,
-  fetchNotificationList
+  fetchNotificationList,
+  getTopRecentTherapists,
+  getTimeAgo
 };

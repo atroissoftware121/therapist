@@ -23,7 +23,8 @@ const {
   fetchChatDetails,
   therapistAccountRestricted,
   notificationBroadCast,
-  fetchNotificationList
+  fetchNotificationList,
+  getTopRecentTherapists
 } = require('../controllers/commonController');
 const { upload } = require('../helpers/s3Helper');
 
@@ -128,4 +129,5 @@ module.exports = (app) => {
     }), therapistAccountRestricted);
   route.post('/notifications/broadcast', notificationBroadCast);
   route.get('/fetchNotificationList', fetchNotificationList);
+  route.get('/getTopRecentTherapists',getTopRecentTherapists)
 };
