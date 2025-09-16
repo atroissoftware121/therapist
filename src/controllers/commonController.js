@@ -202,7 +202,7 @@ const sentPushNotifications = catchAsync(async (req, res) => {
       data: { message: err.message },
     });
   }
-})
+});
 
 const chatHistory = async (req, res) => {
   try {
@@ -233,38 +233,43 @@ const chatHistory = async (req, res) => {
 };
 
 const getProfile = async (req, res) => {
-  try {
-    const { userId } = req.user;
-    const [isUserExists] = await findQuery(authCredtionalsModel, { userId });
-    if (!isUserExists) {
-      return SendBadResponse({
-        res,
-        status: 404,
-        data: { error: 'User not found!' },
-      });
-    }
+  const { id } = req.query;
 
-    const getProfileData = await findQuery(
-      isUserExists.userType === 'therapist' ? therapistModel : individualModel,
-      { _id: userId }
-    );
-    if (!getProfileData) {
-      return SendBadResponse({
-        res,
-        status: 404,
-        data: { error: 'User not found!' },
-      });
-    }
-
-    return SendSuccessResponse({ res, data: { getProfileData } });
-  } catch (err) {
+  if (!id) {
     return SendBadResponse({
       res,
-      status: 403,
-      data: { message: err.message },
+      status: 400,
+      data: { error: 'User ID is required!' },
     });
   }
-}
+
+  const fields =
+    "isTherapistRegistrationStepFirst name image age mobileNumber email gender specialization charges qualification discountedCharges location language experience summary isOnline onCall isMessageQueue isCallQueue isProfileVerified isAdmin wallet review notification userExtraDetails documents createdAt updatedAt isInChat isWalletRestricted accountRestictionMessage isAccountRestricted wallletRestictionMessage";
+
+  const therapist = await therapistModel.findById(id).select(fields);
+  if (therapist) {
+    return SendSuccessResponse({ 
+      res, 
+      data: { getProfileData: therapist } 
+    });
+  }
+
+  const individual = await individualModel.findById(id).select(fields);
+  if (individual) {
+    return SendSuccessResponse({ 
+      res, 
+      data: { getProfileData: individual } 
+    });
+  }
+
+  return SendBadResponse({
+    res,
+    status: 404,
+    data: { error: 'User not found!' },
+  });
+};
+
+
 
 const startSession = async (req, res) => {
   const { individualId, therapistsId } = req.query;
@@ -439,7 +444,7 @@ const report = async (req, res) => {
     description: message
   })
   return SendSuccessResponse({ res, data: { data: 'Sent Successfully' } });
-}
+};
 
 const createNotificationData = async (req, res) => {
   const { individualId, therapistsId } = req.body;
@@ -497,7 +502,7 @@ const getlistOfTherapistNotified = async (req, res) => {
   }
 
   return SendSuccessResponse({ res, data: { data: therapistData } });
-}
+};
 
 const getCalldata = async (req, res) => {
   const { therapistsId, individualId } = req.query;
@@ -554,8 +559,7 @@ const chatMapper = (data) => {
     }
     ]
   }
-}
-
+};
 // const chatUserlist = async (req, res) => {
 //   let { individualId, therapistsId, chatType, page } = req.query;
 //   console.log('req.query', req.query);
@@ -777,7 +781,6 @@ const chatUserlist = async (req, res) => {
   return SendSuccessResponse({ res, data: { data: pushUserData, length: pushUserData.length } });
 };
 
-
 const callUserlist = async (req, res) => {
   let { individualId, therapistsId, chatType, page } = req.query;
 
@@ -816,16 +819,18 @@ const callUserlist = async (req, res) => {
       sessionCost: ((data.conversationDuration) / 60) * userCallData?.charges || 0,
       consultationId: data._id,
       isReview: data?.isReview,
+      // status:data.status,
+      // callerId:data.callerId,
+      // from:data.from,
+      // to:data.to,
       sessionCost: 0,
       ...userCallData?._doc,
     };
-
     pushUserData.push(obj);
   }
 
   return SendSuccessResponse({ res, data: { data: pushUserData, length: pushUserData.length } });
 };
-
 
 const therapistChatList = async (req, res) => {
   const { individualId, page } = req.query;
@@ -877,7 +882,7 @@ const therapistChatList = async (req, res) => {
   const therapistMsgData = await therapistModel.find({ _id: { $in: therapistIds } });
 
   return SendSuccessResponse({ res, data: { data: therapistMsgData, length: therapistMsgData.length } });
-}
+};
 
 const deleteChat = async (req, res) => {
   const { sessionId, chatType } = req.query;
@@ -1484,6 +1489,7 @@ module.exports = {
   getTimeAgo1,
   // getCallStatus,
   // getCallStatusSummary,
-  // getLiveCallStatus
+  // getLiveCallStatus,
+  // getTimeAgo
 
 };

@@ -64,7 +64,7 @@ module.exports = (app) => {
       receiverId: Joi.string().optional(),
     }),
   }), UploadImages);
-  route.get('/getProfile', isAuthorized, injectUserDetails, getProfile);
+  route.get('/getProfile', getProfile);
   route.get('/session-start', startSession);
   route.get('/end-session', endSession);
   route.post('/createReport', celebrate({
@@ -129,5 +129,5 @@ module.exports = (app) => {
     }), therapistAccountRestricted);
   route.post('/notifications/broadcast', notificationBroadCast);
   route.get('/fetchNotificationList', fetchNotificationList);
-  route.get('/getTopRecentTherapists',getTopRecentTherapists)
+  route.get('/getTopRecentTherapists',getTopRecentTherapists);
 };

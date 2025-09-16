@@ -21,6 +21,7 @@ const therapistModel = require("../mongooseModels/therapist.model");
 const individualModel = require("../mongooseModels/individual.model");
 const pick = require("../utils/pick");
 const { admin } = require('../config/messaging-system');
+
 // const { sendSms  } = require('../helpers/exotelHelper');
 
 const TherapistRegisterStepFirst = catchAsync(async (req, res) => {
@@ -273,7 +274,6 @@ const TherapistListForApproval = catchAsync(async (req, res) => {
   });
 });
 
-
 const ApproveTherapist = catchAsync(async (req, res) => {
   let { _id } = req.body;
   const { isAdmin } = req.user;
@@ -291,7 +291,7 @@ const ApproveTherapist = catchAsync(async (req, res) => {
   }
   const [therapistData] = await findQuery(userExtraDetailsModel, {
     userId: _id,
-  });
+  }); 
   console.log('therapistData', therapistData);
   if (!therapist.email || !therapist.documents.length) {
     return SendBadResponse({
@@ -361,7 +361,6 @@ const fetchUserList = async (req, res) => {
   );
   return SendSuccessResponse({ res, data: { data: users } })
 };
-
 
 module.exports = {
   TherapistRegisterStepFirst,

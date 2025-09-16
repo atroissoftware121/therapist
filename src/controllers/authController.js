@@ -129,7 +129,6 @@ const GetOtp = async (req, res) => {
   } else {
     await createQuery(otpSentModel, otpModelObj);
   }
-
   return SendSuccessResponse({
     res,
     data: { message: 'OTP sent successfully!' },
