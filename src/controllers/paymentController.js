@@ -25,33 +25,56 @@ const instance = new razorpay({
 });
 
 const fetchPayment = catchAsync(async (req, res) => {
-  const { paymentId, senderId } = req.query;
-  console.log('paymentId',paymentId);
-  if (paymentId === 'undefined' || senderId === 'undefined') {
-    return SendBadResponse({
-      res,
-      status: 400,
-      data: {
-        error: 'paymentId and senderId cannot be undefined',
-      },
-    });
-  }
-  let addWallet;
-  if (!paymentId) {
-    addWallet = await findQuery(individualModel, { _id: senderId });
-  } else {
+  try {
+    const { paymentId: rawPaymentId, senderId: rawSenderId } = req.query;
+
+    const paymentId = rawPaymentId?.replace(/"/g, '').trim();
+    const senderId = rawSenderId?.replace(/"/g, '').trim();
+
+    console.log('Clean paymentId:', paymentId);
+    console.log('Clean senderId:', senderId);
+
+    if (!paymentId || !senderId) {
+      return SendBadResponse({
+        res,
+        status: 400,
+        data: { error: 'paymentId and senderId cannot be undefined' },
+      });
+    }
+
+    let addWallet;
+
+    // Check if payment already exists
     const [isPaymentExist] = await findQuery(paymentModel, { paymentId });
+    console.log('isPaymentExist:', isPaymentExist);
+
     if (!isPaymentExist) {
-      let paymentData = await instance.payments.fetch(paymentId);
-      let formattedAmount = (paymentData.amount / 100).toFixed(2);
+      // Fetch from Razorpay
+      let paymentData;
+      try {
+        paymentData = await instance.payments.fetch(paymentId);
+        console.log('Fetched paymentData:', paymentData);
+      } catch (err) {
+        console.error('Razorpay fetch failed:', err);
+        return SendBadResponse({
+          res,
+          status: 500,
+          data: { error: 'Failed to fetch payment from Razorpay' },
+        });
+      }
+
+      // Format amount & points
+      const formattedAmount = (paymentData.amount / 100).toFixed(2);
       const amountAfterGst = originalValueAfterPercentage(formattedAmount);
       const loyaltyPoints = points[amountAfterGst];
-      paymentData = {
-        ...paymentData,
-        amount: amountAfterGst,
-      };
+
+      paymentData = { ...paymentData, amount: amountAfterGst };
+
       const payment = paymentMapper(paymentData, senderId);
+      console.log('Mapped payment:', payment);
+
       await createQuery(paymentModel, payment);
+
       addWallet = await updateQuery(
         individualModel,
         { _id: senderId },
@@ -60,9 +83,16 @@ const fetchPayment = catchAsync(async (req, res) => {
     } else {
       addWallet = await findQuery(individualModel, { _id: senderId });
     }
-  }
 
-  return SendSuccessResponse({ res, data: { data: addWallet } });
+    return SendSuccessResponse({ res, data: { data: addWallet } });
+  } catch (err) {
+    console.error('fetchPayment failed:', err);
+    return SendBadResponse({
+      res,
+      status: 500,
+      data: { error: 'Internal Server Error', details: err.message },
+    });
+  }
 });
 
 const refundPayment = async (req, res) => {
