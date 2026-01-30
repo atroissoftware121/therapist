@@ -4,20 +4,32 @@ const {
   TWILLO_SMS_NUMBER,
 } = require("../config");
 
-const client = require("twilio")(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
+const client = require("twilio")(
+  TWILIO_ACCOUNT_SID,
+  TWILIO_AUTH_TOKEN
+);
 
+// Generate 4-digit OTP
 const genrateOtp = () => Math.floor(1000 + Math.random() * 9000);
 
-const sendSMS = ({ from = TWILLO_SMS_NUMBER, body, to }) => {
-  return new Promise((resolve, reject) => {
-    client.messages
-      .create({ from, body, to })
-      .then((message) => resolve(true))
-      .catch((err) => {
-        console.log("sendSMS error==>", err);
-        resolve(false);
-      });
-  });
+// Send SMS
+const sendSMS = async ({ to, body, from = TWILLO_SMS_NUMBER }) => {
+  try {
+    const message = await client.messages.create({
+      from,
+      to,
+      body,
+    });
+
+    console.log("SMS sent:", message.sid);
+    return true;
+  } catch (error) {
+    console.error("Twilio SMS Error:", error.message);
+    return false;
+  }
 };
 
-module.exports = { sendSMS, genrateOtp };
+module.exports = {
+  sendSMS,
+  genrateOtp,
+};

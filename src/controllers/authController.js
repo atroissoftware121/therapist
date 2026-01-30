@@ -27,111 +27,133 @@ const userExtraDetailsModel = require('../mongooseModels/userExtraDetails.model'
 const GetOtp = async (req, res) => {
   let { n: mobileNumber, t: userType, m: method } = req.query;
 
+  // 1️⃣ Validation
   if (!mobileNumber || !method) {
     return SendBadResponse({
       res,
       status: 400,
-      data: { error: 'Please send all required fields!' },
+      data: { error: "Please send all required fields!" },
     });
   }
 
-  if (method !== 'login' && method !== 'signup' && method !== 'forgetPassword') {
+  if (!["login", "signup", "forgetPassword"].includes(method)) {
     return SendBadResponse({
       res,
       status: 400,
-      data: { error: 'Please send correct method!' },
+      data: { error: "Please send correct method!" },
     });
   }
 
-  mobileNumber = '+' + mobileNumber.trim();
-  console.log('mobileNumber', mobileNumber);
+  mobileNumber = "+" + mobileNumber.trim();
 
-  let [isMobileNumberExist] = await findQuery(authCredtionalsModel, { mobileNumber });
-  console.log('isMobileNumberExist12', isMobileNumberExist);
+  // 2️⃣ Check user existence
+  const [isMobileNumberExist] = await findQuery(authCredtionalsModel, {
+    mobileNumber,
+  });
+
   if (
-    (method === 'login' || method === 'forgetPassword') &&
+    (method === "login" || method === "forgetPassword") &&
     !isMobileNumberExist
   ) {
     return SendBadResponse({
       res,
       status: 404,
-      data: { error: 'User not found!' },
+      data: { error: "User not found!" },
     });
   }
 
-  if (method === 'signup' && isMobileNumberExist && isMobileNumberExist.isUserRegistrationCompleted) {
+  if (
+    method === "signup" &&
+    isMobileNumberExist &&
+    isMobileNumberExist.isUserRegistrationCompleted
+  ) {
     return SendBadResponse({
       res,
-      status: 404,
-      data: { error: 'User number already in use, please proceed by logging in.' },
+      status: 409,
+      data: {
+        error: "User number already in use, please login.",
+      },
     });
   }
 
-  if (method === 'login' && userType) {
-    const [isNumberExistWithUsertype] = await findQuery(authCredtionalsModel, {
-      mobileNumber,
-      userType,
-    });
+  // 3️⃣ UserType validation (login only)
+  if (method === "login" && userType) {
+    const [isNumberExistWithUsertype] = await findQuery(
+      authCredtionalsModel,
+      { mobileNumber, userType }
+    );
 
     if (!isNumberExistWithUsertype) {
-      const oppositeUserType = userType === 'individual' ? 'therapist' : 'individual';
+      const oppositeUserType =
+        userType === "individual" ? "therapist" : "individual";
+
       return SendBadResponse({
         res,
         status: 403,
         data: {
-          error: `This number is registered with a ${oppositeUserType}. Please use a number associated with an ${userType}.`,
+          error: `This number is registered with a ${oppositeUserType}.`,
         },
       });
     }
   }
 
+  // 4️⃣ OTP rate limit
   const [isOtpDataExist] = await findQuery(otpSentModel, { mobileNumber });
   const alreadyOtpSent = isOtpDataExist?.sendTimes || 0;
 
   if (
-    alreadyOtpSent === 10 &&
-    new Date().getTime() <
-    new Date(isOtpDataExist?.lastOtpSentTime).getTime() + 24 * 60 * 60 * 1000
+    alreadyOtpSent >= 10 &&
+    Date.now() <
+      new Date(isOtpDataExist.lastOtpSentTime).getTime() +
+        24 * 60 * 60 * 1000
   ) {
     return SendBadResponse({
       res,
-      status: 502,
-      data: { error: 'Limit exceeded! Please try after one day.' },
+      status: 429,
+      data: { error: "OTP limit exceeded. Try again tomorrow." },
     });
   }
 
-  // Generate or use a static OTP
-  let otp = '121'; // Replace with genrateOtp() in production
+  // 5️⃣ Generate OTP
+  const otp = genrateOtp().toString();
 
-  // Send SMS logic can be enabled in production
-  // const messageResponse = await sendSMS({
-  //   to: mobileNumber,
-  //   body: getSignupOtpString(otp),
-  // });
-  // if (!messageResponse) {
-  //   return SendBadResponse({
-  //     res,
-  //     status: 503,
-  //     data: { error: 'Something went wrong!' },
-  //   });
-  // }
+  // 6️⃣ Send SMS via Twilio
+  const messageResponse = await sendSMS({
+    to: mobileNumber,
+    body: getSignupOtpString(otp),
+  });
 
+  if (!messageResponse) {
+    return SendBadResponse({
+      res,
+      status: 503,
+      data: { error: "Failed to send OTP. Please try again." },
+    });
+  }
+
+  // 7️⃣ Save / Update OTP record
   const otpModelObj = {
     otp,
     mobileNumber,
     sendTimes: alreadyOtpSent + 1,
     lastOtpSentTime: new Date(),
+    otpExpireAt: new Date(Date.now() + 5 * 60 * 1000), // 5 minutes
     method,
   };
 
   if (isOtpDataExist) {
-    await updateQuery(otpSentModel, { _id: isOtpDataExist._id }, otpModelObj);
+    await updateQuery(
+      otpSentModel,
+      { _id: isOtpDataExist._id },
+      otpModelObj
+    );
   } else {
     await createQuery(otpSentModel, otpModelObj);
   }
+
   return SendSuccessResponse({
     res,
-    data: { message: 'OTP sent successfully!' },
+    data: { message: "OTP sent successfully!" },
   });
 };
 
