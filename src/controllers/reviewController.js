@@ -71,63 +71,76 @@ const postReview = async (req, res) => {
 };
 
 const getReview = async (req, res) => {
-  const { therapistId, individualId, consultationId } = req.query;
-  let userId;
-  if (consultationId) {
-    userId = individualId ? { individualId, consultationId } : { therapistId };
-  } else {
-    userId = individualId ? { individualId } : { therapistId };
-  }
+  try {
+    const { therapistId, individualId, consultationId } = req.query;
 
-  const reviews = await findQuery(reviewModel, userId);
-  if (!reviews) {
+    let query = {};
+
+    if (consultationId) {
+      query = individualId
+        ? { individualId, consultationId }
+        : { therapistId };
+    } else {
+      query = individualId
+        ? { individualId }
+        : { therapistId };
+    }
+
+    const reviews = await findQuery(reviewModel, query);
+
+    if (!reviews || reviews.length === 0) {
+      return SendBadResponse({
+        res,
+        status: 404,
+        data: { error: "no reviews" },
+      });
+    }
+
+    let pushUserData = [];
+
+    for (let review of reviews) {
+      let user;
+
+      if (therapistId) {
+        user = await findQuery(individualModel, {
+          _id: review.individualId,
+        });
+      } else {
+        user = await findQuery(therapistModel, {
+          _id: review.therapistId,
+        });
+      }
+
+      // safety check
+      if (!user) continue;
+
+      const data = {
+        ...(user._doc || user),
+        postCreated: review.createdAt,
+        comments: review.comments,
+        rating: review.rating,
+        reviewId: review._id,
+        therapistComment: review?.therapistComment,
+      };
+
+      pushUserData.push(data);
+    }
+
+    return SendSuccessResponse({
+      res,
+      data: { data: pushUserData },
+    });
+
+  } catch (error) {
+    console.error("getReview error:", error);
     return SendBadResponse({
       res,
-      status: 404,
-      data: {
-        error: 'no reviews',
-      },
+      status: 500,
+      data: { error: "internal server error" },
     });
   }
-  let pushUserData = [];
-  if (therapistId) {
-    for (let review of reviews) {
-      const [user] = await findQuery(individualModel, {
-        _id: review.individualId,
-      });
-      const data = {
-        ...user._doc,
-        postCreated: review.createdAt,
-        comments: review.comments,
-        rating: review.rating,
-        reviewId: review._id,
-        therapistComment: review?.therapistComment,
-      };
-      pushUserData.push(data);
-    }
-  } else {
-    for (let review of reviews) {
-      const [user] = await findQuery(therapistModel, {
-        _id: review.therapistId,
-      });
-      console.log(user);
-      const data = {
-        ...user._doc,
-        postCreated: review.createdAt,
-        comments: review.comments,
-        rating: review.rating,
-        reviewId: review._id,
-        therapistComment: review?.therapistComment,
-      };
-      pushUserData.push(data);
-    }
-  }
-
-  return SendSuccessResponse({
-    res,
-    data: { data: pushUserData },
-  });
 };
+
 
 const replyTherapist = async(req, res) => {
   const { reviewId, therapistComment } = req.body;
