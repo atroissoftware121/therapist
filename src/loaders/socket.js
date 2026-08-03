@@ -119,26 +119,43 @@ async function handleSocket()  {
     });
 
     // Accepts { therapistId } OR plain therapistId string
-    socket.on('therapist-active', async (data) => {
+    // Optional ack: socket.emit('therapist-active', payload, (res) => console.log(res))
+    socket.on('therapist-active', async (data, ack) => {
+      const reply = (payload) => {
+        if (typeof ack === 'function') ack(payload);
+        socket.emit('therapist-active-result', payload);
+      };
       try {
+        console.log('[socket] therapist-active raw payload:', JSON.stringify(data));
         const therapistId = toId(data?.therapistId ?? data);
         if (!therapistId) {
           console.log('[socket] therapist-active ignored — missing therapistId', data);
-          return;
+          return reply({ success: false, error: 'missing_therapistId', received: data });
+        }
+        if (!/^[a-fA-F0-9]{24}$/.test(therapistId)) {
+          console.log('[socket] therapist-active — invalid id format:', therapistId);
+          return reply({ success: false, error: 'invalid_therapistId_format', therapistId });
+        }
+        const updated = await setTherapistOnlineInDb(therapistId);
+        if (!updated) {
+          console.log('[socket] therapist-active — therapist not found:', therapistId);
+          return reply({ success: false, error: 'therapist_not_found', therapistId });
         }
         socket.join(therapistId);
         socket.data.userId = therapistId;
         socket.data.userType = 'therapist';
-        const updated = await setTherapistOnlineInDb(therapistId);
-        if (!updated) {
-          console.log('[socket] therapist-active — therapist not found:', therapistId);
-          return;
-        }
         markTherapistSocketOnline(therapistId, socket.id);
-        await emitActiveTherapists();
-        console.log(`[socket] therapist online: ${therapistId}`);
+        const list = await emitActiveTherapists();
+        console.log(`[socket] therapist online: ${therapistId} | activeCount=${list.length}`);
+        return reply({
+          success: true,
+          therapistId,
+          name: updated.name,
+          activeCount: list.length,
+        });
       } catch (err) {
         console.error('[socket] therapist-active error:', err.message);
+        return reply({ success: false, error: err.message });
       }
     });
     
