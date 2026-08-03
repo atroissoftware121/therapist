@@ -260,42 +260,85 @@ const VerifyOtp = async (req, res) => {
 
   console.log('userAuthDetails12', userAuthDetails);
   if (!userAuthDetails) {
-    let { notification, userExtraDetails, ...isUserCreated } = await createQuery(
-      userType === 'therapist' ? therapistModel : individualModel,
-      {
+    try {
+      const resolvedUserType = userType === 'therapist' ? 'therapist' : 'individual';
+      // userExtraDetails enum historically used "therapists" (plural)
+      const extraUserType =
+        resolvedUserType === 'therapist' ? 'therapists' : 'individual';
+
+      let { notification, userExtraDetails, ...isUserCreated } = await createQuery(
+        resolvedUserType === 'therapist' ? therapistModel : individualModel,
+        {
+          mobileNumber,
+        }
+      );
+      if (!isUserCreated) {
+        return SendBadResponse({
+          res,
+          status: 500,
+          data: { error: 'Failed to create user!' },
+        });
+      }
+      await createQuery(authCredtionalsModel, {
         mobileNumber,
+        userType: resolvedUserType,
+        userId: isUserCreated._id,
+      });
+      let token = genrateToken({ data: { _id: isUserCreated._id } });
+      let isUserExtraDataCreated = await createQuery(userExtraDetailsModel, {
+        lastLogin: Date.now(),
+        lastJWTToken: token,
+        isUserLogout: false,
+        userId: isUserCreated._id,
+        deviceInfo,
+        fcmToken,
+        userType: extraUserType,
+      });
+      if (!isUserExtraDataCreated) {
+        return SendBadResponse({
+          res,
+          status: 500,
+          data: { error: 'Failed to create user extras!' },
+        });
       }
-    );
-    await createQuery(authCredtionalsModel, {
-      mobileNumber,
-      userType,
-      userId: isUserCreated._id,
-    });
-    let token = genrateToken({ data: { _id: isUserCreated._id } });
-    let isUserExtraDataCreated = await createQuery(userExtraDetailsModel, {
-      lastLogin: Date.now(),
-      lastJWTToken: token,
-      isUserLogout: false,
-      userId: isUserCreated._id,
-      deviceInfo,
-      fcmToken,
-      userType
-    });
-    let isUserNotificationDataCreated = await createQuery(notificationsModel, {
-      userId: isUserCreated._id,
-      userType,
-      notifications: [],
-    });
-    updateQuery(
-      userType === 'therapist' ? therapistModel : individualModel,
-      { _id: isUserCreated._id },
-      {
-        userExtraDetails: isUserExtraDataCreated._id,
-        notification: isUserNotificationDataCreated._id,
-      }
-    );
-    return SendSuccessResponse({ res, data: { isUserCreated, token, userType: userType || userAuthDetails?.userType } });
+      let isUserNotificationDataCreated = await createQuery(notificationsModel, {
+        userId: isUserCreated._id,
+        userType: resolvedUserType,
+        notifications: [],
+      });
+      await updateQuery(
+        resolvedUserType === 'therapist' ? therapistModel : individualModel,
+        { _id: isUserCreated._id },
+        {
+          userExtraDetails: isUserExtraDataCreated._id,
+          notification: isUserNotificationDataCreated?._id,
+        }
+      );
+      return SendSuccessResponse({
+        res,
+        data: {
+          isUserCreated,
+          token,
+          userType: resolvedUserType,
+        },
+      });
+    } catch (error) {
+      console.error('Signup create error:', error);
+      return SendBadResponse({
+        res,
+        status: 500,
+        data: { error: 'Registration failed. Please try again.' },
+      });
+    }
   };
+
+  if (!isUserExist) {
+    return SendBadResponse({
+      res,
+      status: 404,
+      data: { error: 'No user data found!' },
+    });
+  }
 
   let token = genrateToken({ data: { _id: isUserExist._id } });
 
