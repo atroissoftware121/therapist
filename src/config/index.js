@@ -19,7 +19,7 @@ const RAZOR_API_SECRET = process.env.RAZOR_API_SECRET;
 const EXOTEL_SID = process.env.EXOTEL_SID;
 const EXOTEL_TOKEN  = process.env.EXOTEL_TOKEN;
 const EXOTEL_SENDER_ID =  process.env.EXOTEL_SENDER_ID;
-// TEMP: set OTP_BYPASS=true to skip SMS provider & accept any OTP. Set false after Exotel recharge.
+// Set OTP_BYPASS=true to skip SMS sending & accept any OTP (temp while Exotel credits are empty)
 const OTP_BYPASS = process.env.OTP_BYPASS === 'true';
 module.exports = {
   PORT,

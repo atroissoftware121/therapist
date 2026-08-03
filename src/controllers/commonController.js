@@ -27,7 +27,7 @@ const individualTransactionModel = require('../mongooseModels/individual-transac
 const individualNotificationModel = require('../mongooseModels/individual-notification.model');
 const adminNotificationModel = require('../mongooseModels/admin-notification.model');
 const callDetailsModel = require('../mongooseModels/callChat-details.model');
-const { refreshCallListsEvent, chatDetailsEvent, startTimerEvent, endTimerEvent } = require('../loaders/socket');
+const { refreshCallListsEvent, chatDetailsEvent, startTimerEvent, endTimerEvent, io } = require('../loaders/socket');
 const reviewModel = require('../mongooseModels/review.model');
 const notificationsModel = require('../mongooseModels/notifications.model');
 
@@ -131,62 +131,82 @@ const sentPushNotifications = catchAsync(async (req, res) => {
           },
           token: receiverDetail.fcmToken,
         };
-        if (data.userType === 'therapists') {
+        try {
           response = await admin.messaging().send(message);
-          console.log(response)
-          return SendSuccessResponse({ res, data: response });
+          console.log(response);
+        } catch (fcmErr) {
+          // Don't block socket delivery if FCM token is invalid
+          console.error('FCM send failed:', fcmErr.message);
+          response = 'fcm_failed_socket_only';
         }
-        response = await admin.messaging().send(message);
       }
-      console.log(response)
-      const individualObj = {
-        senderId: data.senderId,
-        senderName: `${individualData.fname} ${individualData.lname}`,
-        email: individualData.email,
-        mobileNumber: individualData.mobileNumber,
-        gender: individualData.gender,
-        timing: data.chatDuration
-      };
-      const [isChatExisted] = await findQuery(chatDetailsModel, { receiverId: data.receiverId, chatType: data.chatType });
-      let messageData;
-      if (isChatExisted) {
-        const isSenderPresent = isChatExisted.individualDetails.some(detail => detail.senderId === data.senderId);
-        if (!isSenderPresent) {
-          messageData = await updateQuery(chatDetailsModel,
-            {
-              receiverId: data.receiverId,
-              chatType: data.chatType,
-              'individualDetails.senderId': { $ne: data.senderId }
-            },
-            {
-              $set: {
-                receiverName: therapistsData.name,
+      console.log(response);
+
+      // Individual → therapist: add to therapist queue + socket emit
+      // Therapist → individual: still emit socket so receiver gets real-time event
+      if (data.userType === 'individual') {
+        const individualObj = {
+          senderId: data.senderId,
+          senderName: `${individualData.fname} ${individualData.lname}`,
+          email: individualData.email,
+          mobileNumber: individualData.mobileNumber,
+          gender: individualData.gender,
+          timing: data.chatDuration
+        };
+        const [isChatExisted] = await findQuery(chatDetailsModel, { receiverId: data.receiverId, chatType: data.chatType });
+        let messageData;
+        if (isChatExisted) {
+          const isSenderPresent = isChatExisted.individualDetails.some(detail => detail.senderId === data.senderId);
+          if (!isSenderPresent) {
+            messageData = await updateQuery(chatDetailsModel,
+              {
+                receiverId: data.receiverId,
+                chatType: data.chatType,
+                'individualDetails.senderId': { $ne: data.senderId }
               },
-              $addToSet: {
-                individualDetails: individualObj,
+              {
+                $set: {
+                  receiverName: therapistsData.name,
+                },
+                $addToSet: {
+                  individualDetails: individualObj,
+                },
               },
-            },
-          )
+            )
+          } else {
+            messageData = isChatExisted;
+          }
         } else {
-          messageData = isChatExisted;
+          messageData = await createQuery(chatDetailsModel, {
+            receiverId: data.receiverId,
+            receiverName: therapistsData.name,
+            chatType: data.chatType,
+            individualDetails: [individualObj],
+          });
         }
-      } else {
-        messageData = await createQuery(chatDetailsModel, {
-          receiverId: data.receiverId,
-          receiverName: therapistsData.name,
-          chatType: data.chatType,
-          individualDetails: [individualObj],
+
+        messageData.individualDetails.forEach((item) => {
+          if (item.senderId === data.senderId) {
+            console.log('chatDuration12', data.chatDuration);
+            item.timing = data.chatDuration;
+          }
         });
+        await chatDetailsEvent(data, messageData, individualData);
+      } else {
+        // Therapist → individual: emit to individual's room
+        const receiverRoom = String(data.receiverId);
+        io.to(receiverRoom).emit('chat-details', {
+          data: [{
+            senderId: data.senderId,
+            senderName: therapistsData.name,
+            title: data.title,
+            message: data.message,
+            chatType: data.chatType,
+          }],
+          image: therapistsData.image,
+        });
+        console.log(`[pushNotification] emitted chat-details to individual room ${receiverRoom}`);
       }
-
-
-      messageData.individualDetails.forEach((item) => {
-        if (item.senderId === data.senderId) {
-          console.log('chatDuration12', data.chatDuration);
-          item.timing = data.chatDuration;
-        }
-      });
-      await chatDetailsEvent(data, messageData, individualData);
 
       return SendSuccessResponse({ res, data: response })
     }
