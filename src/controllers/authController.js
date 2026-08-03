@@ -17,13 +17,13 @@ const individualModel = require('../mongooseModels/individual.model');
 const notificationsModel = require('../mongooseModels/notifications.model');
 const { getSignupOtpString } = require('../stringTemplates');
 const { admin } = require('../config/messaging-system');
-const { OTP_BYPASS } = require('../config');
 const { genrateToken } = require('../helpers/jwtHelpers');
 const {
   genratePasswordHash,
   comparePassword,
 } = require('../helpers/bcryptHelper');
 const userExtraDetailsModel = require('../mongooseModels/userExtraDetails.model');
+const { OTP_BYPASS } = require('../config');
 
 const GetOtp = async (req, res) => {
   let { n: mobileNumber, t: userType, m: method } = req.query;
@@ -115,10 +115,10 @@ const GetOtp = async (req, res) => {
     });
   }
 
-  // 5️⃣ Generate OTP
-  const otp = genrateOtp().toString();
+  // 5️⃣ Generate OTP (fixed when bypass is on)
+  const otp = OTP_BYPASS ? '1234' : genrateOtp().toString();
 
-  // 6️⃣ Send SMS (skipped when OTP_BYPASS=true — restore after Exotel recharge)
+  // 6️⃣ Send SMS (skipped when OTP_BYPASS=true)
   if (!OTP_BYPASS) {
     const messageResponse = await sendSMS({
       to: mobileNumber,
@@ -158,7 +158,11 @@ const GetOtp = async (req, res) => {
 
   return SendSuccessResponse({
     res,
-    data: { message: "OTP sent successfully!" },
+    data: {
+      message: OTP_BYPASS
+        ? "OTP sent successfully! (bypass mode — use any OTP)"
+        : "OTP sent successfully!",
+    },
   });
 };
 
@@ -194,9 +198,8 @@ const VerifyOtp = async (req, res) => {
   //   });
   mobileNumber = '+' + mobileNumber.trim();
 
-  // TEMP: OTP_BYPASS accepts any OTP — set OTP_BYPASS=false after Exotel recharge
   if (!OTP_BYPASS) {
-    const [isOtpValid] = await findQuery(otpSentModel, {
+    let [isOtpValid] = await findQuery(otpSentModel, {
       $and: [{ mobileNumber }, { otp }, { method }],
     });
     console.log('isOtpValid', isOtpValid);
@@ -216,7 +219,7 @@ const VerifyOtp = async (req, res) => {
         data: { error: 'Otp Expired!' },
       });
   } else {
-    console.log(`[OTP_BYPASS] Skipping OTP check for ${mobileNumber}, otp=${otp}`);
+    console.log(`[OTP_BYPASS] Skipping OTP validation for ${mobileNumber}, otp=${otp}`);
   }
   deleteQuery(otpSentModel, { mobileNumber });
   console.log('mobileNumber122', mobileNumber);
@@ -260,85 +263,42 @@ const VerifyOtp = async (req, res) => {
 
   console.log('userAuthDetails12', userAuthDetails);
   if (!userAuthDetails) {
-    try {
-      const resolvedUserType = userType === 'therapist' ? 'therapist' : 'individual';
-      // userExtraDetails enum historically used "therapists" (plural)
-      const extraUserType =
-        resolvedUserType === 'therapist' ? 'therapists' : 'individual';
-
-      let { notification, userExtraDetails, ...isUserCreated } = await createQuery(
-        resolvedUserType === 'therapist' ? therapistModel : individualModel,
-        {
-          mobileNumber,
-        }
-      );
-      if (!isUserCreated) {
-        return SendBadResponse({
-          res,
-          status: 500,
-          data: { error: 'Failed to create user!' },
-        });
-      }
-      await createQuery(authCredtionalsModel, {
+    let { notification, userExtraDetails, ...isUserCreated } = await createQuery(
+      userType === 'therapist' ? therapistModel : individualModel,
+      {
         mobileNumber,
-        userType: resolvedUserType,
-        userId: isUserCreated._id,
-      });
-      let token = genrateToken({ data: { _id: isUserCreated._id } });
-      let isUserExtraDataCreated = await createQuery(userExtraDetailsModel, {
-        lastLogin: Date.now(),
-        lastJWTToken: token,
-        isUserLogout: false,
-        userId: isUserCreated._id,
-        deviceInfo,
-        fcmToken,
-        userType: extraUserType,
-      });
-      if (!isUserExtraDataCreated) {
-        return SendBadResponse({
-          res,
-          status: 500,
-          data: { error: 'Failed to create user extras!' },
-        });
       }
-      let isUserNotificationDataCreated = await createQuery(notificationsModel, {
-        userId: isUserCreated._id,
-        userType: resolvedUserType,
-        notifications: [],
-      });
-      await updateQuery(
-        resolvedUserType === 'therapist' ? therapistModel : individualModel,
-        { _id: isUserCreated._id },
-        {
-          userExtraDetails: isUserExtraDataCreated._id,
-          notification: isUserNotificationDataCreated?._id,
-        }
-      );
-      return SendSuccessResponse({
-        res,
-        data: {
-          isUserCreated,
-          token,
-          userType: resolvedUserType,
-        },
-      });
-    } catch (error) {
-      console.error('Signup create error:', error);
-      return SendBadResponse({
-        res,
-        status: 500,
-        data: { error: 'Registration failed. Please try again.' },
-      });
-    }
-  };
-
-  if (!isUserExist) {
-    return SendBadResponse({
-      res,
-      status: 404,
-      data: { error: 'No user data found!' },
+    );
+    await createQuery(authCredtionalsModel, {
+      mobileNumber,
+      userType,
+      userId: isUserCreated._id,
     });
-  }
+    let token = genrateToken({ data: { _id: isUserCreated._id } });
+    let isUserExtraDataCreated = await createQuery(userExtraDetailsModel, {
+      lastLogin: Date.now(),
+      lastJWTToken: token,
+      isUserLogout: false,
+      userId: isUserCreated._id,
+      deviceInfo,
+      fcmToken,
+      userType
+    });
+    let isUserNotificationDataCreated = await createQuery(notificationsModel, {
+      userId: isUserCreated._id,
+      userType,
+      notifications: [],
+    });
+    updateQuery(
+      userType === 'therapist' ? therapistModel : individualModel,
+      { _id: isUserCreated._id },
+      {
+        userExtraDetails: isUserExtraDataCreated._id,
+        notification: isUserNotificationDataCreated._id,
+      }
+    );
+    return SendSuccessResponse({ res, data: { isUserCreated, token, userType: userType || userAuthDetails?.userType } });
+  };
 
   let token = genrateToken({ data: { _id: isUserExist._id } });
 
@@ -444,8 +404,8 @@ const Login = async (req, res) => {
 const ForgetPassword = async (req, res) => {
   let { otp, password, mobileNumber } = req.body;
   console.log('req,,', req.body);
+  console.log('otp', otp);
 
-  // TEMP: OTP_BYPASS accepts any OTP — set OTP_BYPASS=false after Exotel recharge
   if (!OTP_BYPASS) {
     let [isOtpValid] = await findQuery(otpSentModel, {
       $and: [{ mobileNumber }, { otp }, { method: 'forgetPassword' }],
@@ -466,7 +426,7 @@ const ForgetPassword = async (req, res) => {
         data: { error: 'Otp Expired!' },
       });
   } else {
-    console.log(`[OTP_BYPASS] Skipping forget-password OTP check for ${mobileNumber}`);
+    console.log(`[OTP_BYPASS] Skipping forget-password OTP validation for ${mobileNumber}`);
   }
   deleteQuery(otpSentModel, { mobileNumber });
   let hashedPassword = await genratePasswordHash(password);

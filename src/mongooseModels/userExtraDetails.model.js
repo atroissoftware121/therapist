@@ -12,7 +12,7 @@ const userExtraDetailsSchema = new mongoose.Schema(
       type: Date,
       default: null
     },
-    userType: { type: String, enum: ['individual', 'therapist', 'therapists'] },
+    userType: { type: String, enum: ['individual', 'therapists'] },
     email: { type: String, required: false }
   },
   {
