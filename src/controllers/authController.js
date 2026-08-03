@@ -17,6 +17,7 @@ const individualModel = require('../mongooseModels/individual.model');
 const notificationsModel = require('../mongooseModels/notifications.model');
 const { getSignupOtpString } = require('../stringTemplates');
 const { admin } = require('../config/messaging-system');
+const { OTP_BYPASS } = require('../config');
 const { genrateToken } = require('../helpers/jwtHelpers');
 const {
   genratePasswordHash,
@@ -117,18 +118,22 @@ const GetOtp = async (req, res) => {
   // 5️⃣ Generate OTP
   const otp = genrateOtp().toString();
 
-  // 6️⃣ Send SMS via Twilio
-  const messageResponse = await sendSMS({
-    to: mobileNumber,
-    body: getSignupOtpString(otp),
-  });
-
-  if (!messageResponse) {
-    return SendBadResponse({
-      res,
-      status: 503,
-      data: { error: "Failed to send OTP. Please try again." },
+  // 6️⃣ Send SMS (skipped when OTP_BYPASS=true — restore after Exotel recharge)
+  if (!OTP_BYPASS) {
+    const messageResponse = await sendSMS({
+      to: mobileNumber,
+      body: getSignupOtpString(otp),
     });
+
+    if (!messageResponse) {
+      return SendBadResponse({
+        res,
+        status: 503,
+        data: { error: "Failed to send OTP. Please try again." },
+      });
+    }
+  } else {
+    console.log(`[OTP_BYPASS] Skipping SMS. OTP for ${mobileNumber}: ${otp}`);
   }
 
   // 7️⃣ Save / Update OTP record
@@ -188,25 +193,31 @@ const VerifyOtp = async (req, res) => {
   //     data: { error: 'Please send correct usertype!' },
   //   });
   mobileNumber = '+' + mobileNumber.trim();
-  let isOtpValid = await findQuery(otpSentModel, {
-    $and: [{ mobileNumber }, { otp }, { method }],
-  });
-  console.log('isOtpValid', isOtpValid);
-  if (!isOtpValid)
-    return SendBadResponse({
-      res,
-      status: 400,
-      data: { error: 'Invaild Otp!' },
+
+  // TEMP: OTP_BYPASS accepts any OTP — set OTP_BYPASS=false after Exotel recharge
+  if (!OTP_BYPASS) {
+    const [isOtpValid] = await findQuery(otpSentModel, {
+      $and: [{ mobileNumber }, { otp }, { method }],
     });
-  if (
-    new Date().getTime() >
-    new Date(isOtpValid.lastOtpSentTime).getTime() + 10 * 60 * 1000
-  )
-    return SendBadResponse({
-      res,
-      status: 400,
-      data: { error: 'Otp Expired!' },
-    });
+    console.log('isOtpValid', isOtpValid);
+    if (!isOtpValid)
+      return SendBadResponse({
+        res,
+        status: 400,
+        data: { error: 'Invaild Otp!' },
+      });
+    if (
+      new Date().getTime() >
+      new Date(isOtpValid.lastOtpSentTime).getTime() + 10 * 60 * 1000
+    )
+      return SendBadResponse({
+        res,
+        status: 400,
+        data: { error: 'Otp Expired!' },
+      });
+  } else {
+    console.log(`[OTP_BYPASS] Skipping OTP check for ${mobileNumber}, otp=${otp}`);
+  }
   deleteQuery(otpSentModel, { mobileNumber });
   console.log('mobileNumber122', mobileNumber);
   console.log('mobileNumber', mobileNumber);
@@ -390,26 +401,30 @@ const Login = async (req, res) => {
 const ForgetPassword = async (req, res) => {
   let { otp, password, mobileNumber } = req.body;
   console.log('req,,', req.body);
-  otp = '121'
-  console.log('otp', otp);
-  let [isOtpValid] = await findQuery(otpSentModel, {
-    $and: [{ mobileNumber }, { otp }, { method: 'forgetPassword' }],
-  });
-  if (!isOtpValid)
-    return SendBadResponse({
-      res,
-      status: 400,
-      data: { error: 'Invaild Otp!' },
+
+  // TEMP: OTP_BYPASS accepts any OTP — set OTP_BYPASS=false after Exotel recharge
+  if (!OTP_BYPASS) {
+    let [isOtpValid] = await findQuery(otpSentModel, {
+      $and: [{ mobileNumber }, { otp }, { method: 'forgetPassword' }],
     });
-  if (
-    new Date().getTime() >
-    new Date(isOtpValid.lastOtpSentTime).getTime() + 10 * 60 * 1000
-  )
-    return SendBadResponse({
-      res,
-      status: 400,
-      data: { error: 'Otp Expired!' },
-    });
+    if (!isOtpValid)
+      return SendBadResponse({
+        res,
+        status: 400,
+        data: { error: 'Invaild Otp!' },
+      });
+    if (
+      new Date().getTime() >
+      new Date(isOtpValid.lastOtpSentTime).getTime() + 10 * 60 * 1000
+    )
+      return SendBadResponse({
+        res,
+        status: 400,
+        data: { error: 'Otp Expired!' },
+      });
+  } else {
+    console.log(`[OTP_BYPASS] Skipping forget-password OTP check for ${mobileNumber}`);
+  }
   deleteQuery(otpSentModel, { mobileNumber });
   let hashedPassword = await genratePasswordHash(password);
   await updateQuery(
